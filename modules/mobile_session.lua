@@ -12,6 +12,7 @@ local SUCCESS = expectations.SUCCESS
 local FAILED = expectations.FAILED
 local module = {}
 local mt = { __index = { } }
+local wrong_function_name = "WrongFunctionName"
 mt.__index.cor_id_func_map = { }
 function mt.__index:ExpectEvent(event, name)
   local ret = Expectation(name, self.connection)
@@ -130,6 +131,12 @@ function mt.__index:Send(message)
   if not message.frameInfo then
     error("MobileSession:Send: frameInfo must be specified")
   end
+  local message_correlation_id
+  if not message.rpcCorrelationId then
+    message_correlation_id = correlationId
+  else
+    message_correlation_id = message.rpcCorrelationId 
+  end
   self.messageId = self.messageId + 1
   self.connection:Send(
     {
@@ -148,12 +155,18 @@ function mt.__index:Send(message)
         binaryData = message.binaryData
       }
     })
-  if not self.cor_id_func_map[self.correlationId] then
-    for fname, fid in pairs(functionId) do
-      if fid == message.rpcFunctionId then
-        self.cor_id_func_map[self.correlationId] = fname
-        break
+  -- During StartSession Send called with no correllation id
+  if message_correlation_id then
+    if not self.cor_id_func_map[message_correlation_id] then
+      for fname, fid in pairs(functionId) do
+        if fid == message.rpcFunctionId then
+          self.cor_id_func_map[message_correlation_id] = fname
+          break
+        end
       end
+      self.cor_id_func_map[message_correlation_id] = wrong_function_name
+    else
+      error("MobileSession:Send: message with correlationId: "..message_correlation_id.." was sent earlier by ATF")
     end
   end
 
@@ -181,7 +194,6 @@ function mt.__index:StopStreaming(filename)
 end
 function mt.__index:SendRPC(func, arguments, fileName)
   self.correlationId = self.correlationId + 1
-  self.cor_id_func_map[self.correlationId] = func
   local msg =
   {
     serviceType = 7,

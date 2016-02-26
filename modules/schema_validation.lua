@@ -85,6 +85,11 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
     local retval= {}
     local class_, short_name
     if (name == nil ) then return retval end
+
+    if (name == "WrongFunctionName") then
+      name = "GenericResponse"
+    end
+
     if (string.find(name, "%.")) then
       class_, short_name = name:match("([^.]+).([^.]+)")
     else
