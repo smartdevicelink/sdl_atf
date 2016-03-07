@@ -148,7 +148,7 @@ function EXPECT_NOTIFICATION(func,...)
         end
       end
     else
-      arguments = args[#args]
+      arguments = args
     end
     arguments["notifyId"] = module.notification_counter
     module.notification_counter = module.notification_counter + 1
