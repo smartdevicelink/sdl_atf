@@ -115,7 +115,6 @@ function module.ExpectationsList()
       table.insert(self.pinned, e)
       e.index = #self.pinned
     else
-      --print("Ftrace - expectations Add e is not pinned")
       table.insert(self.expectations, e)
       e.index = self.expectations
     end

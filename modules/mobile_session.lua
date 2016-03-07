@@ -132,10 +132,10 @@ function mt.__index:Send(message)
     error("MobileSession:Send: frameInfo must be specified")
   end
   local message_correlation_id
-  if not message.rpcCorrelationId then
-    message_correlation_id = correlationId
-  else
+  if message.rpcCorrelationId then
     message_correlation_id = message.rpcCorrelationId 
+  else
+    message_correlation_id = correlationId
   end
   self.messageId = self.messageId + 1
   self.connection:Send(

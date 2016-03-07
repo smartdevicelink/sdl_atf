@@ -57,7 +57,7 @@ function module.json_validate(table1, table2)
         if not ok then return false,"Missing one or more fields" end
       else
         if (t2keys[k1]) then
-          if v2 == nil then return false, string.format("Missing value for: '%s'",k1) end
+          if not v2 then return false, string.format("Missing value for: '%s'",k1) end
           t2keys[k1] = nil
         else
           t2keys[k1] = v1
@@ -84,7 +84,7 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
   local function get_xml_shema_validation(doc,types,name, msg_type)
     local retval= {}
     local class_, short_name
-    if (name == nil ) then return retval end
+    if not name then return retval end
 
     if (name == "WrongFunctionName") then
       name = "GenericResponse"
