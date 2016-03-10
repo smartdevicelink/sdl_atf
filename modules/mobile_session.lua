@@ -13,7 +13,6 @@ local FAILED = expectations.FAILED
 local module = {}
 local mt = { __index = { } }
 local wrong_function_name = "WrongFunctionName"
-mt.__index.cor_id_func_map = { }
 function mt.__index:ExpectEvent(event, name)
   local ret = Expectation(name, self.connection)
   ret.event = event
@@ -135,7 +134,8 @@ function mt.__index:Send(message)
   if message.rpcCorrelationId then
     message_correlation_id = message.rpcCorrelationId 
   else
-    message_correlation_id = correlationId
+    self.correlationId = self.correlationId + 1
+    message_correlation_id = self.correlationId
   end
   self.messageId = self.messageId + 1
   self.connection:Send(
@@ -396,6 +396,7 @@ function module.MobileSession(test, connection, regAppParams)
   res.sendHeartbeatToSDL = true
   res.answerHeartbeatFromSDL = true
   res.ignoreHeartBeatAck = false
+  res.cor_id_func_map = { }
   setmetatable(res, mt)
   return res
 end

@@ -115,7 +115,6 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
                 tmp['type'] = string.format("%s",class_type)
               end
 
-              -- tmp['mandatory'] = (v2:attr('mandatory')) and v2:attr('mandatory') or 'true'
               tmp['mandatory'] = v2:attr('mandatory') or 'true'
               if (v2:attr('array')) then tmp['array'] = v2:attr('array') end
               if (v2:attr('minsize') and v2:attr('maxsize')) then
