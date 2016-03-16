@@ -155,19 +155,16 @@ function mt.__index:Send(message)
         binaryData = message.binaryData
       }
     })
-  -- During StartSession Send called with no correllation id
-  if message_correlation_id then
-    if not self.cor_id_func_map[message_correlation_id] then
-      for fname, fid in pairs(functionId) do
-        if fid == message.rpcFunctionId then
-          self.cor_id_func_map[message_correlation_id] = fname
-          break
-        end
+  if not self.cor_id_func_map[message_correlation_id] then
+    for fname, fid in pairs(functionId) do
+      if fid == message.rpcFunctionId then
+        self.cor_id_func_map[message_correlation_id] = fname
+        break
       end
-      self.cor_id_func_map[message_correlation_id] = wrong_function_name
-    else
-      error("MobileSession:Send: message with correlationId: "..message_correlation_id.." was sent earlier by ATF")
     end
+    self.cor_id_func_map[message_correlation_id] = wrong_function_name
+  else
+    error("MobileSession:Send: message with correlationId: "..message_correlation_id.." was sent earlier by ATF")
   end
 
   xmlReporter.AddMessage("mobile_connection","Send",

@@ -5,7 +5,7 @@ local mob_types = api.init("data/MOBILE_API.xml")
 if (not hmi_api) then hmi_api = xml.open("data/HMI_API.xml") end
 if (not mobile_api) then mobile_api = xml.open("data/MOBILE_API.xml") end
 local wrong_function_name = "WrongFunctionName"
-local genric_response = "GenericResponse"
+local generic_response = "GenericResponse"
 
 -- ToDo: Fix me. detail: APPLINK-13219
 
@@ -95,7 +95,7 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
     end
 
     if (name == wrong_function_name) then
-      name = genric_response
+      name = generic_response
     end
 
     if (string.find(name, "%.")) then
