@@ -12,7 +12,7 @@ local SUCCESS = expectations.SUCCESS
 local FAILED = expectations.FAILED
 local module = {}
 local mt = { __index = { } }
-mt.__index.cor_id_func_map = { }
+local wrong_function_name = "WrongFunctionName"
 function mt.__index:ExpectEvent(event, name)
   local ret = Expectation(name, self.connection)
   ret.event = event
@@ -130,6 +130,13 @@ function mt.__index:Send(message)
   if not message.frameInfo then
     error("MobileSession:Send: frameInfo must be specified")
   end
+  local message_correlation_id
+  if message.rpcCorrelationId then
+    message_correlation_id = message.rpcCorrelationId 
+  else
+    self.correlationId = self.correlationId + 1
+    message_correlation_id = self.correlationId
+  end
   self.messageId = self.messageId + 1
   self.connection:Send(
     {
@@ -148,13 +155,16 @@ function mt.__index:Send(message)
         binaryData = message.binaryData
       }
     })
-  if not self.cor_id_func_map[self.correlationId] then
+  if not self.cor_id_func_map[message_correlation_id] then
     for fname, fid in pairs(functionId) do
       if fid == message.rpcFunctionId then
-        self.cor_id_func_map[self.correlationId] = fname
+        self.cor_id_func_map[message_correlation_id] = fname
         break
       end
     end
+    self.cor_id_func_map[message_correlation_id] = wrong_function_name
+  else
+    error("MobileSession:Send: message with correlationId: "..message_correlation_id.." was sent earlier by ATF")
   end
 
   xmlReporter.AddMessage("mobile_connection","Send",
@@ -181,7 +191,6 @@ function mt.__index:StopStreaming(filename)
 end
 function mt.__index:SendRPC(func, arguments, fileName)
   self.correlationId = self.correlationId + 1
-  self.cor_id_func_map[self.correlationId] = func
   local msg =
   {
     serviceType = 7,
@@ -384,6 +393,7 @@ function module.MobileSession(test, connection, regAppParams)
   res.sendHeartbeatToSDL = true
   res.answerHeartbeatFromSDL = true
   res.ignoreHeartBeatAck = false
+  res.cor_id_func_map = { }
   setmetatable(res, mt)
   return res
 end

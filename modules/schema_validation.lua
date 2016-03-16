@@ -4,6 +4,8 @@ local hmi_types = api.init("data/HMI_API.xml", true)
 local mob_types = api.init("data/MOBILE_API.xml")
 if (not hmi_api) then hmi_api = xml.open("data/HMI_API.xml") end
 if (not mobile_api) then mobile_api = xml.open("data/MOBILE_API.xml") end
+local wrong_function_name = "WrongFunctionName"
+local generic_response = "GenericResponse"
 
 -- ToDo: Fix me. detail: APPLINK-13219
 
@@ -54,10 +56,14 @@ function module.json_validate(table1, table2)
             break
           end
         end
-        if not ok then return false,"Missing one or more fields" end
+        if not ok
+          then return false,"Missing one or more fields"
+        end
       else
         if (t2keys[k1]) then
-          if v2 == nil then return false, string.format("Missing value for: '%s'",k1) end
+          if not v2 then
+            return false, string.format("Missing value for: '%s'",k1)
+          end
           t2keys[k1] = nil
         else
           t2keys[k1] = v1
@@ -84,7 +90,14 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
   local function get_xml_shema_validation(doc,types,name, msg_type)
     local retval= {}
     local class_, short_name
-    if (name == nil ) then return retval end
+    if not name then
+      return retval
+    end
+
+    if (name == wrong_function_name) then
+      name = generic_response
+    end
+
     if (string.find(name, "%.")) then
       class_, short_name = name:match("([^.]+).([^.]+)")
     else
@@ -110,9 +123,10 @@ local function compare(schema, function_id, msgType, user_data, mandatory_check)
                 tmp['type'] = string.format("%s",class_type)
               end
 
-              -- tmp['mandatory'] = (v2:attr('mandatory')) and v2:attr('mandatory') or 'true'
               tmp['mandatory'] = v2:attr('mandatory') or 'true'
-              if (v2:attr('array')) then tmp['array'] = v2:attr('array') end
+              if (v2:attr('array')) then
+                tmp['array'] = v2:attr('array')
+              end
               if (v2:attr('minsize') and v2:attr('maxsize')) then
                 tmp['minsize'] = v2:attr('minsize')
                 tmp['maxsize'] = v2:attr('maxsize')

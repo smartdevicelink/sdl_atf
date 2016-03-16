@@ -2,6 +2,7 @@ validate_hmi_request:true
 validate_mobile_response:true
 validate_mobile_response:false ==> not valid type 'success': current type - 'string' ; Available - 'Boolean'
 
+validate_mobile_response with "WrongFuntionName":true
 validate_hmi_notification:true
 validate_hmi_notification:false ==> not present : requestType
 
