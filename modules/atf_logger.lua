@@ -1,10 +1,37 @@
 local json = require("json")
 local Logger = {}
 Logger.mobile_log_format = "%s(%s) [version: %s, frameType: %s, encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s] : %s \n"
-Logger.hmi_log_format = "%s(%s) : %s \n"
+Logger.hmi_log_format = "%s[%s] : %s \n"
+
+
+function capture_cmd_output(cmd, is_raw)
+  local f = assert(io.popen(cmd, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  if is_raw then return s end
+  s = string.gsub(s, '^%s+', '')
+  s = string.gsub(s, '%s+$', '')
+  s = string.gsub(s, '[\n\r]+', ' ')
+  return s
+end
+
+function split(inputstr, sep)
+  if not sep then
+    sep = "%s"
+  end
+  local t = {} ; i = 0
+  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+    t[i] = str
+    i = i + 1
+  end
+  return t
+end
 
 function formated_time()
-  return os.date("%X")
+  local time = capture_cmd_output("date +'%d %b %Y %T,%N'", false)
+  time = split(time, ",")
+  time[1] =  string.format("%03.0f", math.floor(tonumber(time[1]) / 1000000))
+  return time[0]..','..time[1]
 end
 
 function Logger:MOBtoSDL(message)
