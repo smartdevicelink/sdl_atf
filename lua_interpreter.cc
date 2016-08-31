@@ -8,6 +8,7 @@
 #include "network.h"
 #include "timers.h"
 #include "qtlua.h"
+#include "qdatetime.h"
 #include <assert.h>
 #include <iostream>
 #include <stdexcept>
@@ -71,6 +72,8 @@ LuaInterpreter::LuaInterpreter(QObject *parent, const QStringList::iterator& arg
   luaL_requiref(lua_state, "os", &luaopen_os, 1);
   luaL_requiref(lua_state, "bit32", &luaopen_bit32, 1);
   luaL_requiref(lua_state, "qt", &luaopen_qt, 1);
+  luaL_requiref(lua_state, "qdatetime", &luaopen_qdatetime, 1);
+
 #line 192 "main.nw"
   // extend package.cpath
   lua_getglobal(lua_state, "package");

@@ -11,6 +11,7 @@ SOURCES= lua_interpreter.cc \
 	network.cc \
 	qtdynamic.cc \
 	qtlua.cc \
+	qdatetime.cc \
 	timers.cc
 
 all: interp modules/libxml.so
