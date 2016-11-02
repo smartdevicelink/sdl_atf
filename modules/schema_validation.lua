@@ -212,7 +212,7 @@ function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofPar
       end
     end
     if name_of_structure~=nil then 
-      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1.." \"".. tostring(data_elem).."\", expected enum value: "..schemaElem 
+      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected enum value: "..schemaElem 
     end
     return false, "Parameter ".. nameofParameter.. ": got "..elem1..", expected enum value: " ..schemaElem   
   end

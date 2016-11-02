@@ -15,6 +15,8 @@ local STOPPED = SDL.STOPPED
 local RUNNING = SDL.RUNNING
 local CRASH = SDL.CRASH
 
+local total_testset_result = true
+
 local control = qt.dynamic()
 
 local function isCapital(c)
@@ -81,8 +83,12 @@ function control.runNextCase()
     end
     module.current_case_name = nil
     print_stopscript()
-    quit()
     xmlReporter:finalize()
+    if total_testset_result == false then
+      quit(2)
+    else 
+      quit()
+    end
   end
 end
 
@@ -111,6 +117,7 @@ local function CheckStatus()
   for _, e in ipairs(module.expectations_list) do
     if e.status ~= SUCCESS then
       success = false
+      total_testset_result = false
     end
     if not e.pinned and e.connection then
       event_dispatcher:RemoveEvent(e.connection, e.event)

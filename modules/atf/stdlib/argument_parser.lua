@@ -43,13 +43,13 @@ local function errmsg (msg)
   if msg:match ("%.$") == nil then msg = msg .. "." end
   print (prog .. ": error: " .. msg .. "\n")
   print (prog .. ": Try '" .. prog .. " --help' for help.")
-  quit(2)
+  quit(3)
 end
 
 local function checkReqOpt(self, arg, val)
   if val:sub (1, 1) == "-" then
     errmsg ("Option '" .. arg .. "' requires an argument.")
-    quit(2)
+    quit(3)
   else
     validOptList[self[arg].key] = val
   end
