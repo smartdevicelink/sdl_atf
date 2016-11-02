@@ -5,6 +5,8 @@ local console = require('console')
 local fmt = require('format')
 local SDL = require('SDL')
 
+local exit_codes = require('exit_codes')
+
 local module = { }
 
 local Expectation = expectations.Expectation
@@ -85,7 +87,7 @@ function control.runNextCase()
     print_stopscript()
     xmlReporter:finalize()
     if total_testset_result == false then
-      quit(2)
+      quit(exit_codes.failed)
     else 
       quit()
     end
@@ -133,7 +135,7 @@ local function CheckStatus()
   module.current_case_name = nil
   if module.current_case_mandatory and not success then
     SDL:StopSDL()
-    quit(1)
+    quit(exit_codes.aborted)
   end
   control:next()
 end
