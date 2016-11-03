@@ -204,7 +204,7 @@ function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofPar
     if(self.schema.interface[interface_name].enum[complex_elem_name][data_elem] ~= nil) then 
       return true
     end 
-    --Enum element can be sended as number, so if it includes to data elements, we will set it as acceptable
+    -- Enum element can be sent as number, so if it belongs to count of data elements, we will set it as acceptable
     if elem1 == 'number' then
       local local_enum = self.schema.interface[interface_name].enum[complex_elem_name]
       if table_contains(local_enum, data_elem) then
