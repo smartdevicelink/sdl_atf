@@ -157,6 +157,17 @@ end
 -- For types "string", "integer" and "float" check values are in intervals from schema 
 -- For enum value check that value are included in schema
 -- For struct call CompareStructs, where structure will be checked
+
+local function table_contains(table, element)
+  for _, value in pairs(table) do
+    if value == element then
+      return true
+    end
+  end
+  return false
+end
+
+
 function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofParameter, name_of_structure)
   local elem1 = type(data_elem)
   if (isArray=='true') then
@@ -193,6 +204,13 @@ function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofPar
     if(self.schema.interface[interface_name].enum[complex_elem_name][data_elem] ~= nil) then 
       return true
     end 
+    -- Enum element can be sent as number, so if it belongs to count of data elements, we will set it as acceptable
+    if elem1 == 'number' then
+      local local_enum = self.schema.interface[interface_name].enum[complex_elem_name]
+      if table_contains(local_enum, data_elem) then
+        return true
+      end
+    end
     if name_of_structure~=nil then 
       return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected enum value: "..schemaElem 
     end

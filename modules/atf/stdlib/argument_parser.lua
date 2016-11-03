@@ -1,6 +1,8 @@
 local std = require "atf.stdlib.std"
 local table = require "atf.stdlib.std.table"
 
+local exit_codes = require('exit_codes')
+
 local validOptList = { }
 local errors = {}
 
@@ -43,13 +45,13 @@ local function errmsg (msg)
   if msg:match ("%.$") == nil then msg = msg .. "." end
   print (prog .. ": error: " .. msg .. "\n")
   print (prog .. ": Try '" .. prog .. " --help' for help.")
-  quit(2)
+  quit(exit_codes.wrong_arg)
 end
 
 local function checkReqOpt(self, arg, val)
   if val:sub (1, 1) == "-" then
     errmsg ("Option '" .. arg .. "' requires an argument.")
-    quit(2)
+    quit(exit_codes.wrong_arg)
   else
     validOptList[self[arg].key] = val
   end

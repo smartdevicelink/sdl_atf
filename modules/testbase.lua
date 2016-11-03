@@ -5,6 +5,8 @@ local console = require('console')
 local fmt = require('format')
 local SDL = require('SDL')
 
+local exit_codes = require('exit_codes')
+
 local module = { }
 
 local Expectation = expectations.Expectation
@@ -14,6 +16,8 @@ local FAILED = expectations.FAILED
 local STOPPED = SDL.STOPPED
 local RUNNING = SDL.RUNNING
 local CRASH = SDL.CRASH
+
+local total_testset_result = true
 
 local control = qt.dynamic()
 
@@ -81,8 +85,12 @@ function control.runNextCase()
     end
     module.current_case_name = nil
     print_stopscript()
-    quit()
     xmlReporter:finalize()
+    if total_testset_result == false then
+      quit(exit_codes.failed)
+    else 
+      quit()
+    end
   end
 end
 
@@ -111,6 +119,7 @@ local function CheckStatus()
   for _, e in ipairs(module.expectations_list) do
     if e.status ~= SUCCESS then
       success = false
+      total_testset_result = false
     end
     if not e.pinned and e.connection then
       event_dispatcher:RemoveEvent(e.connection, e.event)
@@ -126,7 +135,7 @@ local function CheckStatus()
   module.current_case_name = nil
   if module.current_case_mandatory and not success then
     SDL:StopSDL()
-    quit(1)
+    quit(exit_codes.aborted)
   end
   control:next()
 end
