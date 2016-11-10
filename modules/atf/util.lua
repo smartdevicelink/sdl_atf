@@ -94,10 +94,14 @@ function check_required_fields()
     print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
     os.exit(1)
   end
-  if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and 
-     (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
-    print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
-    os.exit(1)
+  if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
+    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and 
+       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
+      print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
+      os.exit(1)
+    end
+  else 
+    print "\27[33m WARNING: Parameter pathToSDLInterfaces is not specified, default APIs are used \27[0m"
   end
 end
 
