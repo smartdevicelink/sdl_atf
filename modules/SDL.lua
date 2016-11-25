@@ -38,6 +38,10 @@ function SDL:StartSDL(pathToSDL, smartDeviceLinkCore, ExitOnCrash)
     sleep(1)
     print('Waiting for SDL shutdown')
     status = self:CheckStatusSDL()
+    if status == self.RUNNING then
+      self:StopSDL()
+    end
+    status = self:CheckStatusSDL()
   end
 
   if status == self.STOPPED  or status == self.CRASH then
