@@ -29,7 +29,7 @@ function mt.__index:PreconditionForStartHeartbeat()
       if self.heartbeatEnabled and self.SendHeartbeatToSDL.get() then
         self.control_services:SendControlMessage( { frameInfo = constants.FRAME_INFO.HEARTBEAT } )
         if not self.IgnoreHeartBeatAck.get() then
-          self.heartbeatFromSDLTimer:reset()
+          self.heartbeatToSDLTimer:reset()
         end
       end
     end
@@ -41,6 +41,18 @@ function mt.__index:PreconditionForStartHeartbeat()
         self.control_services:StopService(7)
       end
     end
+
+    self.session.connection:OnInputData(function(_, msg)
+      if self.sessionId ~= msg.sessionId then return end
+      if self.heartbeatEnabled then
+          if msg.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
+             msg.frameInfo == constants.FRAME_INFO.HEARTBEAT_ACK and
+             self.IgnoreHeartBeatAck.get() then
+              return
+          end
+          self.heartbeatFromSDLTimer:reset()
+      end
+    end)
 
     qt.connect(self.heartbeatToSDLTimer, "timeout()", d, "SendHeartbeat()")
     qt.connect(self.heartbeatFromSDLTimer, "timeout()", d, "CloseSession()")
@@ -54,7 +66,6 @@ function mt.__index:StartHeartbeat()
     xmlReporter.AddMessage("StartHearbeat", "True", (config.heartbeatTimeout + 1000))
   end
 end
-
 
 function mt.__index:StopHeartbeat()
   if self.heartbeatEnabled then
