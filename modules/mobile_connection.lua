@@ -9,6 +9,10 @@
 
 local ph = require('protocol_handler/protocol_handler')
 local file_connection = require("file_connection")
+local mobile_session = require("mobile_session")
+local events = require('events')
+local expectations = require('expectations')
+local FAILED = expectations.FAILED
 
 local MobileConnection = {
   mt = { __index = {} }
@@ -45,6 +49,35 @@ function MobileConnection.mt.__index:Send(data)
     end
   end
   self.connection:Send(messages)
+end
+
+function MobileConnection.mt.__index:StartSession(test)
+  test.mobileSession = mobile_session.MobileSession(
+  test,
+  test.mobileConnection,
+  config.application1.registerAppInterfaceParams)
+  return test.mobileSession:Start()
+end
+
+function MobileConnection.mt.__index:StartSecureSession(test)
+  local startSecureSessionEvent = events.Event()
+  startSecureSessionEvent.matches = function(_, data)
+      return data.message == "Secured session started"
+    end
+
+  self:StartSession(test)
+  :Do(function(exp, _)
+      if exp.status == FAILED then return end
+      test.mobileSession:StartSecureService(7)
+      :Do(function(exp2, _)
+        if exp2.status == FAILED then return end
+        event_dispatcher:RaiseEvent(test.mobileConnection, {message = "Secured session started"})
+      end)
+    end)
+  local ret = expectations.Expectation("StartedSecureSession", test.mobileConnection)
+  ret.event = startSecureSessionEvent
+  event_dispatcher:AddEvent(test.mobileConnection, startSecureSessionEvent, ret)
+  return ret
 end
 
 --- Start streaming file from mobile to SDL
