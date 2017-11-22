@@ -37,7 +37,7 @@ function Events.Event()
 end
 
 --- Event comparation function
--- @treturn boolean True if events are equal
+-- @treturn boolean True if event data matched to conditions
 function event_mt.__index:matches() return false end
 
 return Events

@@ -1,8 +1,8 @@
 --- Module which is responsible for protocol level message handling and provides ProtocolHandler type
 --
--- *Dependencies:* `json`, `protocol_handler.ford_protocol_constants`, `bit32`
+-- *Dependencies:* `json`, `protocol_handler.ford_protocol_constants`, `bit32`, `security.security_manager`, `security.security_constants`
 --
--- *Globals:* `bit32`, ret
+-- *Globals:* `bit32`
 -- @module protocol_handler.protocol_handler
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -76,14 +76,7 @@ local function rpcPayload(msg)
 end
 
 --- Build byte representation of message header
--- @tparam number version Version number of the ford protocol
--- @tparam number encryption Encription flag
--- @tparam number frameType Frame type
--- @tparam number serviceType Service type
--- @tparam number frameInfo Frame info
--- @tparam number sessionId Session Id
--- @tparam string payload Data
--- @tparam number messageId Message Id
+-- @tparam table message Message to create protocol header from
 -- @treturn string Built byte representation of header
 -- @see `Applink Protocol`
 local function createProtocolHeader(message)
@@ -100,6 +93,10 @@ local function createProtocolHeader(message)
   return res
 end
 
+--- Build table representation of message header
+-- @tparam string buffer Bytes to create protocol header table from
+-- @treturn table Built table representation of message header
+-- @see `Applink Protocol`
 local function parseProtocolHeader(buffer)
     local size = bytesToInt32(buffer, 5)
     if #buffer < size + constants.PROTOCOL_HEADER_SIZE then
@@ -119,12 +116,18 @@ local function parseProtocolHeader(buffer)
     return msg
 end
 
+--- Check whether binary data has binary header
+-- @tparam table msg Message with binary data
+-- @treturn boolean True if binary data of message has binary header
 local function isBinaryDataHasHeader(msg)
   return msg.serviceType == constants.SERVICE_TYPE.RPC
            or msg.serviceType == constants.SERVICE_TYPE.BULK_DATA
            or msg.serviceType == constants.SERVICE_TYPE.CONTROL
 end
 
+--- Build table representation of binary data header
+-- @tparam table message Bytes to create protocol header table from
+-- @tparam boolean validateJson If true then JSON should be parsed
 local function parseBinaryHeader(message, validateJson)
   local BINARY_HEADER_SIZE = 12
   if message.serviceType == constants.SERVICE_TYPE.CONTROL
@@ -149,6 +152,10 @@ local function parseBinaryHeader(message, validateJson)
   end
 end
 
+--- Encrypt payload of message using mobile session security settings
+-- @tparam string data Bytes to to encrypt
+-- @tparam table message Message with header
+-- @treturn string Encrypted data
 local function encryptPayload(data, message)
   if message.encryption and data then
     local encryptionStatus, encryptedData = securityManager:encrypt(data, message.sessionId, message.serviceType)
@@ -160,6 +167,11 @@ local function encryptPayload(data, message)
   return data
 end
 
+--- Decrypt payload of message using mobile session security settings
+-- @tparam string data Bytes to to decrypt
+-- @tparam table message Message with header
+-- @treturn string Decryption status
+-- @treturn string Decrypted data
 local function decryptPayload(data, message)
   if data then
     if message.encryption then
@@ -173,6 +185,9 @@ local function decryptPayload(data, message)
   end
 end
 
+--- Calculate protocol frame size
+-- @tparam number version Version of SDL protocol
+-- @treturn number Protocol frame size
 local function getProtocolFrameSize(version)
   return constants.FRAME_SIZE["P" .. version]
 end
@@ -227,6 +242,9 @@ function mt.__index:Parse(binary, validateJson, frameHandler)
   return res
 end
 
+--- Build binary frame from message
+-- @tparam table message Version of SDL protocol
+-- @treturn string Binary frame
 function mt.__index:GetBinaryFrame(message)
   local max_protocol_payload_size = getProtocolFrameSize(message.version)
      - constants.PROTOCOL_HEADER_SIZE

@@ -4,7 +4,7 @@
 --
 -- *Dependencies:* `cardinalities`
 --
--- *Globals:* `list`
+-- *Globals:* `list`, `timestamp()`
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
@@ -23,7 +23,7 @@ function Expectations.Expectation(name, connection)
   local mt = { __index = { } }
 
   --- Perform actions from actions list
-  -- @tparam ??? data ??? Data for actions
+  -- @tparam table data Data for actions
   function mt.__index:Action(data)
     for i = 1, #self.actions do
       self.actions[i](self, data)
@@ -181,6 +181,9 @@ end
 -- @type ExpectationsList
 function Expectations.ExpectationsList()
   local mt = { __index = {} }
+
+  --- Add expectation into list of expectations
+  -- @tparam Expectation exp Expectation to add
   function mt.__index:Add(exp)
     if exp.pinned then
       table.insert(self.pinned, exp)
@@ -192,7 +195,7 @@ function Expectations.ExpectationsList()
   end
 
   --- Remove expectation from list of expectations
-  -- @tparam Expectation e Expectation to remove
+  -- @tparam Expectation exp Expectation to remove
   function mt.__index:Remove(exp)
     if exp.pinned then
       table.remove(self.pinned, exp.index)

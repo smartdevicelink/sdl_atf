@@ -21,6 +21,9 @@ local mt = { __index = { } }
 --- Type which represents single mobile expectation
 -- @type MobileExpectations
 
+--- Expectation of frame event
+-- @tparam table frameMessage Frame message table to expect
+-- @treturn Expectation Created expectation
 function mt.__index:ExpectFrame(frameMessage, binaryDataCompareFunc)
   local event = Event()
   event.level = 0

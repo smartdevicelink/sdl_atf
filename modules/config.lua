@@ -47,9 +47,13 @@ config.ExitOnCrash = true
 config.autorunSDL = true
 --- Security
 --
+--- Define security protocol
 config.SecurityProtocol = "TLS"
+--- Define ciphers
 config.cipherListString = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
+--- Define path to server certificate with public key
 config.serverCertificatePath = "./data/cert/spt_credential.pem"
+--- Define path to server private key
 config.serverPrivateKeyPath = "./data/cert/spt_credential.pem"
 --- Logs and Reports
 --
