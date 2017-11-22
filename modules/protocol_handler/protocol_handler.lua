@@ -181,7 +181,7 @@ end
 -- @tparam string binary Message
 -- @tparam boolean validateJson True if JSON validation is required
 -- @treturn table Parsed message
-function mt.__index:Parse(binary, validateJson)
+function mt.__index:Parse(binary, validateJson, frameHandler)
   self.buffer = self.buffer .. binary
   local res = { }
   while #self.buffer >= constants.PROTOCOL_HEADER_SIZE do
@@ -195,6 +195,8 @@ function mt.__index:Parse(binary, validateJson)
     if msg._technical.decryptionStatus == securityConstants.SECURITY_STATUS.SUCCESS then
       msg.binaryData = decryptedData
     end
+
+    frameHandler(msg)
 
     if #msg.binaryData == 0
        or msg._technical.decryptionStatus == securityConstants.SECURITY_STATUS.ERROR then

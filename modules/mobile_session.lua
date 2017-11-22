@@ -31,6 +31,10 @@ function mt.__index:ExpectAny()
   return self.mobile_session_impl:ExpectAny()
 end
 
+function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
+  return self.mobile_session_impl:ExpectFrame(frameMessage, binaryDataCompareFunc)
+end
+
 --- Expectation of responce with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
@@ -149,6 +153,10 @@ function mt.__index:Send(message)
   --
   self.mobile_session_impl:Send(message)
   return message
+end
+
+function mt.__index:SendPacket(message)
+  self.mobile_session_impl:SendFrame(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
