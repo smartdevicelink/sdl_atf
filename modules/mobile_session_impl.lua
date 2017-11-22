@@ -33,6 +33,10 @@ function mt.__index:ExpectEvent(event, name)
   return self.mobile_expectations:ExpectEvent(event, name)
 end
 
+function mt.__index:ExpectFrame(frameMessage, binaryDataCompareFunc)
+  return self.mobile_expectations:ExpectFrame(frameMessage, binaryDataCompareFunc)
+end
+
 --- Expectation of any event
 -- @treturn Expectation Expectation for any unprocessed event
 function mt.__index:ExpectAny()
@@ -210,6 +214,10 @@ function mt.__index:Send(message)
   end
 
   return message
+end
+
+function mt.__index:SendFrame(message)
+  self.connection:SendFrame(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
