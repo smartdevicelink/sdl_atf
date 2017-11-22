@@ -51,6 +51,7 @@ controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT] = "Heartbeat"
 controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT_ACK] = "HeartbeatACK"
 
 Logger.mobile_log_format = "%s (%s) [%s, sessionId: %s, version: %s, frameType: %s, "
+
       .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n"
 Logger.hmi_log_format = "%s (%s) : %s \n"
 
