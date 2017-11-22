@@ -45,6 +45,14 @@ config.sdl_logs_port = 6676
 config.ExitOnCrash = true
 --- Flag which defines whether ATF starts SDL on startup
 config.autorunSDL = true
+--- Security
+--
+config.SecurityProtocol = "TLS"
+config.cipherListString = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
+config.serverCertificatePath = "./data/cert/spt_credential.pem"
+config.serverPrivateKeyPath = "./data/cert/spt_credential.pem"
+--- Logs and Reports
+--
 --- Flag which defines whether ATF displays time of test step run
 config.ShowTimeInConsole = true
 --- Flag which defines whether ATF performs validation of Mobile and HMI messages by API
