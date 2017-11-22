@@ -8,6 +8,7 @@
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 require('atf.util')
+local config = require('config')
 local mobile_session_impl = require('mobile_session_impl')
 
 local MS = {}
@@ -46,6 +47,13 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.mobile_session_impl:ExpectNotification(funcName, ...)
 end
 
+function mt.__index:ExpectEncryptedResponse(cor_id, ...)
+  return self.mobile_session_impl:ExpectEncryptedResponse(cor_id, ...)
+end
+
+function mt.__index:ExpectEncryptedNotification(funcName, ...)
+   return self.mobile_session_impl:ExpectEncryptedNotification(funcName, ...)
+end
 
 --- Start video streaming
 -- @tparam number service Service type
@@ -69,6 +77,9 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendRPC(func, arguments, fileName)
 end
 
+function mt.__index:SendEncryptedRPC(func, arguments, fileName)
+  return self.mobile_session_impl:SendEncryptedRPC(func, arguments, fileName)
+end
 
 ---Start specific service
 -- For service == 7 should be used StartRPC() instead of this function
@@ -80,6 +91,10 @@ function mt.__index:StartService(service)
   end
   -- in case StartService(7) it should be change on StartRPC
   return self.mobile_session_impl:StartService(service)
+end
+
+function mt.__index:StartSecureService(service)
+  return self.mobile_session_impl:StartSecureService(service)
 end
 
 ---Stop specific service
@@ -138,12 +153,12 @@ end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
 function mt.__index:Start()
-  self.mobile_session_impl:Start()
+  return self.mobile_session_impl:Start()
 end
 
 --- Stop rpc service (7) and stop Heartbeat
 function mt.__index:Stop()
-  self.mobile_session_impl:Stop()
+  return self.mobile_session_impl:Stop()
 end
 
 --- Construct instance of MobileSession type
@@ -151,7 +166,7 @@ end
 -- @tparam MobileConnection connection Base connection for open mobile session
 -- @tparam table regAppParams Mobile application parameters
 -- @treturn MobileSession Constructed instance
-function MS.MobileSession(test, connection, regAppParams)
+function MS.MobileSession(test, connection, regAppParams, securitySettings)
   local res = { }
   res.correlationId = 1
   res.sessionId = 0
@@ -207,8 +222,20 @@ function MS.MobileSession(test, connection, regAppParams)
     return res.ignoreSDLHeartBeatACK
   end
 
+  function res:IsSecuredSession()
+    return self.mobile_session_impl.isSecuredSession
+  end
+
+  securitySettings = securitySettings or {
+    cipherListString = config.cipherListString,
+    serverCertPath = config.serverCertificatePath,
+    serverKeyPath = config.serverPrivateKeyPath,
+    securityProtocol = config.SecurityProtocol,
+    isHandshakeDisplayed = false
+  }
+
   res.mobile_session_impl = mobile_session_impl.MobileSessionImpl(
-      res.SessionId, res.CorrelationId, test, connection, res.ActivateHeartbeat,
+      res.SessionId, res.CorrelationId, test, connection, securitySettings, res.ActivateHeartbeat,
       res.SendHeartbeatToSDL, res.AnswerHeartbeatFromSDL, res.IgnoreSDLHeartBeatAck, regAppParams )
   setmetatable(res, mt)
   return res

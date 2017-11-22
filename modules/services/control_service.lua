@@ -66,11 +66,12 @@ function mt.__index:StartService(service)
     serviceType = service,
     frameInfo =  constants.FRAME_INFO.START_SERVICE,
     sessionId = self.session.sessionId.get(),
+    encryption = false
   }
   -- prepare event to expect
   local startServiceEvent = Event()
   startServiceEvent.matches = function(_, data)
-    return data.frameType == 0 and
+    return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
     data.serviceType == service and
     (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
     (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK or
@@ -79,12 +80,83 @@ function mt.__index:StartService(service)
   self:Send(startServiceMessage)
 
   local ret = self.session:ExpectEvent(startServiceEvent, "StartService ACK")
-  :ValidIf(function(_, data)
+  ret:ValidIf(function(_, data)
       if data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK then
         xmlReporter.AddMessage("StartService", "StartService ACK", "True")
         return true
       else return false, "StartService NACK received" end
     end)
+  ret:Do(function(_, _)
+      self.session.test:RemoveExpectation(ret)
+      event_dispatcher:RemoveEvent(ret.connection, ret.event)
+    end)
+  return ret
+end
+
+function mt.__index:StartSecureService(service)
+  xmlReporter.AddMessage("StartSecureService", service)
+  local startServiceMessage =
+  {
+    serviceType = service,
+    frameInfo =  constants.FRAME_INFO.START_SERVICE,
+    sessionId = self.session.sessionId.get(),
+    encryption = true
+  }
+  local startServiceEvent = Event()
+    startServiceEvent.matches = function(_, data)
+      return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
+      data.serviceType == service and
+      (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
+      (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK or
+        data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
+    end
+
+  local ret = self.session:ExpectEvent(startServiceEvent, "StartService ACK")
+    :ValidIf(function(_, data)
+        if data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK then
+          xmlReporter.AddMessage("StartSecureService", "StartService ACK", "True")
+          if data.encryption == true then
+            return true
+          else return false, "StartService ACK without encription received" end
+        else return false, "StartService NACK received" end
+      end)
+  ret:Do(function(_, _)
+      self.session.test:RemoveExpectation(ret)
+      event_dispatcher:RemoveEvent(ret.connection, ret.event)
+    end)
+  if not self.session.isSecuredSession then
+    local handshakeEvent = Event()
+    local handShakeExp
+    handshakeEvent.matches = function(_,data)
+        return data.frameType ~= constants.FRAME_TYPE.CONTROL_FRAME
+          and data.serviceType == constants.SERVICE_TYPE.CONTROL
+          and data.sessionId == self.session.sessionId.get()
+          and data.rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
+          and data.rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
+      end
+    handShakeExp = self.session:ExpectEvent(handshakeEvent, "Handshake"):Times(AtLeast(1))
+    :Do(function(_, data)
+      local binData = data.binaryData
+        local dataToSend = self.session.security:performHandshake(binData)
+        if dataToSend then
+          local handshakeMessage = {
+            frameInfo = 0,
+            serviceType = constants.SERVICE_TYPE.CONTROL,
+            encryption = false,
+            rpcType = constants.BINARY_RPC_TYPE.NOTIFICATION,
+            rpcFunctionId = constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE,
+            rpcCorrelationId = data.rpcCorrelationId,
+            binaryData = dataToSend
+          }
+          self.session:Send(handshakeMessage)
+          xmlReporter.AddMessage("mobile_connection","SendHandshakeData",{handshakeMessage})
+        end
+        if self.session.security:isHandshakeFinished() then
+          self.session.test:RemoveExpectation(handShakeExp)
+        end
+      end)
+  end
+  self:Send(startServiceMessage)
   return ret
 end
 
@@ -94,7 +166,6 @@ end
 function mt.__index:StopService(service)
   assert(self.session.hashCode ~= 0, "StartServiceAck was not received. Unable to stop not started service")
   xmlReporter.AddMessage("StopService", service)
-  local stopService =
   self:Send(
     {
       serviceType = service,

@@ -9,12 +9,13 @@
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 require('atf.util')
-local expectations = require('expectations')
 local events = require('events')
+local expectations = require('expectations')
 local control_services = require('services/control_service')
 local rpc_services = require('services/rpc_service')
 local heartbeatMonitor = require('services/heartbeat_monitor')
 local mobileExpectations = require('expectations/session_expectations')
+local securityManager = require('security/security_manager')
 local constants = require('protocol_handler/ford_protocol_constants')
 
 local FAILED = expectations.FAILED
@@ -54,6 +55,22 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.rpc_services:ExpectNotification(funcName, ...)
 end
 
+function mt.__index:ExpectEncryptedResponse(cor_id, ...)
+  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
+    return self.rpc_services:ExpectEncryptedResponse(cor_id, ...)
+  end
+  error("Error: Can not create expectation for encrypted response. "
+    .. "Secure service was not established. Session: " .. self.sessionId.get())
+end
+
+function mt.__index:ExpectEncryptedNotification(funcName, ...)
+  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
+    return self.rpc_services:ExpectEncryptedNotification(funcName, ...)
+  end
+  error("Error: Can not create expectation for encrypted notification. "
+    .. "Secure service was not established. Session: " .. self.sessionId.get())
+end
+
 --- Start video streaming
 -- @tparam number session_id Mobile session identifier
 -- @tparam number service Service type
@@ -77,7 +94,15 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.rpc_services:SendRPC(func, arguments, fileName)
 end
 
----Start specific service
+function mt.__index:SendEncryptedRPC(func, arguments, fileName)
+  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
+    return self.rpc_services:SendRPC(func, arguments, fileName, true)
+  end
+  error("Error: Can not send encrypted request. "
+    .. "Secure service was not established. Session: " .. self.sessionId.get())
+end
+
+--- Start specific service
 -- For service == 7 should be used StartRPC() instead of this function
 -- @tparam number service Service type
 -- @treturn Expectation expectation for StartService ACK
@@ -85,11 +110,28 @@ function mt.__index:StartService(service)
   return self.control_services:StartService(service)
 end
 
+function mt.__index:StartSecureService(service)
+  if not self.isSecuredSession then
+    self.security:registerSessionSecurity()
+    self.security:prepareToHandshake()
+  end
+
+  return self.control_services:StartSecureService(service)
+    :Do(function(exp, _)
+        if exp.status == FAILED then return end
+        self.security:registerSecureService(service)
+      end)
+end
+
 ---Stop specific service
 -- @tparam number service Service type
 -- @treturn Expectationexpectation for EndService ACK
 function mt.__index:StopService(service)
   return self.control_services:StopService(service)
+    :Do(function(exp, _)
+        if exp.status == FAILED then return end
+        self.security:unregisterSecureService(service)
+      end)
 end
 
 --- Stop heartbeat from mobile side
@@ -138,6 +180,9 @@ function mt.__index:StopRPC()
   local ret = self.control_services:StopService(constants.SERVICE_TYPE.RPC)
   self:StopHeartbeat()
   return ret
+    :Do(function(_, _)
+      self.security:unregisterAllSecureServices()
+    end)
 end
 
 --- Send message from mobile to SDL
@@ -157,7 +202,6 @@ function mt.__index:Send(message)
   message.sessionId = self.sessionId.get()
   message.messageId = self.messageId
 
-
   self.connection:Send({message})
   xmlReporter.AddMessage("MobileSession","Send",{message})
 
@@ -170,16 +214,30 @@ end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
 function mt.__index:Start()
+  local startEvent = events.Event()
+  startEvent.matches = function(_, data)
+      return data.message == "StartEvent"
+    end
+
   self:StartRPC()
-  :Do(function()
-    local correlationId = self:SendRPC("RegisterAppInterface", self.regAppParams)
-    self:ExpectResponse(correlationId, { success = true })
+  :Do(function(exp, _)
+      if exp.status == FAILED then return end
+      local correlationId = self:SendRPC("RegisterAppInterface", self.regAppParams)
+      self:ExpectResponse(correlationId, { success = true })
+      :Do(function(exp2, _)
+          if exp2.status == FAILED then return end
+          event_dispatcher:RaiseEvent(self.connection, {message = "StartEvent"})
+        end)
     end)
+  local ret = expectations.Expectation("StartEvent", self.connection)
+  ret.event = startEvent
+  event_dispatcher:AddEvent(self.connection, startEvent, ret)
+  return ret
 end
 
 --- Stop rpc service (7) and stop Heartbeat
 function mt.__index:Stop()
-  self:StopRPC()
+  return self:StopRPC()
 end
 
 --- Construct instance of MobileSessionImpl type
@@ -193,8 +251,8 @@ end
 -- @tparam table ignoreHeartBeatAck Access table for ignore heartbeat ACK from SDL flag
 -- @tparam table regAppParams Mobile application parameters
 -- @treturn MobileSessionImpl Constructed instance
-function MSI.MobileSessionImpl(session_id, correlation_id, test, connection, activateHeartbeat,
-    sendHeartbeatToSDL, answerHeartbeatFromSDL, ignoreHeartBeatAck, regAppParams)
+function MSI.MobileSessionImpl(session_id, correlation_id, test, connection, securitySettings,
+    activateHeartbeat, sendHeartbeatToSDL, answerHeartbeatFromSDL, ignoreHeartBeatAck, regAppParams)
   local res = { }
   --- Test which open mobile session
   res.test = test
@@ -230,6 +288,10 @@ function MSI.MobileSessionImpl(session_id, correlation_id, test, connection, act
   res.ignoreHeartBeatAck = ignoreHeartBeatAck
   --- Heartbeat monitor
   res.heartbeat_monitor = heartbeatMonitor.HeartBeatMonitor(res)
+  --- Session security manager
+  res.security = securityManager:Security(res, securitySettings)
+  ---
+  res.isSecuredSession = false
   setmetatable(res, mt)
   return res
 end

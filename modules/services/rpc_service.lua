@@ -12,6 +12,7 @@ require('atf.util')
 local functionId = require('function_id')
 local json = require('json')
 local constants = require('protocol_handler/ford_protocol_constants')
+local securityConstants = require('security/security_constants')
 local events = require('events')
 local load_schema = require('load_schema')
 local mob_schema = load_schema.mob_schema
@@ -26,6 +27,109 @@ local mt = { __index = { } }
 -- @type RPCService
 
 mt.__index.cor_id_func_map = { }
+
+local function baseExpectResponse(RPCService, cor_id, ...)
+  local temp_cor_id = cor_id
+  local func_name = RPCService.cor_id_func_map[cor_id]
+  local tbl_corr_id = {}
+  if func_name then
+    RPCService.cor_id_func_map[cor_id] = nil
+  else
+    if type(cor_id) == 'string' then
+      for fid, fname in pairs(RPCService.cor_id_func_map) do
+        if fname == cor_id then
+          func_name = fname
+          table.insert(tbl_corr_id, fid)
+          table.removeKey(RPCService.cor_id_func_map, fid)
+        end
+      end
+      cor_id = tbl_corr_id[1]
+    end
+    if not func_name then
+      error("Function with cor_id : "..temp_cor_id.." was not sent by ATF")
+    end
+  end
+  local args = table.pack(...)
+  local responseEvent = Event()
+  if type(cor_id) ~= 'number' then
+    error("ExpectResponse: argument 1 (cor_id) must be number")
+    return nil
+  end
+  if(#tbl_corr_id > 0) then
+    responseEvent.matches = function(_, data)
+        for _, v in pairs(tbl_corr_id) do
+          if data.rpcCorrelationId == v and data.sessionId == RPCService.session.sessionId.get() then
+            return true
+          end
+        end
+        return false
+      end
+  else
+    responseEvent.matches = function(_, data)
+        return data.rpcCorrelationId == cor_id and
+          data.sessionId == RPCService.session.sessionId.get()
+      end
+  end
+  local ret = RPCService.session:ExpectEvent(responseEvent, "Response to " .. cor_id)
+  if #args > 0 then
+    ret:ValidIf(function(exp, data)
+        local arguments
+        if exp.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[exp.occurences]
+        end
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
+
+        if (not _res) then return _res, _err end
+        return compareValues(arguments, data.payload, "payload")
+      end)
+  end
+  return ret
+end
+
+local function baseExpectNotification(RPCService, funcName, ...)
+  local notificationEvent = Event()
+  notificationEvent.matches = function(_, data)
+    return data.rpcFunctionId == functionId[funcName] and
+    data.sessionId == RPCService.session.sessionId.get()
+  end
+  local args = table.pack(...)
+
+  if #args ~= 0 and (#args[1] > 0 or args[1].n == 0) then
+    -- These conditions need to validate expectations received from EXPECT_NOTIFICATION
+    -- Second condition - to put out array with expectations which already packed in table
+    -- Third condition - to put out expectation without parameters
+    -- Only args[1].n == 0 allow to validate notifications without parameters from EXPECT_NOTIFICATION
+    args = args[1]
+  end
+
+  local ret = RPCService.session:ExpectEvent(notificationEvent, funcName .. " notification")
+  if #args > 0 then
+    args = table.removeKey(args,'notifyId')
+    ret:ValidIf(function(exp, data)
+        local arguments
+        if exp.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[exp.occurences]
+        end
+        RpcService.notification_counter = RpcService.notification_counter + 1
+        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
+          ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
+        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
+          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
+        if (not _res) then
+          return _res,_err
+        end
+        return compareValues(arguments, data.payload, "payload")
+    end)
+  end
+  return ret
+end
 
 --- Construct instance of RPCService type
 -- @tparam MobileSession session Mobile session
@@ -49,7 +153,6 @@ function mt.__index:CheckCorrelationID(message)
     message_correlation_id = cor_id
   end
   if not self.cor_id_func_map[message_correlation_id] then
-    self.cor_id_func_map[message_correlation_id] = wrong_function_name
     for fname, fid in pairs(functionId) do
       if fid == message.rpcFunctionId then
         self.cor_id_func_map[message_correlation_id] = fname
@@ -57,8 +160,16 @@ function mt.__index:CheckCorrelationID(message)
       end
     end
   else
-    error("MobileSession:Send: message with correlationId: "..message_correlation_id.." in session "..self.session.sessionId.get() .." was sent earlier by ATF")
+    error("RPC service: Message with correlationId: "..message_correlation_id.." in session "..self.session.sessionId.get() .." was sent earlier by ATF")
   end
+end
+
+local function setFunctionId(func)
+  local id = functionId[func]
+  if not id then
+    error("RPC service: Function: " .. func .." was not found in Mobile API")
+  end
+  return id
 end
 
 --- Send RPC message
@@ -66,16 +177,18 @@ end
 -- @tparam table arguments RPC parameters
 -- @tparam string fileName RPC binary data
 -- @treturn number Correlation id
-function mt.__index:SendRPC(func, arguments, fileName)
-  self.session.correlationId.set(self.session.correlationId.get()+1)
-
+function mt.__index:SendRPC(func, arguments, fileName, encrypt)
+  if encrypt ~= true then encrypt = false end
+  self.session.correlationId.set(self.session.correlationId.get() + 1)
+  local correlationId = self.session.correlationId.get()
   local msg =
   {
-    serviceType = 7,
+    encryption = encrypt,
+    serviceType = constants.SERVICE_TYPE.RPC,
     frameInfo = 0,
-    rpcType = 0,
-    rpcFunctionId = functionId[func],
-    rpcCorrelationId = self.session.correlationId.get(),
+    rpcType = constants.BINARY_RPC_TYPE.REQUEST,
+    rpcFunctionId = setFunctionId(func),
+    rpcCorrelationId = correlationId,
     payload = json.encode(arguments)
   }
   self:CheckCorrelationID(msg)
@@ -86,7 +199,7 @@ function mt.__index:SendRPC(func, arguments, fileName)
   end
   self.session:Send(msg)
 
-  return self.session.correlationId.get()
+  return correlationId
 end
 
 --- Create expectation for respons from SDL and register it in expectation list
@@ -95,68 +208,15 @@ end
 -- @treturn Expectation Created expectation
 -- @todo (VVeremjova) Refactore according APPLINK-16802
 function mt.__index:ExpectResponse(cor_id, ...)
-  local temp_cor_id = cor_id
-  local func_name = self.cor_id_func_map[cor_id]
-  local tbl_corr_id = {}
-  if func_name then
-    self.cor_id_func_map[cor_id] = nil
-  else
-    if type(cor_id) == 'string' then
-        for fid, fname in pairs(self.cor_id_func_map) do
-           if fname == cor_id then
-                func_name = fname
-                table.insert(tbl_corr_id, fid)
-                table.removeKey(self.cor_id_func_map, fid)
-            end
-        end
-    cor_id = tbl_corr_id[1]
-    end
-    if not func_name then
-      error("Function with cor_id : "..temp_cor_id.." was not sent by ATF")
-    end
-  end
-  local args = table.pack(...)
-  local event = events.Event()
-  if type(cor_id) ~= 'number' then
-    error("ExpectResponse: argument 1 (cor_id) must be number")
-    return nil
-  end
-  if(#tbl_corr_id>0) then
-       event.matches = function(_, data)
-               for k,v in pairs(tbl_corr_id) do
-                    if data.rpcCorrelationId  == v and  data.sessionId == self.session.sessionId.get() then
-                        return true
-                    end
-                 end
-             return false
+  return baseExpectResponse(self, cor_id, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
+        print("Expected not encripted message. Received encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
+        return false
       end
-  else
-    event.matches = function(_, data)
-        return data.rpcCorrelationId == cor_id and
-        data.sessionId == self.session.sessionId.get()
-      end
-  end
-  local ret = Expectation("response to " .. cor_id, self.session.connection)
-  if #args > 0 then
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
-        local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
-
-        if (not _res) then return _res,_err end
-        return compareValues(arguments, data.payload, "payload")
-      end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(self.session.connection, event, ret)
-  self.session.exp_list:Add(ret)
-  return ret
+      return true
+    end)
 end
 
 --- Create expectation for notification from SDL and register it in expectation list
@@ -165,49 +225,39 @@ end
 -- @treturn Expectation Created expectation
 -- @todo (VVeremjova) Refactore according APPLINK-16802
 function mt.__index:ExpectNotification(funcName, ...)
-  -- move to rpc service
-  local event = events.Event()
-  event.matches = function(_, data)
-    return data.rpcFunctionId == functionId[funcName] and
-    data.sessionId == self.session.sessionId.get()
-  end
-  local args = table.pack(...)
-
-  if #args ~= 0 and (#args[1] > 0 or args[1].n == 0) then
-    -- These conditions need to validate expectations received from EXPECT_NOTIFICATION
-    -- Second condition - to put out array with expectations which already packed in table
-    -- Third condition - to put out expectation without parameters
-    -- Only args[1].n == 0 allow to validate notifications without parameters from EXPECT_NOTIFICATION
-    args = args[1]
-  end
-
-  local ret = Expectation(funcName .. " notification", self.session.connection)
-  if #args > 0 then
-    local notify_id = args.notifyId
-    args = table.removeKey(args,'notifyId')
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        RpcService.notification_counter = RpcService.notification_counter + 1
-        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
-        local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
-        if (not _res) then
-          return _res,_err
-        end
-        return compareValues(arguments, data.payload, "payload")
+  return baseExpectNotification(self, funcName, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
+        print("Expected not encripted message. Received encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
+        return false
+      end
+      return true
     end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(self.session.connection, event, ret)
-  self.session.exp_list:Add(ret)
-  return ret
+end
+
+function mt.__index:ExpectEncryptedResponse(cor_id, ...)
+  return baseExpectResponse(self, cor_id, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.SUCCESS then
+        print("Expected encripted message. Received not encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
+        return false
+      end
+      return true
+    end)
+end
+
+function mt.__index:ExpectEncryptedNotification(funcName, ...)
+  return baseExpectNotification(self, funcName, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.SUCCESS then
+        print("Expected encripted message. Received not encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
+        return false
+      end
+      return true
+    end)
 end
 
 return RpcService
