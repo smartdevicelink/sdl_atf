@@ -213,7 +213,7 @@ local function CheckStatus()
   end
   fmt.PrintCaseResult(Test.current_case_time, Test.current_case_name, success, errorMessage, warningMessage, timestamp() - Test.ts)
   xmlReporter.CaseMessageTotal(Test.current_case_name,{ ["result"] = success, ["timestamp"] = (timestamp() - Test.ts)} )
-  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILD"}, errorMessage ) end
+  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILED"}, errorMessage ) end
   Test.expectations_list:Clear()
   Test.current_case_name = nil
   if Test.current_case_mandatory and not success then
