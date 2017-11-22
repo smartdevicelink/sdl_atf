@@ -200,7 +200,6 @@ function MSI.MobileSessionImpl(session_id, correlation_id, test, connection, act
   res.exp_list = test.expectations_list
   --- Message identifier
   res.messageId = 1
-
   --- Ford protocol version
   res.version = config.defaultProtocolVersion or 2
   --- Mobile application state hashcode

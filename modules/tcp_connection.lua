@@ -82,6 +82,7 @@ end
 function Tcp.mt.__index:OnDataSent(func)
   local d = qt.dynamic()
   local this = self
+  
   function d:bytesWritten(num)
     func(this, num)
   end
