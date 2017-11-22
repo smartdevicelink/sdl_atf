@@ -19,17 +19,66 @@ config = require('config')
 xmlReporter = require("reporter")
 atf_logger = require("atf_logger")
 
-local AtfUtil = {
-  script_file_name = ""
+local Util = {
+  commandLine = {},
+  runner = {
+    script_file_name = ""
+  }
 }
-local script_files = {}
 
-RequiredArgument = utils.RequiredArgument
-OptionalArgument = utils.OptionalArgument
-NoArgument = utils.NoArgument
+Util.commandLine.consts = {
+  RequiredArgument = utils.RequiredArgument,
+  OptionalArgument = utils.OptionalArgument,
+  NoArgument = utils.NoArgument
+}
 
-function get_script_file_name()
-  return AtfUtil.script_file_name
+--- Convert milliseconds count to string in a format
+-- "1d 2h 3m 4s 5ms (summary 999ms)".
+-- @param milliseconds
+-- @return result string in a format
+local function convertMs(milliseconds)
+  local seconds = math.floor( (milliseconds / 1000) % 60)
+  local minutes = math.floor( ((milliseconds / (1000 * 60)) % 60))
+  local hours = math.floor(((milliseconds / (1000 * 60 * 60)) % 24))
+  local days = math.floor( (milliseconds / (1000 * 60 * 60 * 24)))
+  local ms = milliseconds - (days*(1000 * 60 * 60 * 24)+ hours*(1000 * 60 * 60)+minutes*(1000 * 60)+seconds*1000)
+  local converted_time = "(summary ".. tostring(milliseconds).. "ms)"
+  if ms ~= 0 then
+    converted_time = tostring(ms).."ms "..converted_time
+  end
+  if seconds ~= 0 then
+    converted_time = tostring(seconds).."s "..converted_time
+  end
+  if minutes ~= 0 then
+    converted_time = tostring(minutes).."min "..converted_time
+  end
+  if hours ~=0 then
+    converted_time = tostring(hours).."h "..converted_time
+  end
+  if days ~=0 then
+    converted_time = tostring(days).."d "..converted_time
+  end
+  return converted_time
+end
+
+--- Check mandatory files existence for testing
+-- Checks: SDL Core binary, HMI and MObile API files
+-- Stop ATF execution in case any error
+local function check_required_fields()
+  if (not is_file_exists(config.pathToSDL.."smartDeviceLinkCore")) and
+     (not is_file_exists(config.pathToSDL.."/smartDeviceLinkCore")) then
+    print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
+    os.exit(1)
+  end
+  if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
+    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and
+       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
+      print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
+      os.exit(1)
+    end
+  else
+    print "\27[33m WARNING: Parameter pathToSDLInterfaces is not specified, default APIs are used \27[0m"
+  end
 end
 
 --- Serialization any lua table to string
@@ -93,71 +142,6 @@ function table.removeKey(t, k)
   return a
 end
 
---- Convert milliseconds count to string in a format
--- "1d 2h 3m 4s 5ms (summary 999ms)".
--- @param milliseconds
--- @return result string in a format
-local function convertMs(milliseconds)
-  local seconds = math.floor( (milliseconds / 1000) % 60)
-  local minutes = math.floor( ((milliseconds / (1000 * 60)) % 60))
-  local hours = math.floor(((milliseconds / (1000 * 60 * 60)) % 24))
-  local days = math.floor( (milliseconds / (1000 * 60 * 60 * 24)))
-  local ms = milliseconds - (days*(1000 * 60 * 60 * 24)+ hours*(1000 * 60 * 60)+minutes*(1000 * 60)+seconds*1000)
-  local converted_time = "(summary ".. tostring(milliseconds).. "ms)"
-  if ms ~= 0 then
-    converted_time = tostring(ms).."ms "..converted_time
-  end
-  if seconds ~= 0 then
-    converted_time = tostring(seconds).."s "..converted_time
-  end
-  if minutes ~= 0 then
-    converted_time = tostring(minutes).."min "..converted_time
-  end
-  if hours ~=0 then
-    converted_time = tostring(hours).."h "..converted_time
-  end
-  if days ~=0 then
-    converted_time = tostring(days).."d "..converted_time
-  end
-  return converted_time
-end
-
---- Check mandatory files existence for testing
--- Checks: SDL Core binary, HMI and MObile API files
--- Stop ATF execution in case any error
-local function check_required_fields()
-  if (not is_file_exists(config.pathToSDL.."smartDeviceLinkCore")) and
-     (not is_file_exists(config.pathToSDL.."/smartDeviceLinkCore")) then
-    print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
-    os.exit(1)
-  end
-  if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
-    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and
-       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
-      print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
-      os.exit(1)
-    end
-  else
-    print "\27[33m WARNING: Parameter pathToSDLInterfaces is not specified, default APIs are used \27[0m"
-  end
-end
-
-function print_startscript(script_name)
-  print("==============================")
-  print(string.format("Start '%s'",script_name))
-  print("==============================")
-end
-
-function print_stopscript(script_name)
-  local count =  timestamp() - atf_logger.start_file_timestamp
-  local counttime =  convertMs(count)
-  atf_logger.LOGTestFinish(counttime)
-  print(string.format("Total executing time is %s", counttime))
-  print("==============================")
-  print(string.format("Finish '%s'",script_name or script_files[1]))
-  print("==============================")
-end
-
 --- Compare 2 tables field by field
 -- @param a first table
 -- @param b second table
@@ -192,12 +176,17 @@ function compareValues(a, b, name)
   local res = iter(a, b, name, message)
   return res, table.concat(message, '\n')
 end
+
+
+function PrintUsage()
+  utils.PrintUsage()
+end
 -- ------------------------------------------------
 -- parsing command line part
 
 --- Set config file for ATF
 -- @tparam string config_file Path to config file
-function AtfUtil.config_file(config_file)
+function Util.commandLine.config_file(config_file)
   if (is_file_exists(config_file)) then
     config_file = config_file:gsub('%.', " ")
     config_file = config_file:gsub("/", ".")
@@ -212,115 +201,112 @@ end
 
 --- Overwrite property mobileHost in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.mobile_connection(str)
+function Util.commandLine.mobile_connection(str)
   config.mobileHost = str
 end
 
 --- Overwrite property mobilePort in configuration of ATF
 -- @tparam string src Value
-function AtfUtil.mobile_connection_port(src)
+function Util.commandLine.mobile_connection_port(src)
   config.mobilePort = src
 end
 
 --- Overwrite property hmiUrl in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.hmi_connection(str)
+function Util.commandLine.hmi_connection(str)
   config.hmiUrl = str
 end
 
 --- Overwrite property hmiPort in configuration of ATF
 -- @tparam string src Value
-function AtfUtil.hmi_connection_port(src)
+function Util.commandLine.hmi_connection_port(src)
   config.hmiPort = src
 end
 
 --- Overwrite property perflogConnection in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.perflog_connection(str)
+function Util.commandLine.perflog_connection(str)
   config.perflogConnection = str
 end
 
 --- Overwrite property perflogConnectionPort in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.perflog_connection_port(str)
+function Util.commandLine.perflog_connection_port(str)
   config.perflogConnectionPort = str
 end
 
 --- Overwrite property reportPath in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.report_path(str)
+function Util.commandLine.report_path(str)
   config.reportPath = str
 end
 
 --- Overwrite property reportMark in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.report_mark(str)
+function Util.commandLine.report_mark(str)
   config.reportMark = str
-end
-
---- Add test script to execute
--- @tparam string src Path to script
-function AtfUtil.add_script(src)
-  table.insert(script_files,src)
 end
 
 --- Overwrite property storeFullSDLLogs in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.storeFullSDLLogs(str)
+function Util.commandLine.storeFullSDLLogs(str)
   config.storeFullSDLLogs = str
 end
 
 --- Overwrite property heartbeatTimeout in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.heartbeat(str)
+function Util.commandLine.heartbeat(str)
   config.heartbeatTimeout = str
 end
 
 --- Overwrite property pathToSDL in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.sdl_core(str)
+function Util.commandLine.sdl_core(str)
   config.pathToSDL = str
 end
 
 --- Overwrite property pathToSDLInterfaces in configuration of ATF
 -- @tparam string str Value
-function AtfUtil.sdl_interfaces(str)
+function Util.commandLine.sdl_interfaces(str)
   config.pathToSDLInterfaces = str
 end
 
-function parse_cmdl()
-  arguments = utils.getopt(argv, opts)
+--- Overwrite property pathToSDL in configuration of ATF
+-- @tparam string str Value
+function Util.commandLine.security_protocol(str)
+  config.SecurityProtocol = str
+end
+
+function Util.commandLine.parse_cmdl()
+  local scriptFiles = {}
+  local arguments = utils.getopt(argv, opts)
   if (arguments) then
-    if (arguments['config-file']) then AtfUtil.config_file(arguments['config-file']) end
+    if (arguments['config-file']) then Util.commandLine.config_file(arguments['config-file']) end
     for argument, value in pairs(arguments) do
       if (type(argument) ~= 'number') then
         if ( argument ~= 'config-file') then
           argument = (argument):gsub ("%W", "_")
-          AtfUtil[argument](value)
+          Util.commandLine[argument](value)
         end
       else
         if argument >= 2 and value ~= "modules/launch.lua" then
-          AtfUtil.add_script(value)
+          table.insert(scriptFiles, value)
         end
       end
     end
   end
-  return script_files
+  return scriptFiles
 end
 
-function PrintUsage()
-  utils.PrintUsage()
-end
-
-function declare_opt(...)
+function Util.commandLine.declare_opt(...)
   utils.declare_opt(...)
 end
 
-function declare_long_opt(...)
+function Util.commandLine.declare_long_opt(...)
   utils.declare_long_opt(...)
 end
 
-function declare_short_opt(...)
+function Util.commandLine.declare_short_opt(...)
   utils.declare_short_opt(...)
 end
 
@@ -335,15 +321,38 @@ local function copy_interfaces()
     copy_file(mobile_api, 'data/MOBILE_API.xml')
     copy_file(hmi_api, 'data/HMI_API.xml')
   end
+
+--- Runner
+
+function Util.runner.get_script_file_name()
+  return Util.runner.script_file_name
+end
+
+function Util.runner.print_startscript(script_name)
+  print("==============================")
+  print(string.format("Start '%s'",script_name))
+  print("==============================")
+end
+
+function Util.runner.print_stopscript(script_name)
+  local count = timestamp() - atf_logger.start_file_timestamp
+  local counttime = convertMs(count)
+  atf_logger.LOGTestFinish(counttime)
+  print(string.format("Total executing time is %s", counttime))
+  print("==============================")
+  print(string.format("Finish '%s'",script_name or Util.runner.script_file_name))
+  print("==============================")
 end
 
 --- Test script execution
 -- @param script_name path to the script file with a tests
-function script_execute(script_name)
+function Util.runner.script_execute(script_name)
   check_required_fields()
   copy_interfaces()
-  AtfUtil.script_file_name = script_name
+  Util.runner.script_file_name = script_name
   xmlReporter = xmlReporter.init(tostring(script_name))
   atf_logger = atf_logger.init_log(tostring(script_name))
   dofile(script_name)
 end
+
+return Util

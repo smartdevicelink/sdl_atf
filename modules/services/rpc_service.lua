@@ -13,15 +13,10 @@ local functionId = require('function_id')
 local json = require('json')
 local constants = require('protocol_handler/ford_protocol_constants')
 local events = require('events')
-local Event = events.Event
-local expectations = require('expectations')
 local load_schema = require('load_schema')
 local mob_schema = load_schema.mob_schema
 
-local Expectation = expectations.Expectation
 local Event = events.Event
-local SUCCESS = expectations.SUCCESS
-local FAILED = expectations.FAILED
 
 local RpcService = {}
 RpcService.notification_counter = 0

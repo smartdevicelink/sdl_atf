@@ -6,8 +6,8 @@
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
-expectations = require('expectations')
-events = require('events')
+local expectations = require('expectations')
+local events = require('events')
 local config = require('config')
 
 --- Type which is responsible for dispatching events with expectations
@@ -88,9 +88,9 @@ function mt.__index:validateAll()
     end
   end
 
-  for c, pool in pairs(self._pool3) do iter(pool) end
-  for c, pool in pairs(self._pool2) do iter(pool) end
-  for c, pool in pairs(self._pool1) do iter(pool) end
+  for _, pool in pairs(self._pool3) do iter(pool) end
+  for _, pool in pairs(self._pool2) do iter(pool) end
+  for _, pool in pairs(self._pool1) do iter(pool) end
 end
 
 --- Subscribe on connection's [[OnInputData]] signal
@@ -104,7 +104,7 @@ function mt.__index:AddConnection(connection)
       if this.preEventHandler then
         this.preEventHandler(events.connectedEvent)
       end
-      exp = this:GetHandler(self, events.connectedEvent)
+      local exp = this:GetHandler(self, events.connectedEvent)
       if exp then
         exp.occurences = exp.occurences + 1
         exp:Action()
@@ -118,7 +118,7 @@ function mt.__index:AddConnection(connection)
       if this.preEventHandler then
         this.preEventHandler(events.disconnectedEvent)
       end
-      exp = this:GetHandler(self, events.disconnectedEvent)
+      local exp = this:GetHandler(self, events.disconnectedEvent)
       if exp then
         exp.occurences = exp.occurences + 1
         exp:Action()
@@ -140,7 +140,7 @@ function mt.__index:RaiseEvent(connection, data)
   if self.preEventHandler and data then
     self.preEventHandler(data)
   end
-  exp = self:FindHandler(connection, data)
+  local exp = self:FindHandler(connection, data)
   if exp then
     exp.occurences = exp.occurences + 1
     if data then
@@ -186,9 +186,9 @@ end
 
 --- Remove all events with expectation from pools
 function mt.__index:ClearEvents()
-  for connection, pool in pairs(self._pool3) do self._pool3[connection] = { } end
-  for connection, pool in pairs(self._pool2) do self._pool2[connection] = { } end
-  for connection, pool in pairs(self._pool1) do self._pool1[connection] = { } end
+  for connection, _ in pairs(self._pool3) do self._pool3[connection] = { } end
+  for connection, _ in pairs(self._pool2) do self._pool2[connection] = { } end
+  for connection, _ in pairs(self._pool1) do self._pool1[connection] = { } end
 end
 
 return Dispatcher
