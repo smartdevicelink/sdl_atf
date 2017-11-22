@@ -1,4 +1,4 @@
---- Module which provides constants for the Ford protocol
+--- Module which provides constants for the protocol
 --
 -- *Dependencies:* none
 --

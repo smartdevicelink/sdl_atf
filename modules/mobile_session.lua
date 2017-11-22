@@ -31,6 +31,10 @@ function mt.__index:ExpectAny()
   return self.mobile_session_impl:ExpectAny()
 end
 
+--- Expectation of packet event
+-- @tparam table frameMessage Packet message to expect
+-- @tparam function binaryDataCompareFunc Function used for binary data comparation
+-- @treturn Expectation Expectation for packet event
 function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
   return self.mobile_session_impl:ExpectFrame(frameMessage, binaryDataCompareFunc)
 end
@@ -51,10 +55,18 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.mobile_session_impl:ExpectNotification(funcName, ...)
 end
 
+--- Expectation of encrypted responce with specific correlation_id
+-- @tparam number cor_id Correlation identifier of specific rpc event
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for response
 function mt.__index:ExpectEncryptedResponse(cor_id, ...)
   return self.mobile_session_impl:ExpectEncryptedResponse(cor_id, ...)
 end
 
+--- Expectation of encrypted notification with specific funcName
+-- @tparam string funcName Expected notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for notification
 function mt.__index:ExpectEncryptedNotification(funcName, ...)
    return self.mobile_session_impl:ExpectEncryptedNotification(funcName, ...)
 end
@@ -81,6 +93,10 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendRPC(func, arguments, fileName)
 end
 
+--- Send encrypted RPC
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendEncryptedRPC(func, arguments, fileName)
 end
@@ -97,6 +113,9 @@ function mt.__index:StartService(service)
   return self.mobile_session_impl:StartService(service)
 end
 
+---Start specific secure service
+-- @tparam number service Service type
+-- @treturn Expectation expectation for StartService ACK
 function mt.__index:StartSecureService(service)
   return self.mobile_session_impl:StartSecureService(service)
 end
@@ -155,6 +174,8 @@ function mt.__index:Send(message)
   return message
 end
 
+--- Send frame from mobile to SDL
+-- @tparam string bytes Bytes to be sent
 function mt.__index:SendPacket(message)
   self.mobile_session_impl:SendFrame(message)
 end
@@ -173,6 +194,7 @@ end
 -- @tparam Test test Test which open mobile session
 -- @tparam MobileConnection connection Base connection for open mobile session
 -- @tparam table regAppParams Mobile application parameters
+-- @tparam table securitySettings Session security parameters
 -- @treturn MobileSession Constructed instance
 function MS.MobileSession(test, connection, regAppParams, securitySettings)
   local res = { }
@@ -230,6 +252,7 @@ function MS.MobileSession(test, connection, regAppParams, securitySettings)
     return res.ignoreSDLHeartBeatACK
   end
 
+  --- Accessor of isSecuredSession variable
   function res:IsSecuredSession()
     return self.mobile_session_impl.isSecuredSession
   end
@@ -242,6 +265,7 @@ function MS.MobileSession(test, connection, regAppParams, securitySettings)
     isHandshakeDisplayed = false
   }
 
+  --- Accessor of mobile_session_impl
   res.mobile_session_impl = mobile_session_impl.MobileSessionImpl(
       res.SessionId, res.CorrelationId, test, connection, securitySettings, res.ActivateHeartbeat,
       res.SendHeartbeatToSDL, res.AnswerHeartbeatFromSDL, res.IgnoreSDLHeartBeatAck, regAppParams )

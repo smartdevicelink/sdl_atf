@@ -2,7 +2,7 @@
 --
 -- *Dependencies:* `file_connection`, `protocol_handler.protocol_handler`
 --
--- *Globals:* `res`, `atf_logger`, `xmlReporter`
+-- *Globals:* `atf_logger`, `xmlReporter`, `config`
 -- @module mobile_connection
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -51,12 +51,17 @@ function MobileConnection.mt.__index:Send(data)
   self.connection:Send(messages)
 end
 
+--- Send frame from mobile to SDL
+-- @tparam table frameMessage Frame to be sent
 function MobileConnection.mt.__index:SendFrame(frameMessage)
   local protocol_handler = ph.ProtocolHandler()
   local frame = protocol_handler:GetBinaryFrame(frameMessage)
   self.connection:Send({frame})
 end
 
+--- Start mobile session on current connection
+-- @tparam table test Test instance for register mobile session
+-- @treturn Expectation Created MobileSession instance expectation
 function MobileConnection.mt.__index:StartSession(test)
   test.mobileSession = mobile_session.MobileSession(
   test,
@@ -65,6 +70,9 @@ function MobileConnection.mt.__index:StartSession(test)
   return test.mobileSession:Start()
 end
 
+--- Start secure mobile session on current connection
+-- @tparam table test Test instance for register mobile session
+-- @treturn Expectation Created MobileSession instance expectation
 function MobileConnection.mt.__index:StartSecureSession(test)
   local startSecureSessionEvent = events.Event()
   startSecureSessionEvent.matches = function(_, data)
@@ -108,7 +116,7 @@ function MobileConnection.mt.__index:StopStreaming(filename)
 end
 
 --- Set handler for OnInputData
--- @tparam function func Handler function
+-- @tparam function messageHandlerFunc Handler function
 function MobileConnection.mt.__index:OnInputData(messageHandlerFunc)
   local protocol_handler = ph.ProtocolHandler()
   local frameHandlerFunc =

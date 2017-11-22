@@ -6,10 +6,7 @@
 
   *Dependencies:* `atf.stdlib.argument_parser`, `config`, `reporter`, `atf_logger`
 
-  *Globals:* `config`, `xmlReporter`, `atf_logger`, `RequiredArgument`, `OptionalArgument`, `NoArgument`,
-  `table2str()`, `print_table()`, `is_file_exists()`, `print_startscript()`, `print_stopscript()`,
-  `compareValues()`, `parse_cmdl()`, `PrintUsage()`, `declare_opt()`, `declare_long_opt()`,
-  `declare_short_opt()`, `script_execute()`
+  *Globals:* `config`, `xmlReporter`, `atf_logger`, `table2str()`, `print_table()`, `is_file_exists()`, `compareValues()`, `PrintUsage()`
   @module atf.util
   @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
   @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -19,6 +16,10 @@ config = require('config')
 xmlReporter = require("reporter")
 atf_logger = require("atf_logger")
 
+--- Singleton table which is used for perform script run and command line activities for ATF .
+-- @table Util
+-- @tfield table commandLine Table that used for perform command line activities in ATF
+-- @tfield table runner Table that used for perform script run activities in ATF
 local Util = {
   commandLine = {},
   runner = {
@@ -177,7 +178,7 @@ function compareValues(a, b, name)
   return res, table.concat(message, '\n')
 end
 
-
+--- Print usage
 function PrintUsage()
   utils.PrintUsage()
 end
@@ -277,6 +278,8 @@ function Util.commandLine.security_protocol(str)
   config.SecurityProtocol = str
 end
 
+--- Parse command line string
+-- @treturn table Script files list
 function Util.commandLine.parse_cmdl()
   local scriptFiles = {}
   local arguments = utils.getopt(argv, opts)
@@ -298,14 +301,20 @@ function Util.commandLine.parse_cmdl()
   return scriptFiles
 end
 
+--- Declare command line option with both names (-n, --name)
+-- @tparam table ... Option declaration table
 function Util.commandLine.declare_opt(...)
   utils.declare_opt(...)
 end
 
+--- Declare command line option with only long name (--name)
+-- @tparam table ... Option declaration table
 function Util.commandLine.declare_long_opt(...)
   utils.declare_long_opt(...)
 end
 
+--- Declare command line option with only short name (-n)
+-- @tparam table ... Option declaration table
 function Util.commandLine.declare_short_opt(...)
   utils.declare_short_opt(...)
 end
@@ -324,16 +333,20 @@ local function copy_interfaces()
 
 --- Runner
 
+--- Function for receive current script file name
+-- @treturn string Script file name
 function Util.runner.get_script_file_name()
   return Util.runner.script_file_name
 end
 
+--- Print script information before run of script
 function Util.runner.print_startscript(script_name)
   print("==============================")
   print(string.format("Start '%s'",script_name))
   print("==============================")
 end
 
+--- Print script result information after run of script
 function Util.runner.print_stopscript(script_name)
   local count = timestamp() - atf_logger.start_file_timestamp
   local counttime = convertMs(count)

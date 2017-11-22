@@ -33,6 +33,10 @@ function mt.__index:ExpectEvent(event, name)
   return self.mobile_expectations:ExpectEvent(event, name)
 end
 
+--- Expectation of frame event
+-- @tparam table frameMessage Frame message to expect
+-- @tparam function binaryDataCompareFunc Function used for binary data comparation
+-- @treturn Expectation Expectation for event
 function mt.__index:ExpectFrame(frameMessage, binaryDataCompareFunc)
   return self.mobile_expectations:ExpectFrame(frameMessage, binaryDataCompareFunc)
 end
@@ -59,6 +63,10 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.rpc_services:ExpectNotification(funcName, ...)
 end
 
+--- Expectation of encrypted responce with specific correlation_id
+-- @tparam number cor_id Correlation identifier of specific rpc event
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for response
 function mt.__index:ExpectEncryptedResponse(cor_id, ...)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
     return self.rpc_services:ExpectEncryptedResponse(cor_id, ...)
@@ -67,6 +75,10 @@ function mt.__index:ExpectEncryptedResponse(cor_id, ...)
     .. "Secure service was not established. Session: " .. self.sessionId.get())
 end
 
+--- Expectation of encrypted notification with specific funcName
+-- @tparam string funcName Expected notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for notification
 function mt.__index:ExpectEncryptedNotification(funcName, ...)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
     return self.rpc_services:ExpectEncryptedNotification(funcName, ...)
@@ -98,6 +110,10 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.rpc_services:SendRPC(func, arguments, fileName)
 end
 
+--- Send encrypted RPC
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
     return self.rpc_services:SendRPC(func, arguments, fileName, true)
@@ -114,6 +130,10 @@ function mt.__index:StartService(service)
   return self.control_services:StartService(service)
 end
 
+--- Start specific secured service
+-- @tparam number service Service type
+-- @tparam table securitySettings settings for SSL
+-- @treturn Expectation expectation for StartService ACK
 function mt.__index:StartSecureService(service)
   if not self.isSecuredSession then
     self.security:registerSessionSecurity()
@@ -191,6 +211,7 @@ end
 
 --- Send message from mobile to SDL
 -- @tparam table message Data to be sent
+-- @treturn table Sent message
 function mt.__index:Send(message)
   if not message.serviceType then
     error("MobileSession:Send: serviceType must be specified")
@@ -216,11 +237,14 @@ function mt.__index:Send(message)
   return message
 end
 
+--- Send frame from mobile to SDL
+-- @tparam string bytes Bytes to be sent
 function mt.__index:SendFrame(message)
   self.connection:SendFrame(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
+-- @treturn Expectation Expectation for RegisterAppInterface
 function mt.__index:Start()
   local startEvent = events.Event()
   startEvent.matches = function(_, data)
@@ -244,6 +268,7 @@ function mt.__index:Start()
 end
 
 --- Stop rpc service (7) and stop Heartbeat
+-- @treturn Expectation Expectation for stop session
 function mt.__index:Stop()
   return self:StopRPC()
 end
@@ -253,6 +278,7 @@ end
 -- @tparam number correlation_id Initial correlation identifier
 -- @tparam Test test Test which open mobile session
 -- @tparam MobileConnection connection Base connection for open mobile session
+-- @tparam table securitySettings Settings for establish secured connection
 -- @tparam table activateHeartbeat  Access table for activation of heartbeat to SDL flag
 -- @tparam table sendHeartbeatToSDL Access table for send heartbeat to SDL flag
 -- @tparam table answerHeartbeatFromSDL Access table for answer heartbeat from SDL flag
@@ -298,7 +324,7 @@ function MSI.MobileSessionImpl(session_id, correlation_id, test, connection, sec
   res.heartbeat_monitor = heartbeatMonitor.HeartBeatMonitor(res)
   --- Session security manager
   res.security = securityManager:Security(res, securitySettings)
-  ---
+  --- Flag which defines security status of mobile session
   res.isSecuredSession = false
   setmetatable(res, mt)
   return res

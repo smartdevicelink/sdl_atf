@@ -1,3 +1,12 @@
+--- Module which provide SecurityManager type
+--
+-- *Dependencies:* `luaopenssl`, `security.security_constants`
+--
+-- *Globals:* none
+-- @module security.security_constants
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
 local openssl = require('luaopenssl')
 local securityConstants = require('security/security_constants')
 
@@ -20,8 +29,13 @@ local function getSecurityProtocolConst(strProtocol)
   return protocolConst or securityConstants.PROTOCOLS.AUTO
 end
 
+--- Type which perforn security activities for mobile session
+-- @type Security
+
 local security_mt = { __index = {} }
 
+--- Check is SSL handshake finished
+-- @treturn boolean True if SSL handshake was finished
 function security_mt.__index:isHandshakeFinished()
   if self.ssl then
     return self.ssl:isHandshakeFinished()
@@ -29,6 +43,7 @@ function security_mt.__index:isHandshakeFinished()
   return false
 end
 
+--- Prepare openssl to perform SSL handshake on base of securitySettings
 function security_mt.__index:prepareToHandshake()
   local SERVER = 1
   -- create SSL_CTX
@@ -48,6 +63,9 @@ function security_mt.__index:prepareToHandshake()
   self.ssl:prepareToHandshake(SERVER)
 end
 
+--- Start/continue SSL handshake
+-- @tparam string inHandshakeData Incoming binary handshake data
+-- @treturn string Outgoing binary handshake data
 function security_mt.__index:performHandshake(inHandshakeData)
   local outHandshakeData = nil
   if not self:isHandshakeFinished()
@@ -62,6 +80,10 @@ function security_mt.__index:performHandshake(inHandshakeData)
   return outHandshakeData
 end
 
+--- Encrypt binary data
+-- @tparam string data Incoming binary data
+-- @treturn number Encryption status
+-- @treturn string Outgoing encrypted binary data
 function security_mt.__index:encrypt(data)
   if not (self:isHandshakeFinished() and data) then
     return securityConstants.SECURITY_STATUS.ERROR, nil
@@ -81,6 +103,10 @@ function security_mt.__index:encrypt(data)
   return securityConstants.SECURITY_STATUS.SUCCESS, encryptedData
 end
 
+--- Decrypt binary data
+-- @tparam string encryptedData Incoming encrypted binary data
+-- @treturn number Decryption status
+-- @treturn string Outgoing binary data
 function security_mt.__index:decrypt(encryptedData)
   if not (self:isHandshakeFinished()
      and encryptedData and encryptedData:len() > 0) then
@@ -101,37 +127,52 @@ function security_mt.__index:decrypt(encryptedData)
   return securityConstants.SECURITY_STATUS.SUCCESS, data
 end
 
+--- Register mobile session security into Security manager as secure
 function security_mt.__index:registerSessionSecurity()
   if not SecurityManager.mobileSecurities[self.session.sessionId.get()] then
     SecurityManager.mobileSecurities[self.session.sessionId.get()] = self
   end
 end
 
+--- Register service into mobile session security. Service assumed as secure
+-- @tparam number service Service number
 function security_mt.__index:registerSecureService(service)
   self.encryptedServices[service] = true
   updateSecurityOfSession(self)
 end
 
+--- Unregister service into mobile session security. Service assumed as not secure
+-- @tparam number service Service number
 function security_mt.__index:unregisterSecureService(service)
   self.encryptedServices[service] = nil
   updateSecurityOfSession(self)
 end
 
+--- Unregister all registered services into mobile session security. All services assumed as not secure
 function security_mt.__index:unregisterAllSecureServices()
   self.encryptedServices = {}
   updateSecurityOfSession(self)
 end
 
+--- Unregister service into mobile session security. Service assumed as not secure
+-- @tparam number service Service number
 function security_mt.__index:checkSecureService(service)
   return self.encryptedServices[service]
 end
 
+--- Type which perforn security manager activities for ATF
+-- @type SecurityManager
+
 SecurityManager.mobileSecurities = {}
 
+--- Initialize ATF security manager
 function SecurityManager.init()
   openssl.initSslLibrary()
 end
 
+--- Create and initialize instance of SSL context for mobile session
+-- @tparam table sessionSecurity Security instance of mobile session
+-- @treturn userdata SSL context instance
 function SecurityManager.createSslContext(sessionSecurity)
   local sslCtx = openssl.newSslContext(getSecurityProtocolConst(sessionSecurity.settings.securityProtocol))
   if (not (sslCtx and sslCtx:initSslContext(
@@ -143,6 +184,10 @@ function SecurityManager.createSslContext(sessionSecurity)
   return sslCtx
 end
 
+--- Create instance of BIO
+-- @tparam number bioType Type of BIO
+-- @tparam table sessionSecurity Security instance of mobile session
+-- @treturn userdata BIO instance
 function SecurityManager.createBio(bioType, sessionSecurity)
   local bio = openssl.newBio(bioType)
   if not bio then
@@ -151,6 +196,12 @@ function SecurityManager.createBio(bioType, sessionSecurity)
   return bio
 end
 
+--- Decrypt binary data
+-- @tparam string encryptedData Incoming encrypted binary data
+-- @tparam number sessionId Identifier of mobile session
+-- @tparam number serviceType Service number
+-- @treturn number Decryption status
+-- @treturn string Outgoing binary data
 function SecurityManager:decrypt(encryptedData, sessionId, serviceType)
   local security = self.mobileSecurities[sessionId]
   if not security then
@@ -163,6 +214,12 @@ function SecurityManager:decrypt(encryptedData, sessionId, serviceType)
   return security:decrypt(encryptedData)
 end
 
+--- Encrypt binary data
+-- @tparam string data Incoming binary data
+-- @tparam number sessionId Identifier of mobile session
+-- @tparam number serviceType Service number
+-- @treturn number Encryption status
+-- @treturn string Outgoing encrypted binary data
 function SecurityManager:encrypt(data, sessionId, serviceType)
   local security = self.mobileSecurities[sessionId]
   if not security then
@@ -174,6 +231,10 @@ function SecurityManager:encrypt(data, sessionId, serviceType)
   return security:encrypt(data)
 end
 
+--- Construct instance of Security
+-- @tparam MobileSessionImpl mobileSession Mobile session instance
+-- @tparam table securitySettings Settings for security instance
+-- @treturn Security Constructed instance
 function SecurityManager:Security(mobileSession, securitySettings)
   local res = {}
   res.settings = securitySettings

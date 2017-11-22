@@ -2,7 +2,7 @@
 --
 -- *Dependencies:* `atf.util`
 --
--- *Globals:* `declare_opt()`, declare_long_opt()`, `declare_short_opt()`, `print_startscript()`, `script_execute()`
+-- *Globals:* none
 -- @script launch
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>

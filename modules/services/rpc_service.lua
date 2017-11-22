@@ -2,7 +2,7 @@
 --
 -- *Dependencies:* `atf.util`, `function_id`, `json`, `protocol_handler.ford_protocol_constants`, `events`, `expectations`, `load_schema`
 --
--- *Globals:* `xmlReporter`, `event_dispatcher`, `wrong_function_name`, `compareValues`
+-- *Globals:* `xmlReporter`, `event_dispatcher`, `compareValues`
 -- @module services.rpc_service
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -28,6 +28,11 @@ local mt = { __index = { } }
 
 mt.__index.cor_id_func_map = { }
 
+--- Basic function to create expectation for response from SDL and register it in expectation list
+-- @tparam RPCService RPCService Instance of RPCService
+-- @tparam number cor_id Correlation identificator
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
 local function baseExpectResponse(RPCService, cor_id, ...)
   local temp_cor_id = cor_id
   local func_name = RPCService.cor_id_func_map[cor_id]
@@ -90,6 +95,11 @@ local function baseExpectResponse(RPCService, cor_id, ...)
   return ret
 end
 
+--- Basic function to create expectation for notification from SDL and register it in expectation list
+-- @tparam RPCService RPCService Instance of RPCService
+-- @tparam string funcName Notification name
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
 local function baseExpectNotification(RPCService, funcName, ...)
   local notificationEvent = Event()
   notificationEvent.matches = function(_, data)
@@ -202,7 +212,7 @@ function mt.__index:SendRPC(func, arguments, fileName, encrypt)
   return correlationId
 end
 
---- Create expectation for respons from SDL and register it in expectation list
+--- Create expectation for response from SDL and register it in expectation list
 -- @tparam number cor_id Correlation identificator
 -- @tparam table ... Expectations parameters
 -- @treturn Expectation Created expectation
@@ -236,6 +246,10 @@ function mt.__index:ExpectNotification(funcName, ...)
     end)
 end
 
+--- Create expectation for encrypted response from SDL and register it in expectation list
+-- @tparam number cor_id Correlation identificator
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
 function mt.__index:ExpectEncryptedResponse(cor_id, ...)
   return baseExpectResponse(self, cor_id, ...)
   :ValidIf(function(_, data)
@@ -248,6 +262,10 @@ function mt.__index:ExpectEncryptedResponse(cor_id, ...)
     end)
 end
 
+--- Create expectation for encrypted notification from SDL and register it in expectation list
+-- @tparam string funcName Notification name
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
 function mt.__index:ExpectEncryptedNotification(funcName, ...)
   return baseExpectNotification(self, funcName, ...)
   :ValidIf(function(_, data)

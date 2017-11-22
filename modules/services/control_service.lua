@@ -93,6 +93,9 @@ function mt.__index:StartService(service)
   return ret
 end
 
+--- Start encripted service and create expectation on this event
+-- @tparam number service type of service
+-- @treturn Expectation Expectation on start service event
 function mt.__index:StartSecureService(service)
   xmlReporter.AddMessage("StartSecureService", service)
   local startServiceMessage =

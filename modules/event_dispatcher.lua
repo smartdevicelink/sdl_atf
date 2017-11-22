@@ -2,7 +2,7 @@
 --
 -- *Dependencies:* `expectations`, `events`
 --
--- *Globals:* `expectations`, `events`, `res`, `c`, `e`, `exp`, `pool`
+-- *Globals:* none
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
@@ -39,7 +39,7 @@ end
 
 --- Get Handler
 -- @tparam Connection conn Mobile/HMI connection
--- @tparam Event ev Event
+-- @tparam Event event Event
 -- @treturn table Handler
 function mt.__index:GetHandler(conn, event)
   local res = self._pool3[conn][event] or
@@ -50,9 +50,9 @@ function mt.__index:GetHandler(conn, event)
 end
 
 --- Find handler for event
--- @tparam Connection obj Mobile/HMI connection
--- @tparam Event data Event
--- @treturn table Handler
+-- @tparam Connection connection Mobile/HMI connection
+-- @tparam table data Data for find event
+-- @treturn Expectation Handler
 function mt.__index:FindHandler(connection, data)
   -- Visit all event pools and find matching event
   local function findInPool(pool, data)

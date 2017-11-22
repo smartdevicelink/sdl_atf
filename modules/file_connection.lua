@@ -35,7 +35,7 @@ function FileConnection.mt.__index:Connect()
 end
 
 --- Split message to chanks and send them to SDL
--- @tparam table data Data to be sent
+-- @tparam table data List of messages to be sent
 function FileConnection.mt.__index:Send(data)
   for _, chunk in ipairs(data) do
     self.fbuf:WriteMessage(chunk)
