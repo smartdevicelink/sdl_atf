@@ -184,7 +184,7 @@ function MD.MessageDispatcher(connection)
   function res._d:bytesWritten(c)
     if #res.generators == 0 then return end
     res.bufferSize = res.bufferSize + c
-    for i = 1, #res.generators do
+    for _ = 1, #res.generators do
       if res.idx < #res.generators then
         res.idx = res.idx + 1
       else
@@ -207,7 +207,7 @@ function MD.MessageDispatcher(connection)
       end
     end
   end
-  res.connection:OnDataSent(function(self, num) res._d:bytesWritten(num) end)
+  res.connection:OnDataSent(function(_, num) res._d:bytesWritten(num) end)
   qt.connect(res.timer, "timeout()", res._d, "timeout()")
   setmetatable(res, MD.mt)
   return res

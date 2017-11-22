@@ -296,15 +296,15 @@ function parse_cmdl()
   arguments = utils.getopt(argv, opts)
   if (arguments) then
     if (arguments['config-file']) then AtfUtil.config_file(arguments['config-file']) end
-    for k,v in pairs(arguments) do
-      if (type(k) ~= 'number') then
-        if ( k ~= 'config-file') then
-          k = (k):gsub ("%W", "_")
-          AtfUtil[k](v)
+    for argument, value in pairs(arguments) do
+      if (type(argument) ~= 'number') then
+        if ( argument ~= 'config-file') then
+          argument = (argument):gsub ("%W", "_")
+          AtfUtil[argument](value)
         end
       else
-        if k >= 2 and v ~= "modules/launch.lua" then
-          AtfUtil.add_script(v)
+        if argument >= 2 and value ~= "modules/launch.lua" then
+          AtfUtil.add_script(value)
         end
       end
     end
