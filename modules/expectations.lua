@@ -187,7 +187,7 @@ function Expectations.ExpectationsList()
       exp.index = #self.pinned
     else
       table.insert(self.expectations, exp)
-      exp.index = self.expectations
+      exp.index = #self.expectations
     end
   end
 
@@ -200,7 +200,7 @@ function Expectations.ExpectationsList()
         self.pinned[i].index = i
       end
     else
-      table.remove(self.expectations)
+      table.remove(self.expectations, exp.index)
       for i = exp.index, #self.expectations do
         self.expectations[i].index = i
       end
@@ -263,7 +263,7 @@ function Expectations.ExpectationsList()
 
   --- Set expectation as not pinned (expected during one test step where was defined)
   -- @tparam Expectation e Expectation to be unpinned
-  function mt.__index.Unpin(e)
+  function mt.__index:Unpin(e)
     for i = 1, #self.pinned do
       if self.pinned[i] == e then
         table.remove(self.pinned, i)
