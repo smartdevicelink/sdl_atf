@@ -35,7 +35,7 @@ end
 
 --- Expectation of frame event
 -- @tparam table frameMessage Frame message to expect
--- @tparam function binaryDataCompareFunc Function used for binary data comparation
+-- @tparam function binaryDataCompareFunc Function used for binary data comparison
 -- @treturn Expectation Expectation for event
 function mt.__index:ExpectFrame(frameMessage, binaryDataCompareFunc)
   return self.mobile_expectations:ExpectFrame(frameMessage, binaryDataCompareFunc)
@@ -47,7 +47,7 @@ function mt.__index:ExpectAny()
   return self.mobile_expectations:ExpectAny()
 end
 
---- Expectation of responce with specific correlation_id
+--- Expectation of response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
@@ -63,7 +63,7 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.rpc_services:ExpectNotification(funcName, ...)
 end
 
---- Expectation of encrypted responce with specific correlation_id
+--- Expectation of encrypted response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
@@ -132,7 +132,6 @@ end
 
 --- Start specific secured service
 -- @tparam number service Service type
--- @tparam table securitySettings settings for SSL
 -- @treturn Expectation expectation for StartService ACK
 function mt.__index:StartSecureService(service)
   if not self.isSecuredSession then

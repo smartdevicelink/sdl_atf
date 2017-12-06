@@ -174,6 +174,9 @@ function mt.__index:CheckCorrelationID(message)
   end
 end
 
+--- Find function id by function name
+-- @tparam string func Function name
+-- @treturn number Found id
 local function setFunctionId(func)
   local id = functionId[func]
   if not id then
@@ -186,6 +189,7 @@ end
 -- @tparam string func Mobile function name
 -- @tparam table arguments RPC parameters
 -- @tparam string fileName RPC binary data
+-- @tparam boolean encrypt If True RPC payload will be encrypted
 -- @treturn number Correlation id
 function mt.__index:SendRPC(func, arguments, fileName, encrypt)
   if encrypt ~= true then encrypt = false end
@@ -221,7 +225,7 @@ function mt.__index:ExpectResponse(cor_id, ...)
   return baseExpectResponse(self, cor_id, ...)
   :ValidIf(function(_, data)
       if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
-        print("Expected not encripted message. Received encrypted or corrupted message.")
+        print("Expected not encrypted message. Received encrypted or corrupted message.")
         print("Decryption status is: " .. data._technical.decryptionStatus)
         return false
       end
@@ -238,8 +242,7 @@ function mt.__index:ExpectNotification(funcName, ...)
   return baseExpectNotification(self, funcName, ...)
   :ValidIf(function(_, data)
       if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
-        print("Expected not encripted message. Received encrypted or corrupted message.")
-        print("Decryption status is: " .. data._technical.decryptionStatus)
+        print("Expected not encrypted message. Received encrypted or corrupted message.")
         return false
       end
       return true
@@ -254,7 +257,7 @@ function mt.__index:ExpectEncryptedResponse(cor_id, ...)
   return baseExpectResponse(self, cor_id, ...)
   :ValidIf(function(_, data)
       if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.SUCCESS then
-        print("Expected encripted message. Received not encrypted or corrupted message.")
+        print("Expected encrypted message. Received not encrypted or corrupted message.")
         print("Decryption status is: " .. data._technical.decryptionStatus)
         return false
       end
@@ -270,7 +273,7 @@ function mt.__index:ExpectEncryptedNotification(funcName, ...)
   return baseExpectNotification(self, funcName, ...)
   :ValidIf(function(_, data)
       if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.SUCCESS then
-        print("Expected encripted message. Received not encrypted or corrupted message.")
+        print("Expected encrypted message. Received not encrypted or corrupted message.")
         print("Decryption status is: " .. data._technical.decryptionStatus)
         return false
       end

@@ -93,7 +93,7 @@ function mt.__index:StartService(service)
   return ret
 end
 
---- Start encripted service and create expectation on this event
+--- Start encrypted service and create expectation on this event
 -- @tparam number service type of service
 -- @treturn Expectation Expectation on start service event
 function mt.__index:StartSecureService(service)
@@ -120,8 +120,12 @@ function mt.__index:StartSecureService(service)
           xmlReporter.AddMessage("StartSecureService", "StartService ACK", "True")
           if data.encryption == true then
             return true
-          else return false, "StartService ACK without encription received" end
-        else return false, "StartService NACK received" end
+          else
+            return false, "StartService ACK without encryption received"
+          end
+        else
+          return false, "StartService NACK received"
+        end
       end)
   ret:Do(function(_, _)
       self.session.test:RemoveExpectation(ret)

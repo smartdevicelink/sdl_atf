@@ -55,10 +55,7 @@ local function bytesToInt32(val, offset)
 end
 
 --- Build byte representation of RPC payload
--- @tparam number rpcType RPC type
--- @tparam number rpcFunctionId Function Id
--- @tparam number rpcCorrelationId RPC correlation ID
--- @tparam string payload Data
+-- @tparam table msg Message to create RPC payload from
 -- @treturn string Built byte representation of RPC payload
 local function rpcPayload(msg)
   msg.payload = msg.payload or ""
@@ -175,7 +172,6 @@ end
 local function decryptPayload(data, message)
   if data then
     if message.encryption then
-      -- print("Received encrypted message. Start to decrypt.")
       return securityManager:decrypt(data, message.sessionId, message.serviceType)
     else
       return securityConstants.SECURITY_STATUS.NO_ENCRYPTION, data
@@ -193,8 +189,9 @@ local function getProtocolFrameSize(version)
 end
 
 --- Parse binary message from SDL to table with json validation
--- @tparam string binary Message
+-- @tparam string binary Message to parse
 -- @tparam boolean validateJson True if JSON validation is required
+-- @tparam function frameHandler Function for additional handling for each incoming frame
 -- @treturn table Parsed message
 function mt.__index:Parse(binary, validateJson, frameHandler)
   self.buffer = self.buffer .. binary

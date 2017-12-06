@@ -340,6 +340,7 @@ function Util.runner.get_script_file_name()
 end
 
 --- Print script information before run of script
+-- @tparam string script_name Name of script to print
 function Util.runner.print_startscript(script_name)
   print("==============================")
   print(string.format("Start '%s'",script_name))
@@ -347,6 +348,7 @@ function Util.runner.print_startscript(script_name)
 end
 
 --- Print script result information after run of script
+-- @tparam string script_name Name of script to print
 function Util.runner.print_stopscript(script_name)
   local count = timestamp() - atf_logger.start_file_timestamp
   local counttime = convertMs(count)
