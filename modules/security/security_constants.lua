@@ -9,6 +9,7 @@
 
 local SecurityConstants = {}
 
+--- Security status for message
 SecurityConstants.SECURITY_STATUS = {
   ERROR = -1,
   SUCCESS = 0,
@@ -16,11 +17,13 @@ SecurityConstants.SECURITY_STATUS = {
   NO_ENCRYPTION = 2,
 }
 
+--- Basic input/output types for OpenSSL
 SecurityConstants.BIO_TYPES = {
   SOURCE = 0,
   FILTER = 1
 }
 
+--- Security layer protocols for OpenSSL
 SecurityConstants.PROTOCOLS = {
   AUTO = 0,
   SSL = 1,

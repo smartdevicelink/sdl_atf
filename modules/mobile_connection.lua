@@ -64,9 +64,9 @@ end
 -- @treturn Expectation Created MobileSession instance expectation
 function MobileConnection.mt.__index:StartSession(test)
   test.mobileSession = mobile_session.MobileSession(
-  test,
-  test.mobileConnection,
-  config.application1.registerAppInterfaceParams)
+      test,
+      test.mobileConnection,
+      config.application1.registerAppInterfaceParams)
   return test.mobileSession:Start()
 end
 

@@ -23,6 +23,7 @@ local mt = { __index = { } }
 
 --- Expectation of frame event
 -- @tparam table frameMessage Frame message table to expect
+-- @tparam function binaryDataCompareFunc Function for raw binary data comparison in expectation
 -- @treturn Expectation Created expectation
 function mt.__index:ExpectFrame(frameMessage, binaryDataCompareFunc)
   local event = Event()

@@ -25,7 +25,9 @@ config.zeroOccurrenceTimeout = 2000
 config.checkAllValidations = false
 --- Define default version of Ford protocol
 -- 1 - basic
--- 2 - RPC, encription
+--
+-- 2 - RPC, encryption
+--
 -- 3 - video/audio streaming, heartbeat
 -- 4 - SDL 4.0
 config.defaultProtocolVersion = 3

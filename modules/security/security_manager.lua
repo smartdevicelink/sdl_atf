@@ -12,6 +12,7 @@ local securityConstants = require('security/security_constants')
 
 local SecurityManager = {}
 
+--- Update mobile session property 'isSecuredSession' according to secured services
 local function updateSecurityOfSession(security)
   if next(security.encryptedServices) == nil then
     security.session.isSecuredSession = false
@@ -24,12 +25,14 @@ local function updateSecurityOfSession(security)
   end
 end
 
+--- Get security protocol type
+-- @treturn number Return number representation of security protocol type
 local function getSecurityProtocolConst(strProtocol)
   local protocolConst = securityConstants.PROTOCOLS[strProtocol]
   return protocolConst or securityConstants.PROTOCOLS.AUTO
 end
 
---- Type which perforn security activities for mobile session
+--- Type which perform security activities for mobile session
 -- @type Security
 
 local security_mt = { __index = {} }
@@ -46,20 +49,16 @@ end
 --- Prepare openssl to perform SSL handshake on base of securitySettings
 function security_mt.__index:prepareToHandshake()
   local SERVER = 1
-  -- create SSL_CTX
   self.ctx = SecurityManager.createSslContext(self)
-  -- create BIOs
   self.bioIn = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
   self.bioOut = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
-  -- create SSL
   self.ssl = self.ctx:newSsl()
-  -- set info callback
+
   if self.settings.isHandshakeDisplayed then
     self.ssl:setInfoCallback(SERVER)
   end
-  -- populate SSL with BIOs
+
   self.ssl:setBios(self.bioIn, self.bioOut)
-  -- Prepare SSL to perform handshake
   self.ssl:prepareToHandshake(SERVER)
 end
 
@@ -75,7 +74,7 @@ function security_mt.__index:performHandshake(inHandshakeData)
     local pending = self.bioOut:checkData()
     if pending > 0 then
       outHandshakeData = self.bioOut:read(pending)
-   	end
+    end
   end
   return outHandshakeData
 end
@@ -160,7 +159,7 @@ function security_mt.__index:checkSecureService(service)
   return self.encryptedServices[service]
 end
 
---- Type which perforn security manager activities for ATF
+--- Type which perform security manager activities for ATF
 -- @type SecurityManager
 
 SecurityManager.mobileSecurities = {}
@@ -240,7 +239,7 @@ function SecurityManager:Security(mobileSession, securitySettings)
   res.settings = securitySettings
   res.session = mobileSession
   res.encryptedServices = {}
-  res.isEncriptedSession = nil
+  res.isEncryptedSession = nil
   res.ctx = nil
   res.ssl = nil
   res.bioIn = nil

@@ -39,7 +39,7 @@ function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
   return self.mobile_session_impl:ExpectFrame(frameMessage, binaryDataCompareFunc)
 end
 
---- Expectation of responce with specific correlation_id
+--- Expectation of response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
@@ -55,7 +55,7 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.mobile_session_impl:ExpectNotification(funcName, ...)
 end
 
---- Expectation of encrypted responce with specific correlation_id
+--- Expectation of encrypted response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
@@ -181,11 +181,13 @@ function mt.__index:SendPacket(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
+-- @treturn Expectation Expectation for RegisterAppInterface
 function mt.__index:Start()
   return self.mobile_session_impl:Start()
 end
 
 --- Stop rpc service (7) and stop Heartbeat
+-- @treturn Expectation Expectation for stop session
 function mt.__index:Stop()
   return self.mobile_session_impl:Stop()
 end

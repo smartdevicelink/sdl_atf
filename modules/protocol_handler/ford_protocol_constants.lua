@@ -9,10 +9,13 @@
 
 local SDLProtocolConstants = {}
 
+--- Protocol header size for each frame
 SDLProtocolConstants.PROTOCOL_HEADER_SIZE = 12
 
+--- Binary header size for each frame
 SDLProtocolConstants.BINARY_HEADER_SIZE = 12
 
+--- Maximum size of frame for each protocol version
 SDLProtocolConstants.FRAME_SIZE = {
   P1 = 1500,
   P2 = 1500,
