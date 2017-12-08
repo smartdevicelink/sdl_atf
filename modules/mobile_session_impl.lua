@@ -17,6 +17,7 @@ local heartbeatMonitor = require('services/heartbeat_monitor')
 local mobileExpectations = require('expectations/session_expectations')
 local securityManager = require('security/security_manager')
 local constants = require('protocol_handler/ford_protocol_constants')
+local securityConstants = require('security/security_constants')
 
 local FAILED = expectations.FAILED
 local MSI = {}
@@ -107,7 +108,7 @@ end
 -- @tparam table arguments Arguments for RPC function
 -- @tparam string fileName Path to file with binary data
 function mt.__index:SendRPC(func, arguments, fileName)
-  return self.rpc_services:SendRPC(func, arguments, fileName)
+  return self.rpc_services:SendRPC(func, arguments, fileName, securityConstants.ENCRYPTION.OFF)
 end
 
 --- Send encrypted RPC
@@ -116,7 +117,7 @@ end
 -- @tparam string fileName Path to file with binary data
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
-    return self.rpc_services:SendRPC(func, arguments, fileName, true)
+    return self.rpc_services:SendRPC(func, arguments, fileName, securityConstants.ENCRYPTION.ON)
   end
   error("Error: Can not send encrypted request. "
     .. "Secure service was not established. Session: " .. self.sessionId.get())
