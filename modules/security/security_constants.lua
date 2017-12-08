@@ -9,6 +9,12 @@
 
 local SecurityConstants = {}
 
+--- Encryption flag for message
+SecurityConstants.ENCRYPTION = {
+  OFF = 0,
+  ON = 1
+}
+
 --- Security status for message
 SecurityConstants.SECURITY_STATUS = {
   ERROR = -1,
