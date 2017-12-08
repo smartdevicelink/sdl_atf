@@ -122,21 +122,57 @@ local function isBinaryDataHasHeader(msg)
            or msg.serviceType == constants.SERVICE_TYPE.CONTROL
 end
 
+--- Check whether binary data is handshake data
+-- @tparam number serviceType Value of field 'serviceType' from SDL protocol header
+-- @tparam number rpcType Value of field 'rpcType' from SDL binary header
+-- @tparam number rpcFunctionId Value of field 'rpcFunctionId' from SDL binary header
+-- @tparam number rpcJsonSize Value of field 'rpcJsonSize' from SDL binary header
+-- @treturn boolean True if binary data is handshake data
+local function isHandshakeBinaryData(serviceType, rpcType, rpcFunctionId, rpcJsonSize)
+  return serviceType == constants.SERVICE_TYPE.CONTROL
+    and rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
+    and rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
+    and rpcJsonSize == 0
+end
+
+--- Check whether binary header should be built
+-- @tparam table message Message with binary data
+-- @treturn boolean True if binary header should be built
+local function hasToBuildBinaryHeader(message)
+  if message.frameType == constants.FRAME_TYPE.CONTROL_FRAME then
+    return false
+  end
+  if message.payload then
+    if message.serviceType == constants.SERVICE_TYPE.RPC
+        or message.serviceType == constants.SERVICE_TYPE.BULK_DATA then
+      return true
+    end
+    return false
+  end
+  if isHandshakeBinaryData(message.serviceType, message.rpcType, message.rpcFunctionId, 0) then
+      return true
+  end
+  return false
+end
+
 --- Build table representation of binary data header
 -- @tparam table message Bytes to create protocol header table from
 -- @tparam boolean validateJson If true then JSON should be parsed
 local function parseBinaryHeader(message, validateJson)
   local BINARY_HEADER_SIZE = 12
+  local rpcType = bit32.rshift(string.byte(message.binaryData, 1), 4)
+  local rpcFunctionId = bit32.band(bytesToInt32(message.binaryData, 1), 0x0fffffff)
+  local rpcJsonSize = bytesToInt32(message.binaryData, 9)
+
   if message.serviceType == constants.SERVICE_TYPE.CONTROL
-    and (bit32.rshift(string.byte(message.binaryData, 1), 4) ~= constants.BINARY_RPC_TYPE.NOTIFICATION
-      or bit32.band(bytesToInt32(message.binaryData, 1), 0x0fffffff) ~= constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
-      or bytesToInt32(message.binaryData, 9) ~= 0) then  -- it is not Handshake data
+    and (not isHandshakeBinaryData(message.serviceType, rpcType, rpcFunctionId, rpcJsonSize)) then
     return
   end
-  message.rpcType = bit32.rshift(string.byte(message.binaryData, 1), 4)
-  message.rpcFunctionId = bit32.band(bytesToInt32(message.binaryData, 1), 0x0fffffff)
+
+  message.rpcType = rpcType
+  message.rpcFunctionId = rpcFunctionId
+  message.rpcJsonSize = rpcJsonSize
   message.rpcCorrelationId = bytesToInt32(message.binaryData, 5)
-  message.rpcJsonSize = bytesToInt32(message.binaryData, 9)
   if message.rpcJsonSize > 0 then
     if not validateJson then
       message.payload = json.decode(string.sub(message.binaryData, BINARY_HEADER_SIZE + 1, BINARY_HEADER_SIZE + message.rpcJsonSize))
@@ -266,14 +302,7 @@ function mt.__index:Compose(message)
      - constants.PROTOCOL_HEADER_SIZE
   local res = {}
 
-  if message.frameType ~= constants.FRAME_TYPE.CONTROL_FRAME
-    and (((message.serviceType == constants.SERVICE_TYPE.RPC
-          or message.serviceType == constants.SERVICE_TYPE.BULK_DATA)
-        and message.payload)
-      or (message.serviceType == constants.SERVICE_TYPE.CONTROL
-        and message.rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
-        and message.rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
-        and (not message.payload))) then
+  if hasToBuildBinaryHeader(message) then
     message.binaryData = rpcPayload(message)
   end
 
