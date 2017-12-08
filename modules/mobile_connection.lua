@@ -8,6 +8,7 @@
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 local ph = require('protocol_handler/protocol_handler')
+local constants = require('protocol_handler/ford_protocol_constants')
 local file_connection = require("file_connection")
 local mobile_session = require("mobile_session")
 local events = require('events')
@@ -62,30 +63,32 @@ end
 --- Start mobile session on current connection
 -- @tparam table test Test instance for register mobile session
 -- @treturn Expectation Created MobileSession instance expectation
-function MobileConnection.mt.__index:StartSession(test)
+function MobileConnection.mt.__index:StartSession(test, regAppParameters)
+  regAppParameters = regAppParameters or config.application1.registerAppInterfaceParams
   test.mobileSession = mobile_session.MobileSession(
       test,
       test.mobileConnection,
-      config.application1.registerAppInterfaceParams)
+      regAppParameters)
   return test.mobileSession:Start()
 end
 
 --- Start secure mobile session on current connection
 -- @tparam table test Test instance for register mobile session
 -- @treturn Expectation Created MobileSession instance expectation
-function MobileConnection.mt.__index:StartSecureSession(test)
+function MobileConnection.mt.__index:StartSecureSession(test, regAppParameters)
+  local MATCH_MESSAGE = "Secured session started"
   local startSecureSessionEvent = events.Event()
   startSecureSessionEvent.matches = function(_, data)
-      return data.message == "Secured session started"
+      return data.message == MATCH_MESSAGE
     end
 
-  self:StartSession(test)
+  self:StartSession(test, regAppParameters)
   :Do(function(exp, _)
       if exp.status == FAILED then return end
-      test.mobileSession:StartSecureService(7)
+      test.mobileSession:StartSecureService(constants.SERVICE_TYPE.RPC)
       :Do(function(exp2, _)
         if exp2.status == FAILED then return end
-        event_dispatcher:RaiseEvent(test.mobileConnection, {message = "Secured session started"})
+        event_dispatcher:RaiseEvent(test.mobileConnection, {message = MATCH_MESSAGE})
       end)
     end)
   local ret = expectations.Expectation("StartedSecureSession", test.mobileConnection)

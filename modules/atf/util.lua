@@ -6,7 +6,7 @@
 
   *Dependencies:* `atf.stdlib.argument_parser`, `config`, `reporter`, `atf_logger`
 
-  *Globals:* `config`, `xmlReporter`, `atf_logger`, `table2str()`, `print_table()`, `is_file_exists()`, `compareValues()`, `PrintUsage()`
+  *Globals:* `config`, `xmlReporter`, `atf_logger`, `table2str()`, `print_table()`, `is_file_exists()`, `compareValues()`, `print_usage()`
   @module atf.util
   @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
   @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -37,7 +37,7 @@ Util.commandLine.consts = {
 -- "1d 2h 3m 4s 5ms (summary 999ms)".
 -- @param milliseconds
 -- @return result string in a format
-local function convertMs(milliseconds)
+local function convert_ms(milliseconds)
   local seconds = math.floor( (milliseconds / 1000) % 60)
   local minutes = math.floor( ((milliseconds / (1000 * 60)) % 60))
   local hours = math.floor(((milliseconds / (1000 * 60 * 60)) % 24))
@@ -66,14 +66,14 @@ end
 -- Checks: SDL Core binary, HMI and MObile API files
 -- Stop ATF execution in case any error
 local function check_required_fields()
-  if (not is_file_exists(config.pathToSDL.."smartDeviceLinkCore")) and
-     (not is_file_exists(config.pathToSDL.."/smartDeviceLinkCore")) then
+  if (not is_file_exists(config.pathToSDL.."smartDeviceLinkCore"))
+     and (not is_file_exists(config.pathToSDL.."/smartDeviceLinkCore")) then
     print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
     os.exit(1)
   end
   if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
-    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and
-       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
+    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml"))
+       and (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
       print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
       os.exit(1)
     end
@@ -183,7 +183,7 @@ function compareValues(a, b, name)
 end
 
 --- Print usage
-function PrintUsage()
+function print_usage()
   utils.PrintUsage()
 end
 -- ------------------------------------------------
@@ -355,8 +355,8 @@ end
 --- Print script result information after run of script
 -- @tparam string script_name Name of script to print
 function Util.runner.print_stopscript(script_name)
-  local count = timestamp() - atf_logger.start_file_timestamp
-  local counttime = convertMs(count)
+  local count =  timestamp() - atf_logger.start_file_timestamp
+  local counttime =  convert_ms(count)
   atf_logger.LOGTestFinish(counttime)
   print(string.format("Total executing time is %s", counttime))
   print("==============================")

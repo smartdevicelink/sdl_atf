@@ -42,10 +42,10 @@ end
 -- @tparam Event event Event
 -- @treturn table Handler
 function mt.__index:GetHandler(conn, event)
-  local res = self._pool3[conn][event] or
-  self._pool2[conn][event] or
-  self._pool1[conn][event] or
-  self._pool0[conn][event]
+  local res = self._pool3[conn][event]
+  or self._pool2[conn][event]
+  or self._pool1[conn][event]
+  or self._pool0[conn][event]
   return res
 end
 
@@ -68,9 +68,9 @@ function mt.__index:FindHandler(connection, data)
     return findInPool(self._pool0[connection], data)
   end
 
-  return findInPool(self._pool3[connection], data) or
-      findInPool(self._pool2[connection], data) or
-      findInPool(self._pool1[connection], data)
+  return findInPool(self._pool3[connection], data)
+      or findInPool(self._pool2[connection], data)
+      or findInPool(self._pool1[connection], data)
 end
 
 --- Set handler for pre event
