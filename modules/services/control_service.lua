@@ -71,11 +71,11 @@ function mt.__index:StartService(service)
   -- prepare event to expect
   local startServiceEvent = Event()
   startServiceEvent.matches = function(_, data)
-    return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
-    data.serviceType == service and
-    (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
-    (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK or
-      data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
+    return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+    and data.serviceType == service
+    and (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get())
+    and (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK
+      or data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
   end
   self:Send(startServiceMessage)
 
@@ -107,11 +107,11 @@ function mt.__index:StartSecureService(service)
   }
   local startServiceEvent = Event()
     startServiceEvent.matches = function(_, data)
-      return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
-      data.serviceType == service and
-      (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
-      (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK or
-        data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
+      return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+      and data.serviceType == service
+      and (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get())
+      and(data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK
+        or data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
     end
 
   local ret = self.session:ExpectEvent(startServiceEvent, "StartService ACK")

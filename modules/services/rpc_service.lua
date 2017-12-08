@@ -71,8 +71,8 @@ local function baseExpectResponse(RPCService, cor_id, ...)
       end
   else
     responseEvent.matches = function(_, data)
-        return data.rpcCorrelationId == cor_id and
-          data.sessionId == RPCService.session.sessionId.get()
+        return data.rpcCorrelationId == cor_id
+          and data.sessionId == RPCService.session.sessionId.get()
       end
   end
   local ret = RPCService.session:ExpectEvent(responseEvent, "Response to " .. cor_id)
@@ -103,8 +103,8 @@ end
 local function baseExpectNotification(RPCService, funcName, ...)
   local notificationEvent = Event()
   notificationEvent.matches = function(_, data)
-    return data.rpcFunctionId == functionId[funcName] and
-    data.sessionId == RPCService.session.sessionId.get()
+    return data.rpcFunctionId == functionId[funcName]
+    and data.sessionId == RPCService.session.sessionId.get()
   end
   local args = table.pack(...)
 
@@ -192,12 +192,13 @@ end
 -- @tparam boolean encrypt If True RPC payload will be encrypted
 -- @treturn number Correlation id
 function mt.__index:SendRPC(func, arguments, fileName, encrypt)
-  if encrypt ~= true then encrypt = false end
+  local encryptFlag = false
+  if encrypt == securityConstants.ENCRYPTION.ON then encryptFlag = true end
   self.session.correlationId.set(self.session.correlationId.get() + 1)
   local correlationId = self.session.correlationId.get()
   local msg =
   {
-    encryption = encrypt,
+    encryption = encryptFlag,
     serviceType = constants.SERVICE_TYPE.RPC,
     frameInfo = 0,
     rpcType = constants.BINARY_RPC_TYPE.REQUEST,
