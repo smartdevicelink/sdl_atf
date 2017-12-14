@@ -180,12 +180,6 @@ end
 -- @treturn Expectation Expectation for StartService ACK
 function mt.__index:StartRPC()
   local ret = self:StartService(constants.SERVICE_TYPE.RPC)
-  ret:Do(function()
-      -- Heartbeat
-      if self.version > 2 then
-        self.heartbeat_monitor:StartHeartbeat()
-      end
-    end)
   ret:Do(function(s, data)
     if s.status == FAILED then return end
     self.sessionId.set(data.sessionId)
@@ -228,6 +222,11 @@ function mt.__index:Send(message)
   message.messageId = self.messageId
 
   self.connection:Send({message})
+
+  if self.activateHeartbeat.get() then
+    self.heartbeat_monitor:OnMessageSent(message)
+  end
+
   xmlReporter.AddMessage("MobileSession","Send",{message})
 
   if self.activateHeartbeat.get() then
@@ -241,6 +240,10 @@ end
 -- @tparam string bytes Bytes to be sent
 function mt.__index:SendFrame(message)
   self.connection:SendFrame(message)
+
+  if self.activateHeartbeat.get() then
+    self.heartbeat_monitor:OnMessageSent(message)
+  end
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
