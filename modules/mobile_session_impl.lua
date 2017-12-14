@@ -222,6 +222,11 @@ function mt.__index:Send(message)
   message.messageId = self.messageId
 
   self.connection:Send({message})
+
+  if self.activateHeartbeat.get() then
+    self.heartbeat_monitor:OnMessageSent(message)
+  end
+
   xmlReporter.AddMessage("MobileSession","Send",{message})
 
   if self.activateHeartbeat.get() then
@@ -235,6 +240,10 @@ end
 -- @tparam string bytes Bytes to be sent
 function mt.__index:SendFrame(message)
   self.connection:SendFrame(message)
+
+  if self.activateHeartbeat.get() then
+    self.heartbeat_monitor:OnMessageSent(message)
+  end
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
