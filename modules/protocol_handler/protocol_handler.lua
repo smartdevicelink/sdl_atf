@@ -185,6 +185,14 @@ local function parseBinaryHeader(message, validateJson)
   end
 end
 
+--- Check whether message is StartServiceACK
+-- @tparam table message Message with binary data
+-- @treturn boolean True if message is StartServiceACK
+local function isStartServiceAck(message)
+  return message.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+    and message.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK
+end
+
 --- Encrypt payload of message using mobile session security settings
 -- @tparam string data Bytes to to encrypt
 -- @tparam table message Message with header
@@ -208,7 +216,7 @@ end
 local function decryptPayload(data, message)
   if data then
     if message.encryption then
-      return securityManager:decrypt(data, message.sessionId, message.serviceType)
+      return securityManager:decrypt(data, message.sessionId, message.serviceType, isStartServiceAck(message))
     else
       return securityConstants.SECURITY_STATUS.NO_ENCRYPTION, data
     end

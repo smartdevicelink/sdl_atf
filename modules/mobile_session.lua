@@ -181,7 +181,7 @@ function mt.__index:SendPacket(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
--- @treturn Expectation Expectation for RegisterAppInterface
+-- @treturn Expectation Expectation for session is started and app is registered
 function mt.__index:Start()
   return self.mobile_session_impl:Start()
 end
@@ -263,6 +263,8 @@ function MS.MobileSession(test, connection, regAppParams, securitySettings)
     cipherListString = config.cipherListString,
     serverCertPath = config.serverCertificatePath,
     serverKeyPath = config.serverPrivateKeyPath,
+    serverCAChainCertPath = config.serverCAChainCertPath,
+    isCheckClientCertificate = config.isCheckClientCertificate,
     securityProtocol = config.SecurityProtocol,
     isHandshakeDisplayed = false
   }

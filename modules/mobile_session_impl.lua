@@ -69,11 +69,12 @@ end
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
 function mt.__index:ExpectEncryptedResponse(cor_id, ...)
-  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
-    return self.rpc_services:ExpectEncryptedResponse(cor_id, ...)
+  if not (self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC)) then
+    print("Error: Can not create expectation for encrypted response. "
+      .. "Secure service was not established. Session: " .. self.sessionId.get())
   end
-  error("Error: Can not create expectation for encrypted response. "
-    .. "Secure service was not established. Session: " .. self.sessionId.get())
+
+  return self.rpc_services:ExpectEncryptedResponse(cor_id, ...)
 end
 
 --- Expectation of encrypted notification with specific funcName
@@ -81,11 +82,12 @@ end
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for notification
 function mt.__index:ExpectEncryptedNotification(funcName, ...)
-  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
-    return self.rpc_services:ExpectEncryptedNotification(funcName, ...)
+  if not (self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC)) then
+    print("Error: Can not create expectation for encrypted notification. "
+      .. "Secure service was not established. Session: " .. self.sessionId.get())
   end
-  error("Error: Can not create expectation for encrypted notification. "
-    .. "Secure service was not established. Session: " .. self.sessionId.get())
+
+  return self.rpc_services:ExpectEncryptedNotification(funcName, ...)
 end
 
 --- Start video streaming
@@ -119,8 +121,9 @@ function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
     return self.rpc_services:SendRPC(func, arguments, fileName, securityConstants.ENCRYPTION.ON)
   end
-  error("Error: Can not send encrypted request. "
+  print("Error: Can not send encrypted request. "
     .. "Secure service was not established. Session: " .. self.sessionId.get())
+  return -1
 end
 
 --- Start specific service
@@ -141,9 +144,10 @@ function mt.__index:StartSecureService(service)
   end
 
   return self.control_services:StartSecureService(service)
-    :Do(function(exp, _)
-        if exp.status == FAILED then return end
-        self.security:registerSecureService(service)
+    :Do(function(_, data)
+        if data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK then
+          self.security:registerSecureService(service)
+        end
       end)
 end
 
@@ -247,7 +251,7 @@ function mt.__index:SendFrame(message)
 end
 
 --- Start rpc service (7) and send RegisterAppInterface rpc
--- @treturn Expectation Expectation for RegisterAppInterface
+-- @treturn Expectation Expectation for session is started and app is registered
 function mt.__index:Start()
   local startEvent = events.Event()
   startEvent.matches = function(_, data)

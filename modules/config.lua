@@ -57,6 +57,10 @@ config.cipherListString = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
 config.serverCertificatePath = "./data/cert/spt_credential.pem"
 --- Define path to server private key
 config.serverPrivateKeyPath = "./data/cert/spt_credential.pem"
+--- Define path to server CA certificates chain for client certificate validation
+config.serverCAChainCertPath = "./data/cert/spt_credential.pem"
+--- Define whether client certificate validation needed
+config.isCheckClientCertificate = true
 --- Logs and Reports
 --
 --- Flag which defines whether ATF displays time of test step run

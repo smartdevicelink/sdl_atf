@@ -51,7 +51,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
       cor_id = tbl_corr_id[1]
     end
     if not func_name then
-      error("Function with cor_id : "..temp_cor_id.." was not sent by ATF")
+      print("Function with cor_id : ".. tostring(temp_cor_id) .." was not sent by ATF")
     end
   end
   local args = table.pack(...)

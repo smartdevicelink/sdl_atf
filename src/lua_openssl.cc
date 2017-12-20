@@ -51,14 +51,6 @@ namespace {
 	}
 
 	/**
-	* @brief Callback function for peer verification
-	* @return Always return 1, because ATF should not verify SDL certificate
-	**/
-	int sslVerifyPeer(int ok, X509_STORE_CTX* ctx) {
-		return 1;
-	}
-
-	/**
 	* @brief OpenSSL library cleanup
 	**/
 	void cleanupOpensslLib() {
@@ -164,11 +156,49 @@ namespace {
 	}
 
 	/**
-	* @brief Set colback function for peer verification in OpenSSL SSL_CTX
+	* @brief Load chain of trusted CA certificates to OpenSSL SSL_CTX
+	* @param ctx OpenSSL SSL_CTX
+	* @param CAfile Path to PEM file with chain of trusted CA certificates
+	* @return Checking result. 1 - on success
+	**/
+	int loadTrustedCACertificates(SSL_CTX* ctx, const char* CAfile) {
+		const int res = SSL_CTX_load_verify_locations(ctx, CAfile, NULL);
+		if(res != 1) {
+			printf("Error: loading of trusted CA certificates was failed\n");
+			ERR_print_errors_fp(stderr);
+		}
+		return res;
+	}
+
+	/**
+	* @brief Callback function for peer verification
+	* @return Certificate verification result
+	**/
+	int sslVerifyPeer(int isPreverifyOk, X509_STORE_CTX* ctx) {
+		if (isPreverifyOk == 0) {
+			X509* cert = X509_STORE_CTX_get_current_cert(ctx);
+			int err = X509_STORE_CTX_get_error(ctx);
+			int depth = X509_STORE_CTX_get_error_depth(ctx);
+			char buf[256];
+			X509_NAME_oneline(X509_get_subject_name(cert), buf, 256);
+			printf("Certificate verification result: Error: \nnum = %d:%s\ndepth = %d:%s\n", err,
+				X509_verify_cert_error_string(err), depth, buf);
+		}
+
+		return isPreverifyOk;
+	}
+
+	/**
+	* @brief Set callback function for peer verification in OpenSSL SSL_CTX
 	* @param ctx OpenSSL SSL_CTX
 	**/
-	void setVerifyCallbackIntoSSLContext(SSL_CTX* ctx) {
-		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, sslVerifyPeer);
+	void setVerifyCallbackIntoSSLContext(SSL_CTX* ctx, int isCheckClientCertificate) {
+		int mode = SSL_VERIFY_PEER;
+		if (isCheckClientCertificate == 0) {
+			mode = SSL_VERIFY_NONE;
+		}
+
+		SSL_CTX_set_verify(ctx, mode, sslVerifyPeer);
 	}
 
 	/**
@@ -180,13 +210,13 @@ namespace {
 	* @return Initialization result. 1 - on success
 	**/
 	int initSSLContext(SSL_CTX* ctx, const char* cipherListStr,
-						const char* certFile, const char* keyFile) {
+						const char* certFile, const char* keyFile,
+						const int isCheckClientCertificate, const char* CAfile) {
 		int res = setCipherListIntoSSLContext(ctx, cipherListStr);
 		if (res != 1) {
 			return 0;
 		}
 
-		setVerifyCallbackIntoSSLContext(ctx);
 		res = addCertificateIntoSSLContext(ctx, certFile);
 		if (res != 1) {
 			return 0;
@@ -201,6 +231,15 @@ namespace {
 		if (res != 1) {
 			return 0;
 		}
+
+		if (isCheckClientCertificate == 1) {
+			res = loadTrustedCACertificates(ctx, CAfile);
+			if (res != 1) {
+				return 0;
+			}
+		}
+
+		setVerifyCallbackIntoSSLContext(ctx, isCheckClientCertificate);
 
 		return 1;
 	}
@@ -517,7 +556,7 @@ namespace {
 	* 1 - userdata OpenSSL BIO structure
 	**/
 	int openssl_newBio(lua_State* L) {
-		const int type = luaL_checknumber(L, 1);
+		const int type = luaL_checkinteger(L, 1);
 		BIO* bio = newBIO(type);
 		if(bio) {
 			BIO** pBio = (BIO**)lua_newuserdata(L, sizeof(BIO*));
@@ -540,6 +579,10 @@ namespace {
 	*		cipherListStr - List of supported ciphers
 	*		certFile - Path to PEM file with certificate
 	*		keyFile - Path to PEM file with private key
+	*		CAfile - Path to PEM file with chain of CA
+	*			certificates for client certificate validation
+	*		isCheckClientCertificate - True if client certificate
+				needs to be validated
 	*	]
 	* @return Count of results on top of Lua stack
 	* 1 - boolean Initialization result
@@ -549,7 +592,10 @@ namespace {
 		const char* cipherListStr = luaL_checkstring(L, 2);
 		const char* certFile = luaL_checkstring(L, 3);
 		const char* keyFile = luaL_checkstring(L, 4);
-		const int isSuccess = initSSLContext(ctx, cipherListStr, certFile, keyFile);
+		const char* CAfile = luaL_checkstring(L, 5);
+		const int isCheckClientCertificate = lua_toboolean(L, 6);
+		const int isSuccess = initSSLContext(ctx, cipherListStr, certFile,
+								keyFile, isCheckClientCertificate, CAfile);
 		lua_pushboolean(L, isSuccess);
 		return 1;
 	}

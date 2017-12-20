@@ -177,7 +177,9 @@ function SecurityManager.createSslContext(sessionSecurity)
   if (not (sslCtx and sslCtx:initSslContext(
                 sessionSecurity.settings.cipherListString,
                 sessionSecurity.settings.serverCertPath,
-                sessionSecurity.settings.serverKeyPath))) then
+                sessionSecurity.settings.serverKeyPath,
+                sessionSecurity.settings.serverCAChainCertPath,
+                sessionSecurity.settings.isCheckClientCertificate))) then
     error("Error: Can not create and init SSL context for mobile session " .. sessionSecurity.session.sessionId.get())
   end
   return sslCtx
@@ -201,13 +203,13 @@ end
 -- @tparam number serviceType Service number
 -- @treturn number Decryption status
 -- @treturn string Outgoing binary data
-function SecurityManager:decrypt(encryptedData, sessionId, serviceType)
+function SecurityManager:decrypt(encryptedData, sessionId, serviceType, isStartServiceAck)
   local security = self.mobileSecurities[sessionId]
   if not security then
     print("Error [decrypt]: Session " .. sessionId .. " is not registered in ATF Security manager")
     return securityConstants.SECURITY_STATUS.ERROR, encryptedData
   end
-  if not security:checkSecureService(serviceType) then
+  if not security:checkSecureService(serviceType) and not isStartServiceAck then
     print("Warning: Received encrypted message with not secure service: " .. serviceType)
   end
   return security:decrypt(encryptedData)
