@@ -99,16 +99,18 @@ end
 
 --- Start streaming file from mobile to SDL
 -- @tparam number session Session identificator
+-- @tparam number version SDL protocol version
 -- @tparam number service Sevice number
+-- @tparam boolean encryption True in case of encrypted streaming
 -- @tparam string filename Name of file to be streamed
 -- @tparam number bandwidth Bandwidth in bytes
-function MobileConnection.mt.__index:StartStreaming(session, service, filename, bandwidth)
+function MobileConnection.mt.__index:StartStreaming(session, version, service, encryption, filename, bandwidth)
   if getmetatable(self.connection) ~= file_connection.mt then
     error("Data streaming is impossible unless underlying connection is FileConnection")
   end
   xmlReporter.AddMessage("mobile_connection","StartStreaming", {["Session"] = session,
       ["Service"] = service,["FileName"] = filename,["Bandwidth"] = bandwidth })
-  self.connection:StartStreaming(session, service, filename, bandwidth)
+  self.connection:StartStreaming(session, version, service, encryption, filename, bandwidth)
 end
 
 --- Stop streaming file from mobile to SDL
