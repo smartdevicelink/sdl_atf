@@ -71,7 +71,15 @@ function mt.__index:ExpectEncryptedNotification(funcName, ...)
    return self.mobile_session_impl:ExpectEncryptedNotification(funcName, ...)
 end
 
---- Start video streaming
+--- Start encrypted audio/video streaming
+-- @tparam number service Service type
+-- @tparam string filename File for streaming
+-- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
+function mt.__index:StartEncryptedStreaming(service, filename, bandwidth)
+  self.mobile_session_impl:StartEncryptedStreaming(self.SessionId.get(), service, filename, bandwidth)
+end
+
+--- Start audio/video streaming
 -- @tparam number service Service type
 -- @tparam string filename File for streaming
 -- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
@@ -79,7 +87,7 @@ function mt.__index:StartStreaming(service, filename, bandwidth)
   self.mobile_session_impl:StartStreaming(self.SessionId.get(), service, filename, bandwidth)
 end
 
---- Stop video streaming
+--- Stop audio/video streaming
 -- @tparam string filename File for streaming
 function mt.__index:StopStreaming(filename)
   self.mobile_session_impl:StopStreaming(filename)

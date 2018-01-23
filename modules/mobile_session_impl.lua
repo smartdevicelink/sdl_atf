@@ -90,13 +90,26 @@ function mt.__index:ExpectEncryptedNotification(funcName, ...)
   return self.rpc_services:ExpectEncryptedNotification(funcName, ...)
 end
 
+--- Start encrypted video streaming
+-- @tparam number session_id Mobile session identifier
+-- @tparam number service Service type
+-- @tparam string filename File for streaming
+-- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
+function mt.__index:StartEncryptedStreaming(session_id, service, filename, bandwidth)
+  if not (self.isSecuredSession and self.security:checkSecureService(service)) then
+    print("Error: Can not start encrypted streaming. "
+      .. "Secure service was not established. Session: " .. session_id)
+  end
+  self.connection:StartStreaming(session_id, self.version, service, true, filename, bandwidth)
+end
+
 --- Start video streaming
 -- @tparam number session_id Mobile session identifier
 -- @tparam number service Service type
 -- @tparam string filename File for streaming
 -- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
 function mt.__index:StartStreaming(session_id, service, filename, bandwidth)
-  self.connection:StartStreaming(session_id, service, filename, bandwidth)
+  self.connection:StartStreaming(session_id, self.version, service, false, filename, bandwidth)
 end
 
 --- Stop video streaming

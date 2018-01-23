@@ -19,8 +19,8 @@ SDLProtocolConstants.BINARY_HEADER_SIZE = 12
 SDLProtocolConstants.FRAME_SIZE = {
   P1 = 1500,
   P2 = 1500,
-  P3 = 1500,
-  P4 = 1500
+  P3 = 131084,
+  P4 = 131084
 }
 
 --- Frame type enumeration
