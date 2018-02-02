@@ -134,6 +134,7 @@ function control.runNextCase()
     local function wait(pConnection)
       local timeout = config.zeroOccurrenceTimeout
       local event = events.Event()
+      event.level = 3
       event.matches = function(event1, event2) return event1 == event2 end
 
       local ret = Expectation("Wait", pConnection)
