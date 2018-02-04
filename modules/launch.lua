@@ -24,6 +24,7 @@ declare_long_opt("--storeFullSDLLogs", NoArgument, "Store Full SDL Logs enable")
 declare_long_opt("--heartbeat", RequiredArgument, "Hearbeat timeout value")
 declare_long_opt("--sdl-core", RequiredArgument, "Path to folder with SDL binary")
 declare_long_opt("--report-mark", RequiredArgument, "Marker of testing report")
+declare_long_opt("--sdl-interfaces", RequiredArgument, "Path to folder with APIs")
 
 local script_files = parse_cmdl()
 

@@ -9,21 +9,6 @@
 
 local xml = require('xml')
 
-local function CopyFile(file, newfile)
-  return os.execute (string.format('cp "%s" "%s"', file, newfile))
-end
-
-local function CopyInterface()
-  if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
-    local mobile_api = config.pathToSDLInterfaces .. '/MOBILE_API.xml'
-    local hmi_api = config.pathToSDLInterfaces .. '/HMI_API.xml'
-    CopyFile(mobile_api, 'data/MOBILE_API.xml')
-    CopyFile(hmi_api, 'data/HMI_API.xml')
-  end
-end
-
-CopyInterface()
-
 local FunctionId = { }
 
 --- Table with mobile functions.
