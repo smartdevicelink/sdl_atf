@@ -2,3 +2,7 @@
     path = modules/json4lua
     url = https://github.com/CustomSDL/json4lua
     branch = master
+[submodule "modules/luamq"]
+	path = modules/luamq
+	url = https://github.com/dboltovskyi/luamq
+	branch = master
