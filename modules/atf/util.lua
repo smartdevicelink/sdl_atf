@@ -282,6 +282,12 @@ function AtfUtil.sdl_core(str)
   config.pathToSDL = str
 end
 
+--- Overwrite property pathToSDLInterfaces in configuration of ATF
+-- @tparam string str Value
+function AtfUtil.sdl_interfaces(str)
+  config.pathToSDLInterfaces = str
+end
+
 function parse_cmdl()
   arguments = utils.getopt(argv, opts)
   if (arguments) then
@@ -318,10 +324,24 @@ function declare_short_opt(...)
   utils.declare_short_opt(...)
 end
 
+local function copy_file(file, newfile)
+  return os.execute(string.format('cp "%s" "%s"', file, newfile))
+end
+
+local function copy_interfaces()
+  if config.pathToSDLInterfaces ~= "" and config.pathToSDLInterfaces ~= nil then
+    local mobile_api = config.pathToSDLInterfaces .. '/MOBILE_API.xml'
+    local hmi_api = config.pathToSDLInterfaces .. '/HMI_API.xml'
+    copy_file(mobile_api, 'data/MOBILE_API.xml')
+    copy_file(hmi_api, 'data/HMI_API.xml')
+  end
+end
+
 --- Test script execution
 -- @param script_name path to the script file with a tests
 function script_execute(script_name)
   check_required_fields()
+  copy_interfaces()
   AtfUtil.script_file_name = script_name
   xmlReporter = xmlReporter.init(tostring(script_name))
   atf_logger = atf_logger.init_log(tostring(script_name))
