@@ -145,6 +145,7 @@ function SDL:StopSDL()
   if config.storeFullSDLLogs == true then
     sdl_logger.close()
   end
+  sleep(1)
 end
 
 --- SDL status check
