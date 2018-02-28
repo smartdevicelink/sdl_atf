@@ -216,7 +216,7 @@ end
 function Test:initHMI_onReady()
   local function ExpectRequest(name, mandatory, params)
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
@@ -235,7 +235,7 @@ function Test:initHMI_onReady()
   local function ExpectNotification(name, mandatory)
     xmlReporter.AddMessage(debug.getinfo(1, "n").name, tostring(name))
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
