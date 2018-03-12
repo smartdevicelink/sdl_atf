@@ -167,6 +167,10 @@ function compareValues(a, b, name)
   local function iter(a, b, name, msg)
     if type(a) == 'table' and type(b) == 'table' then
       local res = true
+      if #a ~= #b then
+        table.insert(msg, "Unexpected number of array elements, expected " .. #a .. ", got " .. #b)
+        res = false
+      end
       for k, v in pairs(a) do
         res = res and iter(v, b[k], name .. "." .. k, msg)
       end
