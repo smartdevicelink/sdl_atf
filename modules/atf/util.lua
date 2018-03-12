@@ -168,7 +168,7 @@ function compareValues(a, b, name)
     if type(a) == 'table' and type(b) == 'table' then
       local res = true
       if #a ~= #b then
-        table.insert(msg, "Unexpected number of array elements, expected " .. #a .. ", got " .. #b)
+        table.insert(msg, string.format("number of array elements %s: expected %s, actual: %s", name, #a, #b))
         res = false
       end
       for k, v in pairs(a) do
