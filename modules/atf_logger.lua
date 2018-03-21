@@ -11,7 +11,6 @@ local json = require('json')
 local config = require('config')
 local io = require('atf.stdlib.std.io')
 local ford_constants = require("protocol_handler/ford_protocol_constants")
-local rpc_function_id = require('function_id')
 
 --- Singleton table which is used for perform all logging activities for ATF log.
 -- @table Logger
@@ -53,6 +52,8 @@ controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT_ACK] = "HeartbeatACK"
 Logger.mobile_log_format = "%s (%s) [%s, sessionId: %s, version: %s, frameType: %s, "
       .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n"
 Logger.hmi_log_format = "%s (%s) : %s \n"
+
+local rpc_function_id
 
 --- Get function name from Mobile API
 -- @tparam table message Message table
@@ -216,6 +217,7 @@ end
 --- Initialization of ATF logger
 -- @tparam string script_name Test script name
 function Logger.init_log(script_name)
+  rpc_function_id = require('function_id')
   Logger.script_file_name = script_name
   Logger.start_file_timestamp = timestamp()
 
