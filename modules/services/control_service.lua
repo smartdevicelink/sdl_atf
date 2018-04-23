@@ -107,7 +107,7 @@ function mt.__index:StopService(service)
   event.matches = function(_, data)
     return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
     data.serviceType == service and
-    (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
+    (data.sessionId == self.session.sessionId.get()) and
     (data.frameInfo == constants.FRAME_INFO.END_SERVICE_ACK or
       data.frameInfo == constants.FRAME_INFO.END_SERVICE_NACK)
   end
