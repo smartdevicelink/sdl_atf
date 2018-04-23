@@ -121,7 +121,7 @@ end
 
 --- Stop RPC service
 function mt.__index:StopRPC()
-  self.mobile_session_impl:StopRPC()
+  return self.mobile_session_impl:StopRPC()
 end
 
 --- Send message from mobile to SDL
@@ -143,7 +143,7 @@ end
 
 --- Stop rpc service (7) and stop Heartbeat
 function mt.__index:Stop()
-  self.mobile_session_impl:Stop()
+  return self.mobile_session_impl:Stop()
 end
 
 --- Construct instance of MobileSession type

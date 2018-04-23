@@ -173,7 +173,7 @@ end
 
 --- Stop rpc service (7) and stop Heartbeat
 function mt.__index:Stop()
-  self:StopRPC()
+  return self:StopRPC()
 end
 
 --- Construct instance of MobileSessionImpl type
