@@ -126,6 +126,10 @@ function control.runNextCase()
   if testcase then
     Test.current_case_name = Test.case_names[testcase]
     xmlReporter.AddCase(Test.current_case_name)
+    if Test.caseTitles and Test.caseTitles[Test.current_case_name] then
+      print(console.setattr(Test.caseTitles[Test.current_case_name], "green", 2))
+      atf_logger.LOGTestCaseStart(Test.caseTitles[Test.current_case_name])
+    end
     atf_logger.LOGTestCaseStart(Test.current_case_name)
     testcase(Test)
     --- Perform delay for the time defined in 'zeroOccurrenceTimeout' configuration parameter
