@@ -62,7 +62,7 @@ function mt.__index:CheckCorrelationID(message)
       end
     end
   else
-    error("MobileSession:Send: message with correlationId: "..message_correlation_id.." in session "..self.session.sessionId.get() .." was sent earlier by ATF")
+    print("Warning: message with correlationId "..message_correlation_id.." in session "..self.session.sessionId.get() .." was sent earlier by ATF")
   end
 end
 
@@ -117,7 +117,7 @@ function mt.__index:ExpectResponse(cor_id, ...)
     cor_id = tbl_corr_id[1]
     end
     if not func_name then
-      error("Function with cor_id : "..temp_cor_id.." was not sent by ATF")
+      print("Warning: Function with cor_id "..temp_cor_id.." was not sent by ATF")
     end
   end
   local args = table.pack(...)
