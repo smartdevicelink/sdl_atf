@@ -20,7 +20,8 @@ SDLProtocolConstants.FRAME_SIZE = {
   P1 = 1500,
   P2 = 1500,
   P3 = 131084,
-  P4 = 131084
+  P4 = 131084,
+  P5 = 131084,
 }
 
 --- Frame type enumeration

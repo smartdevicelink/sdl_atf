@@ -193,12 +193,20 @@ local function isStartServiceAck(message)
     and message.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK
 end
 
+--- Check whether message is StartService
+-- @tparam table message Message with binary data
+-- @treturn boolean True if message is StartService
+local function isStartService(message)
+  return message.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+    and message.frameInfo == constants.FRAME_INFO.START_SERVICE
+end
+
 --- Encrypt payload of message using mobile session security settings
 -- @tparam string data Bytes to to encrypt
 -- @tparam table message Message with header
 -- @treturn string Encrypted data
 local function encryptPayload(data, message)
-  if message.encryption and data then
+  if message.encryption and data and not isStartService(message) then
     local encryptionStatus, encryptedData = securityManager:encrypt(data, message.sessionId, message.serviceType)
     if encryptionStatus == securityConstants.SECURITY_STATUS.ERROR then
       error("Protocol handler: Encryption error")
