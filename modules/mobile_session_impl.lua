@@ -15,8 +15,8 @@ local control_services = require('services/control_service')
 local rpc_services = require('services/rpc_service')
 local heartbeatMonitor = require('services/heartbeat_monitor')
 local mobileExpectations = require('expectations/session_expectations')
+local constants = require('protocol_handler/ford_protocol_constants')
 
-local Event = events.Event
 local FAILED = expectations.FAILED
 local MSI = {}
 local mt = { __index = { } }
@@ -113,7 +113,13 @@ end
 --- Start RPC service and heartBeat
 -- @treturn Expectation Expectation for StartService ACK
 function mt.__index:StartRPC()
-  local ret = self:StartService(7)
+  local ret = self:StartService(constants.SERVICE_TYPE.RPC)
+  ret:Do(function()
+      -- Heartbeat
+      if self.version > 2 then
+        self.heartbeat_monitor:StartHeartbeat()
+      end
+    end)
   ret:Do(function(s, data)
     if s.status == FAILED then return end
     self.sessionId.set(data.sessionId)
@@ -129,7 +135,7 @@ end
 
 --- Stop RPC service
 function mt.__index:StopRPC()
-  local ret = self.control_services:StopService(7)
+  local ret = self.control_services:StopService(constants.SERVICE_TYPE.RPC)
   self:StopHeartbeat()
   return ret
 end

@@ -21,6 +21,7 @@ local console = require('console')
 local fmt = require('format')
 local SDL = require('SDL')
 local exit_codes = require('exit_codes')
+local util = require ("atf.util")
 
 local Test = { }
 
@@ -166,7 +167,7 @@ function control.runNextCase()
       SDL:StopSDL()
     end
     Test.current_case_name = nil
-    print_stopscript()
+    util.runner.print_stopscript()
     xmlReporter:finalize()
     if total_testset_result == false then
       quit(exit_codes.failed)

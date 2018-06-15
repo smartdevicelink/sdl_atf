@@ -21,7 +21,7 @@ local MobileConnection = {
 -- @tparam FileConnection connection Lower level connection
 -- @treturn MobileConnection Constructed instance
 function MobileConnection.MobileConnection(connection)
-  res = { }
+  local res = { }
   res.connection = connection
   setmetatable(res, MobileConnection.mt)
   return res
