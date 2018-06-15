@@ -114,12 +114,6 @@ end
 -- @treturn Expectation Expectation for StartService ACK
 function mt.__index:StartRPC()
   local ret = self:StartService(constants.SERVICE_TYPE.RPC)
-  ret:Do(function()
-      -- Heartbeat
-      if self.version > 2 then
-        self.heartbeat_monitor:StartHeartbeat()
-      end
-    end)
   ret:Do(function(s, data)
     if s.status == FAILED then return end
     self.sessionId.set(data.sessionId)
