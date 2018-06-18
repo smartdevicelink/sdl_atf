@@ -50,7 +50,7 @@ config.autorunSDL = true
 --- Security
 --
 --- Define security protocol
-config.SecurityProtocol = "TLS"
+config.SecurityProtocol = "DTLS"
 --- Define ciphers
 config.cipherListString = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
 --- Define path to server certificate with public key
