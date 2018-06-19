@@ -25,7 +25,9 @@ config.zeroOccurrenceTimeout = 2000
 config.checkAllValidations = false
 --- Define default version of Ford protocol
 -- 1 - basic
--- 2 - RPC, encription
+--
+-- 2 - RPC, encryption
+--
 -- 3 - video/audio streaming, heartbeat
 -- 4 - SDL 4.0
 config.defaultProtocolVersion = 3
@@ -45,6 +47,22 @@ config.sdl_logs_port = 6676
 config.ExitOnCrash = true
 --- Flag which defines whether ATF starts SDL on startup
 config.autorunSDL = true
+--- Security
+--
+--- Define security protocol
+config.SecurityProtocol = "DTLS"
+--- Define ciphers
+config.cipherListString = "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH"
+--- Define path to server certificate with public key
+config.serverCertificatePath = "./data/cert/spt_credential.pem"
+--- Define path to server private key
+config.serverPrivateKeyPath = "./data/cert/spt_credential.pem"
+--- Define path to server CA certificates chain for client certificate validation
+config.serverCAChainCertPath = "./data/cert/spt_credential.pem"
+--- Define whether client certificate validation needed
+config.isCheckClientCertificate = true
+--- Logs and Reports
+--
 --- Flag which defines whether ATF displays time of test step run
 config.ShowTimeInConsole = true
 --- Flag which defines whether ATF performs validation of Mobile and HMI messages by API

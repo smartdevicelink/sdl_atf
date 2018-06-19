@@ -35,7 +35,7 @@ function FileConnection.mt.__index:Connect()
 end
 
 --- Split message to chanks and send them to SDL
--- @tparam table data Data to be sent
+-- @tparam table data List of messages to be sent
 function FileConnection.mt.__index:Send(data)
   for _, chunk in ipairs(data) do
     self.fbuf:WriteMessage(chunk)
@@ -46,11 +46,13 @@ end
 
 --- Start streaming file to SDL
 -- @tparam number session Session identificator
+-- @tparam number version SDL protocol version
 -- @tparam number service Sevice number
+-- @tparam boolean encryption True in case of encrypted streaming
 -- @tparam string filename Name of file to be streamed
 -- @tparam number bandwidth Bandwidth in bytes
-function FileConnection.mt.__index:StartStreaming(session, service, filename, bandwidth)
-  local stream = message_dispatcher.FileStream(filename, session, service, bandwidth or 30 * 1024, 1488)
+function FileConnection.mt.__index:StartStreaming(session, version, service, encryption, filename, bandwidth)
+  local stream = message_dispatcher.FileStream(filename, version, session, service, encryption, bandwidth)
   self.mapped[filename] = stream
   self.fmapper:MapFile(stream)
   self.fmapper:Pulse()
