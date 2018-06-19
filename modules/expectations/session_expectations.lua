@@ -14,8 +14,6 @@ local events = require('events')
 
 local Expectation = expectations.Expectation
 local Event = events.Event
-local SUCCESS = expectations.SUCCESS
-local FAILED = expectations.FAILED
 
 local SessionExpectations = {}
 local mt = { __index = { } }
@@ -38,7 +36,7 @@ end
 --- Expectation of any event
 -- @treturn Expectation Expectation table for any unprocessed event
 function mt.__index:ExpectAny()
-  local event = events.Event()
+  local event = Event()
   event.level = 1
   event.matches = function(_, data)
     return data.sessionId == self.session.sessionId.get()

@@ -61,25 +61,25 @@ end
 -- @treturn Expectation Expectation on start service event
 function mt.__index:StartService(service)
   xmlReporter.AddMessage("StartService", service)
-  local startSession =
+  local startServiceMessage =
   {
     serviceType = service,
     frameInfo =  constants.FRAME_INFO.START_SERVICE,
     sessionId = self.session.sessionId.get(),
   }
   -- prepare event to expect
-  local startserviceEvent = Event()
-  startserviceEvent.matches = function(_, data)
+  local startServiceEvent = Event()
+  startServiceEvent.matches = function(_, data)
     return data.frameType == 0 and
     data.serviceType == service and
     (service == constants.SERVICE_TYPE.RPC or data.sessionId == self.session.sessionId.get()) and
     (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK or
       data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
   end
-  self:Send(startSession)
+  self:Send(startServiceMessage)
 
-  local ret = self.session:ExpectEvent(startserviceEvent, "StartService ACK")
-  :ValidIf(function(s, data)
+  local ret = self.session:ExpectEvent(startServiceEvent, "StartService ACK")
+  :ValidIf(function(_, data)
       if data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK then
         xmlReporter.AddMessage("StartService", "StartService ACK", "True")
         return true
@@ -113,7 +113,7 @@ function mt.__index:StopService(service)
   end
 
   local ret = self.session:ExpectEvent(event, "EndService ACK")
-  :ValidIf(function(s, data)
+  :ValidIf(function(_, data)
       if data.frameInfo == constants.FRAME_INFO.END_SERVICE_ACK then return true
       else return false, "EndService NACK received" end
     end)

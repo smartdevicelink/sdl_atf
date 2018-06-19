@@ -21,7 +21,7 @@ local MobileConnection = {
 -- @tparam FileConnection connection Lower level connection
 -- @treturn MobileConnection Constructed instance
 function MobileConnection.MobileConnection(connection)
-  res = { }
+  local res = { }
   res.connection = connection
   setmetatable(res, MobileConnection.mt)
   return res
@@ -74,12 +74,12 @@ function MobileConnection.mt.__index:OnInputData(func)
   local this = self
   local protocol_handler = ph.ProtocolHandler()
   local f =
-  function(self, binary)
-    local msg = protocol_handler:Parse(binary)
-    for _, v in ipairs(msg) do
+  function(_, binary)
+    local msgs = protocol_handler:Parse(binary)
+    for _, msg in ipairs(msgs) do
       -- After refactoring should be moved in mobile session
-      atf_logger.LOG("SDLtoMOB", v)
-      func(this, v)
+      atf_logger.LOG("SDLtoMOB", msg)
+      func(this, msg)
     end
   end
   self.connection:OnInputData(f)

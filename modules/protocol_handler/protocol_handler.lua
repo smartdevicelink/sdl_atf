@@ -18,7 +18,7 @@ local mt = { __index = { } }
 --- Construct instance of ProtocolHandler type
 -- @treturn ProtocolHandler Constructed instance
 function ProtocolHandler.ProtocolHandler()
-  ret =
+  local ret =
   {
     buffer = "",
     frames = { }

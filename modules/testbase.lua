@@ -21,6 +21,7 @@ local console = require('console')
 local fmt = require('format')
 local SDL = require('SDL')
 local exit_codes = require('exit_codes')
+local util = require ("atf.util")
 
 local Test = { }
 
@@ -166,7 +167,7 @@ function control.runNextCase()
       SDL:StopSDL()
     end
     Test.current_case_name = nil
-    print_stopscript()
+    util.runner.print_stopscript()
     xmlReporter:finalize()
     if total_testset_result == false then
       quit(exit_codes.failed)
@@ -219,7 +220,7 @@ local function CheckStatus()
   end
   fmt.PrintCaseResult(Test.current_case_time, Test.current_case_name, success, errorMessage, warningMessage, timestamp() - Test.ts)
   xmlReporter.CaseMessageTotal(Test.current_case_name,{ ["result"] = success, ["timestamp"] = (timestamp() - Test.ts)} )
-  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILD"}, errorMessage ) end
+  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILED"}, errorMessage ) end
   Test.expectations_list:Clear()
   Test.current_case_name = nil
   if Test.current_case_mandatory and not success then
