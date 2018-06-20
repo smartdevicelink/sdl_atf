@@ -52,7 +52,7 @@ end
 -- @tparam string filename Name of file to be streamed
 -- @tparam number bandwidth Bandwidth in bytes
 function FileConnection.mt.__index:StartStreaming(session, version, service, encryption, filename, bandwidth)
-  local stream = message_dispatcher.FileStream(filename, version, session, service, encryption, bandwidth)
+  local stream = message_dispatcher.FileStream(filename, version, session, service, encryption, bandwidth or 30 * 1024)
   self.mapped[filename] = stream
   self.fmapper:MapFile(stream)
   self.fmapper:Pulse()
