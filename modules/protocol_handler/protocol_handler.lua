@@ -270,6 +270,7 @@ function mt.__index:Parse(binary, validateJson, frameHandler)
         table.insert(res, msg)
       elseif msg.frameType == constants.FRAME_TYPE.FIRST_FRAME then
         self.frames[msg.messageId] = ""
+        self.totalSize = msg.size
       elseif msg.frameType == constants.FRAME_TYPE.SINGLE_FRAME then
         if isBinaryDataHasHeader(msg) then
           parseBinaryHeader(msg, validateJson)
@@ -277,9 +278,12 @@ function mt.__index:Parse(binary, validateJson, frameHandler)
         table.insert(res, msg)
       elseif msg.frameType == constants.FRAME_TYPE.CONSECUTIVE_FRAME then
         self.frames[msg.messageId] = self.frames[msg.messageId] .. msg.binaryData
+        self.totalSize = self.totalSize + msg.size
         if msg.frameInfo == constants.FRAME_INFO.LAST_FRAME then
           msg.binaryData = self.frames[msg.messageId]
+          msg.size = self.totalSize
           self.frames[msg.messageId] = nil
+          self.totalSize = nil
           if isBinaryDataHasHeader(msg) then
             parseBinaryHeader(msg, validateJson)
           end
