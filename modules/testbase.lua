@@ -202,7 +202,8 @@ local function CheckStatus()
     print(console.setattr("SDL has unexpectedly crashed or stop responding!", "cyan", 1))
     critical(SDL.exitOnCrash)
     SDL:DeleteFile()
-  elseif Test.expectations_list:Any(function(e) return not e.status end) then return end
+  end
+  if Test.expectations_list:Any(function(e) return not e.status end) then return end
   for _, e in ipairs(Test.expectations_list) do
     if e.status ~= SUCCESS then
       success = false
