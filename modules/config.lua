@@ -94,7 +94,8 @@ config.application1 =
     languageDesired = 'EN-US',
     hmiDisplayLanguageDesired = 'EN-US',
     appHMIType = { "NAVIGATION" },
-    appID = "0000001",
+    appID = "0001",
+    fullAppID = "0000001",
     deviceInfo =
     {
       os = "Android",
@@ -121,7 +122,8 @@ config.application2 =
     languageDesired = 'EN-US',
     hmiDisplayLanguageDesired = 'EN-US',
     appHMIType = { "NAVIGATION" },
-    appID = "0000002",
+    appID = "0002",
+    fullAppID = "0000002",
     deviceInfo =
     {
       os = "Android",
@@ -148,7 +150,8 @@ config.application3 =
     languageDesired = 'EN-US',
     hmiDisplayLanguageDesired = 'EN-US',
     appHMIType = { "NAVIGATION" },
-    appID = "0000003",
+    appID = "0003",
+    fullAppID = "0000003",
     deviceInfo =
     {
       os = "Android",
@@ -175,7 +178,8 @@ config.application4 =
     languageDesired = 'EN-US',
     hmiDisplayLanguageDesired = 'EN-US',
     appHMIType = { "NAVIGATION" },
-    appID = "0000004",
+    appID = "0004",
+    fullAppID = "0000004",
     deviceInfo =
     {
       os = "Android",
@@ -202,7 +206,8 @@ config.application5 =
     languageDesired = 'EN-US',
     hmiDisplayLanguageDesired = 'EN-US',
     appHMIType = { "NAVIGATION" },
-    appID = "0000005",
+    appID = "0005",
+    fullAppID = "0000005",
     deviceInfo =
     {
       os = "Android",
