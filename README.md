@@ -71,9 +71,30 @@ $ sudo find / -name qmake
    Here you can find qmake location.
 
 ## Run:
-``` ./start.sh [options] [script file name] ```
+``` ./start.sh SDL TEST [OPTION]... ```
+
+
+- SDL  - path to SDL binaries
+- TEST - test target, could be one of the following:
+  - test script
+  - test set
+  - folder with test scripts
+- [OPTION] - options supported by ATF:
+  - --sdl-interfaces   - path to SDL APIs
+  - --report-path      - path to report and logs
+
+In case if folder is specified:
+   - only scripts which name starts with number will be taken into account (e.g. 001, 002 etc.)
+   - if there are sub-folders scripts will be run recursively
+
+Besides execution of test scripts start.sh also does auxiliary actions:
+   - clean up SDL and ATF folders before running of each script
+   - backup and restore SDL important files
+   - create report with all required logs for each script
+
 
 ## Documentation generation
+
 ### Download and install [ldoc](stevedonovan.github.io/ldoc/manual/doc.md.html)
 ```
 sudo apt install luarocks
@@ -82,37 +103,34 @@ sudo luarocks install penlight
 sudo luarocks install ldoc
 sudo luarocks install discount
 ```
+
 ### Generate ATF documentation
 ```
 cd sdl_atf
 ldoc -c docs/config.ld .
 ```
+
 ### Open documentation
 ```chromium-browser docs/html/index.html```
 
 ### Useful options:
-#### Path to SDL
-You can setup path to SDL via command line with ```--sdl-core``` option.
+#### Path to SDL APIs
+By default ATF uses APIs from `./data` folder.
+But this behavior can be overridden via command line with `--sdl-interfaces` option.
+If this option is defined with a particular path, ATF will copy APIs from path defined to `./data` folder during script execution.
 
 **Example :**
 ```
-./start.sh --sdl-core=/home/user/development/sdl/build/bin ./test_scripts/ActivationDuringActiveState.lua
+./start.sh /home/user/development/sdl/build/bin ./test_scripts/test.lua --sdl-interfaces=~/sdl_core/src/components/interfaces
 ```
 
-Or via config file(```modules/config.lua```) with config parameter
+#### Path to Reports folder
+By default folder for the reports is `./TestingReports`
+But this can be overridden via command line with `--report-path` option
 
 **Example :**
-*ATF config : modules/config.lua :*
 ```
-config.pathToSDL = "home/user/development/sdl/build/bin"
-```
-
-also you can copy ```modules/config.lua``` to root and rename to ```local_config.lua```.
-```local_config.lua``` is added to ```.gitignore```
-
-Usage example:
-```
-./start.sh -clocal_config.lua ATF_script.lua 
+./start.sh /home/user/development/sdl/build/bin ./test_scripts/test.lua --report-path=~/Reports
 ```
 
 #### Connect ATF to already started SDL
@@ -145,5 +163,6 @@ ServerPort = 8087
 ; Listening port form incoming TCP mobile connection
 TCPAdapterPort = 12345
 ```
+
 ## Run tests
 ``` make test```
