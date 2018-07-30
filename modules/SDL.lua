@@ -38,13 +38,13 @@ local usedBuildOptions = {
   }
 }
 
---- Read specified parameter from CMakeCache.txt file
+--- Read specified parameter from build_config.txt file
 -- @tparam string paramName Parameter to read value
 -- @treturn string The main result. Value read of parameter.
 -- Can be nil in case parameter was not found.
 -- @treturn string Type of read parameter
-local function readParameterFromCMakeCacheFile(paramName)
-  local pathToFile = config.pathToSDL .. "/CMakeCache.txt"
+local function readParameterFromBuildConfigFile(paramName)
+  local pathToFile = config.pathToSDL .. "/build_config.txt"
   if is_file_exists(pathToFile) then
     local paramValue, paramType
     for line in io.lines(pathToFile) do
@@ -63,13 +63,9 @@ end
 -- @tparam string sdlBuildParam SDL build parameter to read value
 -- @tparam string defaultValue Default value of set option
 local function setSdlBuildOption(self, optionName, sdlBuildParam, defaultValue)
-  local value, paramType = readParameterFromCMakeCacheFile(sdlBuildParam)
+  local value, paramType = readParameterFromBuildConfigFile(sdlBuildParam)
   if value == nil then
     value = defaultValue
-    local msg = "SDL build option " ..
-      sdlBuildParam .. " is unavailable.\nAssume that SDL was built with " ..
-      sdlBuildParam .. " = " .. defaultValue
-    print(console.setattr(msg, "cyan", 1))
   else
     if paramType == "UNINITIALIZED" then
       value = nil
