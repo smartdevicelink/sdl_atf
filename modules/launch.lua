@@ -9,7 +9,7 @@
 
 local util = require ("atf.util")
 
-util.commandLine.declare_opt("-c", "--config-file", util.commandLine.consts.RequiredArgument, "Config file")
+util.commandLine.declare_long_opt("--config-file", util.commandLine.consts.RequiredArgument, "Config file")
 util.commandLine.declare_long_opt("--mobile-connection", util.commandLine.consts.RequiredArgument, "Mobile connection IP")
 util.commandLine.declare_long_opt("--mobile-connection-port", util.commandLine.consts.RequiredArgument, "Mobile connection port")
 util.commandLine.declare_long_opt("--hmi-connection", util.commandLine.consts.RequiredArgument, "HMI connection IP")
@@ -18,8 +18,6 @@ util.commandLine.declare_long_opt("--perflog-connection", util.commandLine.const
 util.commandLine.declare_long_opt("--perflog-connection-port", util.commandLine.consts.RequiredArgument, "Perflog connection port")
 util.commandLine.declare_long_opt("--report-path", util.commandLine.consts.RequiredArgument, "Path for a report collecting.")
 util.commandLine.declare_long_opt("--report-mark", util.commandLine.consts.RequiredArgument, "Specify label of string for marking test report.")
-util.commandLine.declare_short_opt("-r", util.commandLine.consts.NoArgument, "Recursively scan of folders")
-util.commandLine.declare_short_opt("-p", util.commandLine.consts.NoArgument, "Parallel script running mode")
 util.commandLine.declare_long_opt("--storeFullSDLLogs", util.commandLine.consts.NoArgument, "Store Full SDL Logs enable")
 util.commandLine.declare_long_opt("--heartbeat", util.commandLine.consts.RequiredArgument, "Hearbeat timeout value")
 util.commandLine.declare_long_opt("--sdl-core", util.commandLine.consts.RequiredArgument, "Path to folder with SDL binary")
