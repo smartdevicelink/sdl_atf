@@ -13,7 +13,6 @@
 local xml = require('xml')
 
 local apiLoader = { }
-local interfaceVersion = { }
 
 --- Include result codes that are elements in functions from Mobile Api.
 -- Each function with paremeter resultCode that has type Result
