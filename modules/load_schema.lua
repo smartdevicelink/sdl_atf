@@ -22,10 +22,13 @@ LoadSchema.response = 'response'
 LoadSchema.request = 'request'
 LoadSchema.notification = 'notification'
 if (not LoadSchema.mob_schema) then
-  LoadSchema.mob_schema = validator.CreateSchemaValidator(api_loader.init("data/MOBILE_API.xml"))
+  LoadSchema.mob_api = api_loader.init("data/MOBILE_API.xml")
+  LoadSchema.mob_api_version = LoadSchema.mob_api.interface["SmartDeviceLink RAPI"].version
+  LoadSchema.mob_schema = validator.CreateSchemaValidator(LoadSchema.mob_api)
 end
 if (not LoadSchema.hmi_schema) then
-  LoadSchema.hmi_schema = validator.CreateSchemaValidator(api_loader.init("data/HMI_API.xml"))
+  LoadSchema.hmi_api = api_loader.init("data/HMI_API.xml")
+  LoadSchema.hmi_schema = validator.CreateSchemaValidator(LoadSchema.hmi_api)
 end
 
 return LoadSchema
