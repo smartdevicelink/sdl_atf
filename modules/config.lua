@@ -86,7 +86,7 @@ config.application1 =
   {
     syncMsgVersion =
     {
-      majorVersion = 3,
+      majorVersion = 5,
       minorVersion = 0
     },
     appName = "Test Application",
@@ -113,7 +113,7 @@ config.application2 =
   {
     syncMsgVersion =
     {
-      majorVersion = 3,
+      majorVersion = 5,
       minorVersion = 0
     },
     appName = "Test Application2",
@@ -140,7 +140,7 @@ config.application3 =
   {
     syncMsgVersion =
     {
-      majorVersion = 3,
+      majorVersion = 5,
       minorVersion = 0
     },
     appName = "Test Application3",
@@ -167,7 +167,7 @@ config.application4 =
   {
     syncMsgVersion =
     {
-      majorVersion = 3,
+      majorVersion = 5,
       minorVersion = 0
     },
     appName = "Test Application4",
@@ -194,7 +194,7 @@ config.application5 =
   {
     syncMsgVersion =
     {
-      majorVersion = 3,
+      majorVersion = 5,
       minorVersion = 0
     },
     appName = "Test Application5",
