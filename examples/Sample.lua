@@ -4,7 +4,6 @@ local events = require('events')
 local mobile_session = require('mobile_session')
 
 local CommonFunctions = require('examples/CommonFunctions')
-require('user_modules/AppTypes')
 
 config.deviceMAC = "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0"
 config.defaultProtocolVersion = 2

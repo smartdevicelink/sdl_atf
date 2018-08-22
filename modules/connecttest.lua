@@ -1,5 +1,18 @@
+---- Provides high level interface for test script creation and base precondition snippets
+--
+--
+-- *Dependencies:* `atf.util`, `testbase`, `mobile_connection`, `tcp_connection`, `file_connection`,
+-- `mobile_session`, `websocket_connection`, `hmi_connection`, `events`, `expectations`, `function_id`,
+-- `SDL`, `exit_codes`, `load_schema`
+--
+-- *Globals:* `config`, `event_dispatcher`, `xmlReporter`, `table2str`, `func_name_str`, `compareValues`, `qt`, `timers`
+-- `event_str`, `critical()`, `errmsg`, `quit()`, `AnyNumber()`, `enableFullLoggintTestCase()`, `disableFullLoggintTestCase()`
+-- @module connecttest
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
 require('atf.util')
-local module = require('testbase')
+local Test = require('testbase')
 local mobile = require("mobile_connection")
 local tcp = require("tcp_connection")
 local file_connection = require("file_connection")
@@ -10,7 +23,7 @@ local events = require("events")
 local expectations = require('expectations')
 local functionId = require('function_id')
 local SDL = require('SDL')
-
+local exit_codes = require('exit_codes')
 local load_schema = require('load_schema')
 
 local mob_schema = load_schema.mob_schema
@@ -22,15 +35,24 @@ local Expectation = expectations.Expectation
 local SUCCESS = expectations.SUCCESS
 local FAILED = expectations.FAILED
 
-module.hmiConnection = hmi_connection.Connection(websocket.WebSocketConnection(config.hmiUrl, config.hmiPort))
+--- Type Test extends Test from testbase module
+-- @type Test
+
+--- HMI connection
+Test.hmiConnection = hmi_connection.Connection(websocket.WebSocketConnection(config.hmiUrl, config.hmiPort))
 local tcpConnection = tcp.Connection(config.mobileHost, config.mobilePort)
 local fileConnection = file_connection.FileConnection("mobile.out", tcpConnection)
-module.mobileConnection = mobile.MobileConnection(fileConnection)
-event_dispatcher:AddConnection(module.hmiConnection)
-event_dispatcher:AddConnection(module.mobileConnection)
-module.notification_counter=1
 
-function module.hmiConnection:EXPECT_HMIRESPONSE(id, args)
+--- Default mobile connection
+Test.mobileConnection = mobile.MobileConnection(fileConnection)
+event_dispatcher:AddConnection(Test.hmiConnection)
+event_dispatcher:AddConnection(Test.mobileConnection)
+--- Notification counter
+Test.notification_counter = 1
+--- Tist of timers for specific test
+Test.timers = { }
+
+function Test.hmiConnection:EXPECT_HMIRESPONSE(id, args)
   local event = events.Event()
   event.matches = function(self, data) return data.id == id end
   local ret = Expectation("HMI response " .. id, self)
@@ -41,6 +63,7 @@ function module.hmiConnection:EXPECT_HMIRESPONSE(id, args)
       else
         arguments = args[self.occurences]
       end
+
       xmlReporter.AddMessage("EXPECT_HMIRESPONSE", {["Id"] = tostring(id),["Type"] = "EXPECTED_RESULT"},arguments)
       xmlReporter.AddMessage("EXPECT_HMIRESPONSE", {["Id"] = tostring(id),["Type"] = "AVALIABLE_RESULT"},data)
       local func_name = data.method
@@ -49,16 +72,28 @@ function module.hmiConnection:EXPECT_HMIRESPONSE(id, args)
       if(table2str(arguments):match('result')) then
         results_args = arguments.result
         results_args2 = arguments.result
+      elseif(table2str(arguments):match('error')) then
+        results_args = arguments.error
+        results_args2 = arguments.error
       end
-      if results_args2 and results_args2.code then
-        results_args2 = table.removeKey(results_args2, 'code')
+
+      if results_args2 then
+        if results_args2.code then
+          results_args2 = table.removeKey(results_args2, 'code')
+        end
+        if results_args2.method then
+          results_args2 = table.removeKey(results_args2, 'method')
+        elseif results_args2.data and results_args2.data.method then
+          results_args2 = table.removeKey(results_args2.data, 'method')
+        end
       end
-      if results_args2 and results_args2.method then
-        results_args2 = table.removeKey(results_args2, 'method')
-      end
+
       if func_name == nil and type(data.result) == 'table' then
         func_name = data.result.method
+      elseif func_name == nil and type(data.error) == 'table' then
+        func_name = data.error.data.method
       end
+
       local _res, _err
       _res = true
       if not (table2str(arguments):match('error')) then
@@ -67,267 +102,77 @@ function module.hmiConnection:EXPECT_HMIRESPONSE(id, args)
       if (not _res) then
         return _res,_err
       end
+
       if func_name and results_args and data.result then
         return compareValues(results_args, data.result, "result")
+      elseif func_name and results_args and data.error then
+        return compareValues(results_args, data.error, "error")
       else
         return compareValues(results_args, data.params, "params")
       end
     end)
   ret.event = event
-  event_dispatcher:AddEvent(module.hmiConnection, event, ret)
-  module:AddExpectation(ret)
+  event_dispatcher:AddEvent(Test.hmiConnection, event, ret)
+  Test:AddExpectation(ret)
   return ret
 end
 
-function EXPECT_HMIRESPONSE(id,...)
-  local args = table.pack(...)
-  return module.hmiConnection:EXPECT_HMIRESPONSE(id, args)
-end
 
-function EXPECT_HMINOTIFICATION(name,...)
-  local args = table.pack(...)
-  local event = events.Event()
-  event.matches = function(self, data) return data.method == name end
-  local ret = Expectation("HMI notification " .. name, module.hmiConnection)
-  if #args > 0 then
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        local correlation_id = module.notification_counter
-        module.notification_counter = module.notification_counter + 1
-        xmlReporter.AddMessage("EXPECT_HMINOTIFICATION", {["Id"] = correlation_id, ["name"] = tostring(name),["Type"] = "EXPECTED_RESULT"},arguments)
-        xmlReporter.AddMessage("EXPECT_HMINOTIFICATION", {["Id"] = correlation_id, ["name"] = tostring(name),["Type"] = "AVALIABLE_RESULT"},data)
-        local _res, _err = hmi_schema:Validate(name, load_schema.notification, data.params)
-        if (not _res) then return _res,_err end
-        return compareValues(arguments, data.params, "params")
-      end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(module.hmiConnection, event, ret)
-  module:AddExpectation(ret)
-  return ret
-end
 
-function EXPECT_HMICALL(methodName, ...)
-  local args = table.pack(...)
-  -- TODO: Avoid copy-paste
-  local event = events.Event()
-  event.matches =
-  function(self, data) return data.method == methodName end
-  local ret = Expectation("HMI call " .. methodName, module.hmiConnection)
-  if #args > 0 then
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        xmlReporter.AddMessage("EXPECT_HMICALL", {["Id"] = data.id, ["name"] = tostring(methodName),["Type"] = "EXPECTED_RESULT"},arguments)
-        xmlReporter.AddMessage("EXPECT_HMICALL", {["Id"] = data.id, ["name"] = tostring(methodName),["Type"] = "AVALIABLE_RESULT"},data.params)
-        _res, _err = hmi_schema:Validate(methodName, load_schema.request, data.params)
-        if (not _res) then return _res,_err end
-        return compareValues(arguments, data.params, "params")
-      end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(module.hmiConnection, event, ret)
-  module:AddExpectation(ret)
-  return ret
-end
-
-function EXPECT_NOTIFICATION(func,...)
-  -- xmlReporter.AddMessage(debug.getinfo(1, "n").name, "EXPECTED_RESULT", ... )
-  local args = table.pack(...)
-  local args_count = 1
-  if #args > 0 then
-    local arguments = {}
-    if #args > 1 then
-      for args_count = 1, #args do
-        if(type( args[args_count])) == 'table' then
-          table.insert(arguments, args[args_count])
-        end
-      end
-    else
-      arguments = args
-    end
-    return module.mobileSession:ExpectNotification(func,arguments)
-  end
-  return module.mobileSession:ExpectNotification(func,args)
-
-end
-
-function EXPECT_ANY_SESSION_NOTIFICATION(funcName, ...)
-  local args = table.pack(...)
-  local event = events.Event()
-  event.matches = function(_, data)
-    return data.rpcFunctionId == functionId[funcName]
-  end
-  local ret = Expectation(funcName .. " notification", module.mobileConnection)
-  if #args > 0 then
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
-        xmlReporter.AddMessage("EXPECT_ANY_SESSION_NOTIFICATION", {["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_ANY_SESSION_NOTIFICATION", {["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
-        if (not _res) then return _res,_err end
-        return compareValues(arguments, data.payload, "payload")
-      end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(module.mobileConnection, event, ret)
-  module.expectations_list:Add(ret)
-  return ret
-end
-
-module.timers = { }
-
-function RUN_AFTER(func, timeout, funcName)
-  func_name_str = "noname"
-  if funcName then
-    func_name_str = funcName
-  end
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, func_name_str, 
-    {["functionLine"] = debug.getinfo(func, "S").linedefined, ["Timeout"] = tostring(timeout)})
-  local d = qt.dynamic()
-  d.timeout = function(self)
-    func()
-    module.timers[self] = nil
-  end
-  local timer = timers.Timer()
-  module.timers[timer] = true
-  qt.connect(timer, "timeout()", d, "timeout()")
-  timer:setSingleShot(true)
-  timer:start(timeout)
-end
-
-function EXPECT_RESPONSE(correlationId, ...)
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, "EXPECTED_RESULT", ... )
-  return module.mobileSession:ExpectResponse(correlationId, ...)
-end
-
-function EXPECT_ANY_SESSION_RESPONSE(correlationId, ...)
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, {["CorrelationId"] = tostring(correlationId)})
-  local args = table.pack(...)
-  local event = events.Event()
-  event.matches = function(_, data)
-    return data.rpcCorrelationId == correlationId
-  end
-  local ret = Expectation("response to " .. correlationId, module.mobileConnection)
-  if #args > 0 then
-    ret:ValidIf(function(self, data)
-        local arguments
-        if self.occurences > #args then
-          arguments = args[#args]
-        else
-          arguments = args[self.occurences]
-        end
-        xmlReporter.AddMessage("EXPECT_ANY_SESSION_RESPONSE", "EXPECTED_RESULT", arguments)
-        xmlReporter.AddMessage("EXPECT_ANY_SESSION_RESPONSE", "AVALIABLE_RESULT", data.payload)
-        return compareValues(arguments, data.payload, "payload")
-      end)
-  end
-  ret.event = event
-  event_dispatcher:AddEvent(module.mobileConnection, event, ret)
-  module.expectations_list:Add(ret)
-  return ret
-end
-
-function EXPECT_ANY()
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, '')
-  return module.mobileSession:ExpectAny()
-end
-
-function EXPECT_EVENT(event, name)
-  local ret = Expectation(name, module.mobileConnection)
-  ret.event = event
-  event_dispatcher:AddEvent(module.mobileConnection, event, ret)
-  module:AddExpectation(ret)
-  return ret
-end
-
-function RAISE_EVENT(event, data, eventName)
-  event_str = "noname"
-  if eventName then
-    event_str = eventName
-  end
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, event_str)
-  event_dispatcher:RaiseEvent(module.mobileConnection, data)
-end
-
-function EXPECT_HMIEVENT(event, name)
-  xmlReporter.AddMessage(debug.getinfo(1, "n").name, name)
-  local ret = Expectation(name, module.hmiConnection)
-  ret.event = event
-  event_dispatcher:AddEvent(module.hmiConnection, event, ret)
-  module:AddExpectation(ret)
-  return ret
-end
-
-function StartSDL(SDLPathName, ExitOnCrash)
-  return SDL:StartSDL(SDLPathName, config.SDL, ExitOnCrash)
-end
-
-function StopSDL()
-  event_dispatcher:ClearEvents()
-  module.expectations_list:Clear()
-  return SDL:StopSDL()
-end
-
-function module:RunSDL()
+--- Add test step with start SDL
+function Test:RunSDL()
   self:runSDL()
 end
 
-function module:InitHMI()
+--- Add critical test step with initialize
+-- HMI with base checks
+function Test:InitHMI()
   critical(true)
   self:initHMI()
 end
 
-function module:InitHMI_onReady()
+--- Add critical test step with performing of onReady communications with base checks
+function Test:InitHMI_onReady()
   critical(true)
   self:initHMI_onReady()
 end
 
-function module:ConnectMobile()
+--- Add critical test step with open
+-- default mobile connection
+function Test:ConnectMobile()
   critical(true)
   self:connectMobile()
 end
 
-function module:StartSession()
+--- Add critical test step with start
+-- default mobile session on default mobile connection
+function Test:StartSession()
   critical(true)
   self:startSession()
 end
 
-function module:runSDL()
+--- Start SDL
+function Test:runSDL()
   if config.autorunSDL ~= true then
     SDL.autoStarted = false
     return
   end
   local result, errmsg = SDL:StartSDL(config.pathToSDL, config.SDL, config.ExitOnCrash)
   if not result then
-    SDL:DeleteFile()
-    quit(1)
+    quit(exit_codes.aborted)
   end
   SDL.autoStarted = true
 end
 
-function module:initHMI()
+--- Initialize HMI with base checks
+function Test:initHMI()
   local function registerComponent(name, subscriptions)
-    local rid = module.hmiConnection:SendRequest("MB.registerComponent", { componentName = name })
+    local rid = Test.hmiConnection:SendRequest("MB.registerComponent", { componentName = name })
     local exp = EXPECT_HMIRESPONSE(rid)
     if subscriptions then
       for _, s in ipairs(subscriptions) do
         exp:Do(function()
-            local rid = module.hmiConnection:SendRequest("MB.subscribeTo", { propertyName = s })
+            local rid = Test.hmiConnection:SendRequest("MB.subscribeTo", { propertyName = s })
             EXPECT_HMIRESPONSE(rid)
           end)
       end
@@ -367,10 +212,11 @@ function module:initHMI()
   self.hmiConnection:Connect()
 end
 
-function module:initHMI_onReady()
+--- Perform onReady communications with base checks
+function Test:initHMI_onReady()
   local function ExpectRequest(name, mandatory, params)
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
@@ -389,7 +235,7 @@ function module:initHMI_onReady()
   local function ExpectNotification(name, mandatory)
     xmlReporter.AddMessage(debug.getinfo(1, "n").name, tostring(name))
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
@@ -501,7 +347,7 @@ function module:initHMI_onReady()
       rows = rows or 1
     }
   end
-  local function image_field(name, width, heigth)
+  local function image_field(name, width, height)
     return
     {
       name = name,
@@ -611,6 +457,15 @@ function module:initHMI_onReady()
           upDownAvailable = true,
           imageSupported = true
         }
+      },
+      systemCapabilities = {
+          navigationCapability = {
+              sendLocationEnabled = true,
+              getWayPointsEnabled = true
+          },
+          phoneCapability = {
+              dialNumberEnabled = true
+          }
       }
     })
 
@@ -634,20 +489,22 @@ function module:initHMI_onReady()
   self.hmiConnection:SendNotification("BasicCommunication.OnReady")
 end
 
-function module:connectMobile()
+--- Open default mobile conection and add mobile disconnect expectation
+function Test:connectMobile()
   -- Disconnected expectation
   EXPECT_EVENT(events.disconnectedEvent, "Disconnected")
   :Pin()
   :Times(AnyNumber())
   :Do(function()
       print("Disconnected!!!")
-      quit(1)
+      quit(exit_codes.aborted)
     end)
   self.mobileConnection:Connect()
   return EXPECT_EVENT(events.connectedEvent, "Connected")
 end
 
-function module:startSession()
+--- Start default mobile session on default mobile conection
+function Test:startSession()
   self.mobileSession = mobile_session.MobileSession(
     self,
     self.mobileConnection,
@@ -663,28 +520,280 @@ function module:startSession()
     end)
 end
 
+--- Global functions
+-- @section Global
+
+--- Create expectation for specific HMI resonse and add it to expectation list
+-- @tparam number id Correlation identifier
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_HMIRESPONSE(id,...)
+  local args = table.pack(...)
+  return Test.hmiConnection:EXPECT_HMIRESPONSE(id, args)
+end
+
+--- Create expectation for specific HMI notification and add it to expectation list
+-- @tparam string name Notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_HMINOTIFICATION(name,...)
+  local args = table.pack(...)
+  local event = events.Event()
+  event.matches = function(self, data) return data.method == name end
+  local ret = Expectation("HMI notification " .. name, Test.hmiConnection)
+  if #args > 0 then
+    ret:ValidIf(function(self, data)
+        local arguments
+        if self.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[self.occurences]
+        end
+        local correlation_id = Test.notification_counter
+        Test.notification_counter = Test.notification_counter + 1
+        xmlReporter.AddMessage("EXPECT_HMINOTIFICATION", {["Id"] = correlation_id, ["name"] = tostring(name),["Type"] = "EXPECTED_RESULT"},arguments)
+        xmlReporter.AddMessage("EXPECT_HMINOTIFICATION", {["Id"] = correlation_id, ["name"] = tostring(name),["Type"] = "AVALIABLE_RESULT"},data)
+        local _res, _err = hmi_schema:Validate(name, load_schema.notification, data.params)
+        if (not _res) then return _res,_err end
+        return compareValues(arguments, data.params, "params")
+      end)
+  end
+  ret.event = event
+  event_dispatcher:AddEvent(Test.hmiConnection, event, ret)
+  Test:AddExpectation(ret)
+  return ret
+end
+
+--- Create expectation for specific HMI call and add it to expectation list
+-- @tparam string methodName Method name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_HMICALL(methodName, ...)
+  local args = table.pack(...)
+  -- TODO: Avoid copy-paste
+  local event = events.Event()
+  event.matches =
+  function(self, data) return data.method == methodName end
+  local ret = Expectation("HMI call " .. methodName, Test.hmiConnection)
+  if #args > 0 then
+    ret:ValidIf(function(self, data)
+        local arguments
+        if self.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[self.occurences]
+        end
+        xmlReporter.AddMessage("EXPECT_HMICALL", {["Id"] = data.id, ["name"] = tostring(methodName),["Type"] = "EXPECTED_RESULT"},arguments)
+        xmlReporter.AddMessage("EXPECT_HMICALL", {["Id"] = data.id, ["name"] = tostring(methodName),["Type"] = "AVALIABLE_RESULT"},data.params)
+        _res, _err = hmi_schema:Validate(methodName, load_schema.request, data.params)
+        if (not _res) then return _res,_err end
+        return compareValues(arguments, data.params, "params")
+      end)
+  end
+  ret.event = event
+  event_dispatcher:AddEvent(Test.hmiConnection, event, ret)
+  Test:AddExpectation(ret)
+  return ret
+end
+
+--- Create expectation for specific mobile notification from default session and add it to expectation list
+-- @tparam string func Notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_NOTIFICATION(func, ...)
+  -- xmlReporter.AddMessage(debug.getinfo(1, "n").name, "EXPECTED_RESULT", ... )
+  local args = table.pack(...)
+  local args_count = 1
+  if #args > 0 then
+    local arguments = {}
+    if #args > 1 then
+      for args_count = 1, #args do
+        if(type( args[args_count])) == 'table' then
+          table.insert(arguments, args[args_count])
+        end
+      end
+    else
+      arguments = args
+    end
+    return Test.mobileSession:ExpectNotification(func,arguments)
+  end
+  return Test.mobileSession:ExpectNotification(func,args)
+
+end
+
+--- Create expectation for specific mobile notification from any session and add it to expectation list
+-- @tparam string funcName Notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_ANY_SESSION_NOTIFICATION(funcName, ...)
+  local args = table.pack(...)
+  local event = events.Event()
+  event.matches = function(_, data)
+    return data.rpcFunctionId == functionId[funcName]
+  end
+  local ret = Expectation(funcName .. " notification", Test.mobileConnection)
+  if #args > 0 then
+    ret:ValidIf(function(self, data)
+        local arguments
+        if self.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[self.occurences]
+        end
+        local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
+        xmlReporter.AddMessage("EXPECT_ANY_SESSION_NOTIFICATION", {["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
+        xmlReporter.AddMessage("EXPECT_ANY_SESSION_NOTIFICATION", {["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        if (not _res) then return _res,_err end
+        return compareValues(arguments, data.payload, "payload")
+      end)
+  end
+  ret.event = event
+  event_dispatcher:AddEvent(Test.mobileConnection, event, ret)
+  Test.expectations_list:Add(ret)
+  return ret
+end
+
+--- Run function after specified delay
+-- @tparam function func Function to run
+-- @tparam number timeout Delay in msec
+-- @tparam ?string funcName function name
+function RUN_AFTER(func, timeout, funcName)
+  func_name_str = "noname"
+  if funcName then
+    func_name_str = funcName
+  end
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, func_name_str,
+    {["functionLine"] = debug.getinfo(func, "S").linedefined, ["Timeout"] = tostring(timeout)})
+  Test:RunAfter(func, timeout)
+end
+
+--- Create expectation for specific mobile response from default session and add it to expectation list
+-- @tparam number correlationId Correlation identifier
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_RESPONSE(correlationId, ...)
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, "EXPECTED_RESULT", ... )
+  return Test.mobileSession:ExpectResponse(correlationId, ...)
+end
+
+--- Create expectation for specific mobile response from any session and add it to expectation list
+-- @tparam number correlationId Correlation identifier
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation
+function EXPECT_ANY_SESSION_RESPONSE(correlationId, ...)
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, {["CorrelationId"] = tostring(correlationId)})
+  local args = table.pack(...)
+  local event = events.Event()
+  event.matches = function(_, data)
+    return data.rpcCorrelationId == correlationId
+  end
+  local ret = Expectation("response to " .. correlationId, Test.mobileConnection)
+  if #args > 0 then
+    ret:ValidIf(function(self, data)
+        local arguments
+        if self.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[self.occurences]
+        end
+        xmlReporter.AddMessage("EXPECT_ANY_SESSION_RESPONSE", "EXPECTED_RESULT", arguments)
+        xmlReporter.AddMessage("EXPECT_ANY_SESSION_RESPONSE", "AVALIABLE_RESULT", data.payload)
+        return compareValues(arguments, data.payload, "payload")
+      end)
+  end
+  ret.event = event
+  event_dispatcher:AddEvent(Test.mobileConnection, event, ret)
+  Test.expectations_list:Add(ret)
+  return ret
+end
+
+--- Create expectation for any mobile event and add it to expectation list
+-- @treturn Expectation Expectation
+function EXPECT_ANY()
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, '')
+  return Test.mobileSession:ExpectAny()
+end
+
+--- Create expectation for specific mobile event and add it to expectation list
+-- @tparam Event event Event for expectation
+-- @tparam string name Event name
+-- @treturn Expectation Expectation
+function EXPECT_EVENT(event, name)
+  local ret = Expectation(name, Test.mobileConnection)
+  ret.event = event
+  event_dispatcher:AddEvent(Test.mobileConnection, event, ret)
+  Test:AddExpectation(ret)
+  return ret
+end
+
+--- Raise specific event
+-- @tparam Event event Event
+-- @tparam table data Data for rise event
+-- @tparam ?string eventName Event name
+function RAISE_EVENT(event, data, eventName)
+  event_str = "noname"
+  if eventName then
+    event_str = eventName
+  end
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, event_str)
+  event_dispatcher:RaiseEvent(Test.mobileConnection, data)
+end
+
+--- Create expectation for specific HMI event and add it to expectation list
+-- @tparam Event event Event for expectation
+-- @tparam string name Event name
+-- @treturn Expectation Expectation
+function EXPECT_HMIEVENT(event, name)
+  xmlReporter.AddMessage(debug.getinfo(1, "n").name, name)
+  local ret = Expectation(name, Test.hmiConnection)
+  ret.event = event
+  event_dispatcher:AddEvent(Test.hmiConnection, event, ret)
+  Test:AddExpectation(ret)
+  return ret
+end
+
+--- Start SDL
+-- @tparam string SDLPathName Path to SDL
+-- @tparam boolean ExitOnCrash Flag whether Stop ATF in case SDL shutdown
+-- @treturn boolean The main result. Indicates whether the launch of SDL was successful
+-- @treturn string Additional information on the main SDL startup result
+function StartSDL(SDLPathName, ExitOnCrash)
+  return SDL:StartSDL(SDLPathName, config.SDL, ExitOnCrash)
+end
+
+--- Stop SDL
+-- @treturn nil The main result. Always nil.
+-- @treturn string Additional information on the main result of stopping SDL
+function StopSDL()
+  event_dispatcher:ClearEvents()
+  Test.expectations_list:Clear()
+  return SDL:StopSDL()
+end
+
+--- Create test step for enable full ATF logs
 function enableFullATFLogs()
   function enableFullLoggintTestCase()
     if (config.storeFullATFLogs) then
-      module:FailTestCase("full ATF logs already enabled")
+      Test:FailTestCase("full ATF logs already enabled")
     else
       config.storeFullATFLogs = true
     end
   end
-  module["EnableFullATFLogs"] = nil
-  module["EnableFullATFLogs"] = enableFullLoggintTestCase
+  Test["EnableFullATFLogs"] = nil
+  Test["EnableFullATFLogs"] = enableFullLoggintTestCase
 end
 
+--- Create test step for disable full ATF logs
 function disableFullATFLogs()
   function disableFullLoggintTestCase()
     if (not config.storeFullATFLogs) then
-      module:FailTestCase("full ATF logs already disabled")
+      Test:FailTestCase("full ATF logs already disabled")
     else
       config.storeFullATFLogs = false
     end
   end
-  module["DisableFullATFLogs"] = nil
-  module["DisableFullATFLogs"] = disableFullLoggintTestCase
+  Test["DisableFullATFLogs"] = nil
+  Test["DisableFullATFLogs"] = disableFullLoggintTestCase
 end
 
-return module
+return Test

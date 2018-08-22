@@ -1,15 +1,30 @@
+--- Module which is responsible for validation income and outcome RPCs and provide type Validator
+--
+-- *Dependencies:* `json`
+--
+-- *Globals:* `config`, `res`, `arraySize`, `param_from_schema`
+-- @module schema_validation
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
 local json = require("json")
 local wrong_function_name = "WrongFunctionName"
 local generic_response = "GenericResponse"
 
-local module = {
+local SchemaValidation = {
   mt = {__index = { } }
 }
 
-function module.CreateSchemaValidator(schema)
+--- Type which responsible for validation income and outcome RPCs
+-- @type Validator
+
+--- Construct instance of Validator type
+-- @tparam table schema table with a list of RPCs
+-- @treturn Validator Constructed instance
+function SchemaValidation.CreateSchemaValidator(schema)
   res = { }
   res.schema = schema
-  setmetatable(res, module.mt)
+  setmetatable(res, SchemaValidation.mt)
   return res
 end
 
@@ -22,9 +37,10 @@ local function dump(o)
     if type(k) ~= 'number' then k = '"'..k..'"' end
     s = s .. '['..k..'] = ' .. dump(v) .. ','
   end
-  return s .. '} \n'  
+  return s .. '} \n'
 end
 
+--- Build error messa string from error message structure
 local function errorMsgToString(tbl)
   local tmp = ''
   if type(tbl) ~= 'table' then
@@ -39,14 +55,13 @@ local function errorMsgToString(tbl)
       end
     end
   end
-  return tmp  
+  return tmp
 end
 
--- Check that all mandatory parameters in current schema are existing
+--- Check that all mandatory parameters in current schema are existing
 local function CheckExistenceOfMandatoryParam(func_schema, user_data, name_of_structure)
   local error_message = {}
   local result = true
-
   for key,value in pairs(func_schema) do
       if (type(user_data)~='table')then
         return false, "not valid type of "..key .. " expected structure, got "..type(user_data)
@@ -54,7 +69,7 @@ local function CheckExistenceOfMandatoryParam(func_schema, user_data, name_of_st
       local bool_result = true
       if((user_data[key]==nil) and func_schema[key]["mandatory"] == true) then
         bool_result = false
-        if (name_of_structure ~= nil) then 
+        if (name_of_structure ~= nil) then
           key = name_of_structure.."."..key
         end
         error_message["mandatory "..key]= "mandatory parameter "..key.." not present"
@@ -64,24 +79,33 @@ local function CheckExistenceOfMandatoryParam(func_schema, user_data, name_of_st
   return result, error_message
 end
 
--- Get names of function or structures
-local function GetNames( name )
+--- Get names of function or structures
+local function GetNames(name, schema)
   if (string.find(name, "%.")) then
     return name:match("([^.]+).([^.]+)")
   end
-  return 'Ford Sync RAPI', name
+  return next(schema.interface), name
 end
 
--- Compare structs. For each structure should be called 
+--- Compare structs. For each structure should be called
 -- check of mandatory params and types for all elements in the struct
-function module.mt.__index:CompareStructs( data_elem, struct_schema,name_of_structure)
+-- @tparam table data_elem Data
+-- @tparam table struct_schema Schema
+-- @tparam string name_of_structure Structure description
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the structure schema.
+-- @treturn string Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:CompareStructs( data_elem, struct_schema, name_of_structure)
   local mandatory_check_result = true --for mandatory param
   local type_parameter_check_result = true -- for correct types of param
   local error_message = {}
   local error_message2 = {}
-
   local struct_params = struct_schema["param"]
   mandatory_check_result, error_message= CheckExistenceOfMandatoryParam(struct_params, data_elem, name_of_structure)
+mandatory_check_result = true--(struct_params, data_elem, name_of_structure)
   type_parameter_check_result, error_message2 = self:CheckTypeOfParam(struct_params, data_elem, error_message, name_of_structure)
 
   local result = (mandatory_check_result and type_parameter_check_result)
@@ -91,19 +115,29 @@ function module.mt.__index:CompareStructs( data_elem, struct_schema,name_of_stru
   return result, error_message
 end
 
--- If data is empty, then we think it is empty array
+--- If data is empty, then we think it is empty array
 -- Json's isArray recieve false in this case
 -- If data is non empty then we check data using json
 local function isArray(data)
   if(type(data)~='table') then return false end
-  if next(data) == nil then return true end 
+  if next(data) == nil then return true end
   return json.isArray(data);
 end
 
--- Calls if element has attribute array=true
+--- Calls if element has attribute array=true
 -- Check that element is array
 -- For each element of array call CompareType with isArray=false
-function module.mt.__index:CheckTypesInArray( data_elem, schemaElem, nameofParameter, name_of_structure)
+-- @tparam table data_elem Data
+-- @tparam table schemaElem Element of schema
+-- @tparam string nameofParameter Parameter name
+-- @tparam string name_of_structure Structure description
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn string Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:CheckTypesInArray( data_elem, schemaElem, nameofParameter, name_of_structure)
   local result = true
   local error_message  = {}
   local elem1 = type(data_elem)
@@ -111,8 +145,8 @@ function module.mt.__index:CheckTypesInArray( data_elem, schemaElem, nameofParam
     for key, value in pairs(data_elem) do
       result, error_message[key]= self:CompareType(value, schemaElem, false, nameofParameter.."."..key, name_of_structure)
     end
-  else 
-    if name_of_structure~=nil then 
+  else
+    if name_of_structure~=nil then
       return false, "Parameter "..name_of_structure.."."..nameofParameter..": got "..elem1..", expected Array"
     end
     return false, "Parameter "..nameofParameter..": got "..elem1..", expected Array"
@@ -120,8 +154,7 @@ function module.mt.__index:CheckTypesInArray( data_elem, schemaElem, nameofParam
   return result, error_message
 end
 
-
--- Check that length of value more than minlength and less then maxlength
+--- Check that length of value more than minlength and less then maxlength
 local function CheckLength( data_elem, schemaElem, data_name )
   local length = string.len(data_elem)
   if schemaElem["minlength"] ~= nil then
@@ -137,7 +170,7 @@ local function CheckLength( data_elem, schemaElem, data_name )
   return true
 end
 
--- Check value is more than minvalue and less then maxvalue
+--- Check value is more than minvalue and less then maxvalue
 local function CheckValue( data_elem, schemaElem, data_name )
   if schemaElem["minvalue"] ~= nil then
     if(data_elem < schemaElem["minvalue"]) then
@@ -152,12 +185,34 @@ local function CheckValue( data_elem, schemaElem, data_name )
   return true
 end
 
---Compare types of element
+--- Compare types of element
 -- For elements with "array = true" process CheckTypesInArray
--- For types "string", "integer" and "float" check values are in intervals from schema 
+-- For types "string", "integer" and "float" check values are in intervals from schema
 -- For enum value check that value are included in schema
 -- For struct call CompareStructs, where structure will be checked
-function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofParameter, name_of_structure)
+
+local function table_contains(table, element)
+  for _, value in pairs(table) do
+    if value == element then
+      return true
+    end
+  end
+  return false
+end
+
+--- Compare types of element and schema
+-- @tparam table data_elem Data
+-- @tparam table schemaElem Element of schema
+-- @tparam boolean isArray True for array elements
+-- @tparam string nameofParameter Parameter name
+-- @tparam string name_of_structure Structure description
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn string Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofParameter, name_of_structure)
   local elem1 = type(data_elem)
   if (isArray=='true') then
     return self:CheckTypesInArray(data_elem, schemaElem, nameofParameter, name_of_structure)
@@ -166,56 +221,69 @@ function module.mt.__index:CompareType(data_elem, schemaElem, isArray, nameofPar
     if elem1 == 'number'  then
       return CheckValue( data_elem, schemaElem, nameofParameter )
     end
-    if name_of_structure~=nil then 
-      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem 
+    if name_of_structure~=nil then
+      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem
     end
-    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem       
-  elseif schemaElem == 'String' then 
+    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem
+  elseif schemaElem == 'String' then
     if elem1 == 'string' then
       return CheckLength( data_elem, schemaElem, nameofParameter )
-    end 
-    if name_of_structure~=nil then 
-      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem 
     end
-    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem     
+    if name_of_structure~=nil then
+      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem
+    end
+    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem
   elseif schemaElem == 'Boolean' then
     if elem1 == 'boolean' then
      return true
-    end 
-    if name_of_structure~=nil then 
-      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem 
     end
-    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem    
+    if name_of_structure~=nil then
+      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem
+    end
+    return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem
   end
-  local interface_name, complex_elem_name = GetNames(schemaElem)
+  local interface_name, complex_elem_name = GetNames(schemaElem, self.schema)
   -- Check element is enum
   if self.schema.interface[interface_name].enum[complex_elem_name] ~= nil then
-    if(self.schema.interface[interface_name].enum[complex_elem_name][data_elem] ~= nil) then 
+    if(self.schema.interface[interface_name].enum[complex_elem_name][data_elem] ~= nil) then
       return true
-    end 
-    if name_of_structure~=nil then 
-      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected enum value: "..schemaElem 
     end
-    return false, "Parameter ".. nameofParameter.. ": got "..elem1..", expected enum value: " ..schemaElem   
+    -- Enum element can be sent as number, so if it belongs to count of data elements, we will set it as acceptable
+    if elem1 == 'number' then
+      local local_enum = self.schema.interface[interface_name].enum[complex_elem_name]
+      if table_contains(local_enum, data_elem) then
+        return true
+      else
+        -- Workaround for non-existed value in enum
+        local err_msg = "[WARNING]: got non-existed integer value \"".. tostring(data_elem).. "\" in enum ".. schemaElem
+        return true, err_msg
+        -- Finish workaround
+      end
+
+    end
+    if name_of_structure~=nil then
+      return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected enum value: "..schemaElem
+    end
+    return false, "Parameter ".. nameofParameter.. ": got "..elem1..", expected enum value: " ..schemaElem
   end
   -- Check element is struct
   if self.schema.interface[interface_name].struct[complex_elem_name] ~= nil then
-    if (elem1~='table') then 
-      if name_of_structure~=nil then 
-        return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected struct: "..schemaElem 
+    if (elem1~='table') then
+      if name_of_structure~=nil then
+        return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected struct: "..schemaElem
       end
       return false, "Parameter ".. nameofParameter.. ": got "..elem1..", expected struct: "..schemaElem
     end
-    if name_of_structure~=nil then 
+    if name_of_structure~=nil then
       name_of_structure = name_of_structure.."."..nameofParameter
       else
       name_of_structure=nameofParameter
     end
 
     return self:CompareStructs(data_elem, self.schema.interface[interface_name].struct[complex_elem_name],name_of_structure)
-  end  
-  if name_of_structure~=nil then 
-    return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem 
+  end
+  if name_of_structure~=nil then
+    return false, "Parameter ".. name_of_structure.."."..nameofParameter..": got "..elem1..", expected "..schemaElem
   end
   return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem
 end
@@ -228,36 +296,47 @@ local function CountInArray(T)
 end
 
 
--- Check element is array
+--- Check element is array
 -- Check count of values
 local function CheckArray(data_elem, schemaElem, elem_name)
   if not isArray(data_elem) then
     return false
-  end   
+  end
   arraySize = CountInArray(data_elem)
   local err_msg = {}
   if (schemaElem["minsize"]~=nil) then
     if(arraySize < schemaElem["minsize"]) then
       return false, "n array get size: "..arraySize..", expected minsize:"..schemaElem["minsize"]
     end
-  else 
+  else
     err_msg["minsize"] =  "WARNING: Problem with API schema "..elem_name..": \"minsize\" does not present in schema with array"
   end
   if (schemaElem["maxsize"]~=nil) then
     if(arraySize > schemaElem["maxsize"]) then
       return false, "in array get size: "..arraySize..", expected maxsize:"..schemaElem["maxsize"]
-    end 
-  else    
+    end
+  else
     err_msg["maxsize"] = "WARNING: Problem with API schema "..elem_name..": \"maxsize\" does not present in schema with array"
   end
   return true, err_msg
 end
 
--- Check parameters includes:
+--- Check types of parameters includes:
+--
 -- Check data is table
+--
 -- Call checking of Array
--- Call comparation of types with schema's types
-function module.mt.__index:CheckTypeOfParam( func_schema, user_data, error_message, name_of_structure)
+-- @tparam table func_schema Schema
+-- @tparam table user_data Data
+-- @tparam table error_message Table with error messages
+-- @tparam string name_of_structure Structure description
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn table Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:CheckTypeOfParam( func_schema, user_data, error_message, name_of_structure)
   local result = true
   local result1 = true
   local  result2 = true
@@ -288,9 +367,19 @@ function module.mt.__index:CheckTypeOfParam( func_schema, user_data, error_messa
   return result, error_message
 end
 
--- Call checking that mandatory params are existing
--- Call checking that parameters has correct type and values 
-function  module.mt.__index:CheckFunctionParams( interface_name, function_name, function_type, user_data )
+--- Call checking that mandatory params are existing
+-- Call checking that parameters has correct type and values
+-- @tparam string interface_name RPC Interface name
+-- @tparam string function_name RPC function name
+-- @tparam string function_type RPC function type
+-- @tparam table user_data Data
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn table Additional result.
+--
+-- Provides additional information if main result is false
+function  SchemaValidation.mt.__index:CheckFunctionParams( interface_name, function_name, function_type, user_data )
 
   local result1 = true --for mandatory param
   local result2 = true -- for correct types of param
@@ -299,7 +388,7 @@ function  module.mt.__index:CheckFunctionParams( interface_name, function_name, 
   local func_schema = self.schema.interface[interface_name].type[function_type].functions[function_name]
   local function_params = func_schema["param"]
 
-  result1, error_message= CheckExistenceOfMandatoryParam(function_params, user_data)
+  -- result1, error_message= CheckExistenceOfMandatoryParam(function_params, user_data)
   result2, error_message2 = self:CheckTypeOfParam(function_params, user_data, error_message )
 
   local result = (result1 and result2)
@@ -310,15 +399,24 @@ function  module.mt.__index:CheckFunctionParams( interface_name, function_name, 
 end
 
 
--- Extract function name and interface from function_id
+--- Extract function name and interface from function_id
 -- Check that function and interface exist
 -- Call CheckFunctionParams for processing function
-function module.mt.__index:Compare(function_id,function_type, user_data)
+-- @tparam string function_id RPC function Id
+-- @tparam string function_type RPC function type
+-- @tparam table user_data Data
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn table Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:Compare(function_id,function_type, user_data)
   local result = true
   local error_message = {}
   local types = ''
 
-  if (function_id==nil) then 
+  if (function_id==nil) then
     return result, error_message
   end
 
@@ -328,26 +426,37 @@ function module.mt.__index:Compare(function_id,function_type, user_data)
     user_data["resultCode"]=success_code
   end
 
-  local interface_name, function_name = GetNames(function_id)
+  local interface_name, function_name = GetNames(function_id, self.schema)
   if not user_data then
     user_data = {}
   end
-  if (self.schema.interface[interface_name].type[function_type].functions[function_name]==nil) then 
+  if (self.schema.interface[interface_name].type[function_type].functions[function_name]==nil) then
     result = false
     error_message[function_name] ="function " .. function_name.." has not been found in schema"
     return result, error_message
   end
   result, error_message[function_name] = self:CheckFunctionParams(interface_name, function_name, function_type, user_data)
 
-  return result, error_message 
+  return result, error_message
 end
 
-
-function module.mt.__index:Validate(function_id, function_type, user_data)
+--- Validate data with schema
+-- @tparam string function_id RPC function Id
+-- @tparam string function_type RPC function type
+-- @tparam table user_data Data
+-- @treturn boolean Main result.
+--
+-- True if data corresponds to the types.
+-- @treturn string Additional result.
+--
+-- Provides additional information if main result is false
+function SchemaValidation.mt.__index:Validate(function_id, function_type, user_data)
   local result = true
   local error_message = {}
-  result, error_message = self:Compare(function_id, function_type, user_data)
+  if config.ValidateSchema then
+    result, error_message = self:Compare(function_id, function_type, user_data)
+  end
   return result, errorMsgToString(error_message)
 end
 
-return module
+return SchemaValidation

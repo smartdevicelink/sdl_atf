@@ -1,36 +1,60 @@
+--- Module which provides transport level interface for emulate connection with HMI for SDL
+--
+-- *Dependencies:* `json`, `qt`, `network`
+--
+-- *Globals:* `atf_logger`, `qt`, `network`
+-- @module websocket_connection
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
 local json = require("json")
 
-local module = { 
+local WS = {
   mt = { __index = {} }
 }
 
-function module.WebSocketConnection(url, port)
+--- Type which provides transport level interface for emulate connection with HMI for SDL
+-- @type WebSocketConnection
+
+--- Construct instance of WebSocketConnection type
+-- @tparam string url URL for websocket
+-- @tparam number port Port for Websocket
+-- @treturn WebSocketConnection Constructed instance
+function WS.WebSocketConnection(url, port)
   local res =
   {
     url = url,
     port = port
   }
   res.socket = network.WebSocket()
-  setmetatable(res, module.mt)
+  setmetatable(res, WS.mt)
   res.qtproxy = qt.dynamic()
   return res
 end
 
-function module.mt.__index:Connect()
+--- Connect with SDL
+function WS.mt.__index:Connect()
   self.socket:open(self.url, self.port)
 end
+
+--- Check 'self' argument
 local function checkSelfArg(s)
   if type(s) ~= "table" or
-  getmetatable(s) ~= module.mt then
+  getmetatable(s) ~= WS.mt then
     error("Invalid argument 'self': must be connection (use ':', not '.')")
   end
 end
-function module.mt.__index:Send(text)
+
+--- Send message from HMI to SDL
+-- @tparam string text Message
+function WS.mt.__index:Send(text)
   atf_logger.LOG("HMItoSDL", text)
   self.socket:write(text)
 end
 
-function module.mt.__index:OnInputData(func)
+--- Set handler for OnInputData
+-- @tparam function func Handler function
+function WS.mt.__index:OnInputData(func)
   local d = qt.dynamic()
   local this = self
   function d:textMessageReceived(text)
@@ -42,7 +66,9 @@ function module.mt.__index:OnInputData(func)
   qt.connect(self.socket, "textMessageReceived(QString)", d, "textMessageReceived(QString)")
 end
 
-function module.mt.__index:OnDataSent(func)
+--- Set handler for OnDataSent
+-- @tparam function func Handler function
+function WS.mt.__index:OnDataSent(func)
   local d = qt.dynamic()
   local this = self
   function d:bytesWritten(num)
@@ -51,7 +77,9 @@ function module.mt.__index:OnDataSent(func)
   qt.connect(self.socket, "bytesWritten(qint64)", d, "bytesWritten(qint64)")
 end
 
-function module.mt.__index:OnConnected(func)
+--- Set handler for OnConnected
+-- @tparam function func Handler function
+function WS.mt.__index:OnConnected(func)
   if self.qtproxy.connected then
     error("Websocket connection: connected signal is handled already")
   end
@@ -60,7 +88,9 @@ function module.mt.__index:OnConnected(func)
   qt.connect(self.socket, "connected()", self.qtproxy, "connected()")
 end
 
-function module.mt.__index:OnDisconnected(func)
+--- Set handler for OnDisconnected
+-- @tparam function func Handler function
+function WS.mt.__index:OnDisconnected(func)
   if self.qtproxy.disconnected then
     error("Websocket connection: disconnected signal is handled already")
   end
@@ -68,8 +98,11 @@ function module.mt.__index:OnDisconnected(func)
   self.qtproxy.disconnected = function() func(this) end
   qt.connect(self.socket, "disconnected()", self.qtproxy, "disconnected()")
 end
-function module.mt.__index:Close()
+
+--- Close connection
+function WS.mt.__index:Close()
   checkSelfArg(self)
   self.socket:close();
 end
-return module
+
+return WS

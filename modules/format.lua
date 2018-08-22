@@ -1,7 +1,26 @@
-local module = { }
-console = require('console')
+--- Module which is responsible for formated output into console
+--
+-- *Dependencies:* `console`, `config`
+--
+-- *Globals:* `console`
+-- @module format
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
+--- Singleton table which is used for perform formated output into console
+-- @table Format
+local Format = { }
+local console = require('console')
 local config = require('config')
-function module.PrintCaseResult(startCaseTime, caseName, success, errorMessage, timespan)
+
+--- Print formated information about test step result into console
+-- @tparam string startCaseTime String representation of time of test step start
+-- @tparam string caseName Test step name
+-- @tparam boolean success Boolean representation of successes of test step
+-- @tparam string errorMessage Error message
+-- @tparam number timespan Duration of test step execution in msec
+-- @treturn Format Module Format
+function Format.PrintCaseResult(startCaseTime, caseName, success, errorMessage, warningMessage, timespan)
   caseName = tostring(caseName)
   if #caseName > 85 then
     caseName = string.sub(caseName, 1, 82) .. "..."
@@ -24,6 +43,7 @@ function module.PrintCaseResult(startCaseTime, caseName, success, errorMessage, 
   else
     print(string.format("%s %s (%d ms)", caseName, result, timespan))
   end
+
   if not success and errorMessage then
     for k, v in pairs(errorMessage) do
       local errmsg = " " .. k .. ": " .. v
@@ -34,6 +54,18 @@ function module.PrintCaseResult(startCaseTime, caseName, success, errorMessage, 
       end
     end
   end
-  return module
+  -- Print warnings
+  if warningMessage then
+    for k, v in pairs(warningMessage) do
+      local errmsg = " " .. k .. ": " .. v
+      if config.color then
+        print(console.setattr(errmsg, "brown", 1))
+      else
+        print(errmsg)
+      end
+    end
+  end
+  return Format
 end
-return module
+
+return Format

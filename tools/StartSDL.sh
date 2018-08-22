@@ -7,7 +7,6 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:. export LD_LIBRARY_PATH
 ./$appName > /dev/null &
 sdl_pid=$!
 echo "SDL pid "$sdl_pid
-sleep 20
 test -e /proc/$sdl_pid || exit 1
 cd $dirATF
 echo $sdl_pid > sdl.pid

@@ -1,5 +1,20 @@
-local module = { }
-function module.setattr(string, color, bold, underline)
+--- Module that provides functions for working with the console
+--
+-- *Dependencies:* none
+--
+-- *Globals:* `c`, `b`, `u`, `suffix`
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
+local console = { }
+
+--- Build attribute that represents string with applied style
+-- @tparam string string Attribute string
+-- @tparam string color Attribute style modifier color
+-- @tparam string bold Attribute style modifier bold
+-- @tparam string underline Attribute style modifier underline
+-- @treturn string Attribute with applied style
+function console.setattr(string, color, bold, underline)
   if color == "black" then c = '30'
   elseif color == "red" then c = '31'
   elseif color == "green" then c = '32'
@@ -34,4 +49,5 @@ function module.setattr(string, color, bold, underline)
   end
   return prefix .. string .. suffix
 end
-return module
+
+return console

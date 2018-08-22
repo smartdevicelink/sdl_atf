@@ -1,0 +1,51 @@
+@startuml
+/'
+It is a source file for ATF SDD diagram.
+For further information, please, follow http://plantuml.com/
+'/
+
+-> load_schema : require
+    loop for each API - Mobile and HMI
+    load_schema -> api_loader : Load API by path to file
+    api_loader -> api_loader : load xml,\ngenerate schema
+    api_loader -> load_schema
+    participant Validator
+    load_schema-> schema_validation : create Validator
+    create Validator
+    schema_validation -> Validator : new
+    schema_validation -> load_schema : Validator
+end
+<- load_schema
+...
+-> api_loader : get RPC Validator
+<- api_loader : Validator
+...
+-> Validator : Validate RPC
+<- Validator : result
+
+skinparam defaultFontSize 16
+skinparam sequence {
+    ArrowColor Blue
+    ArrowFontColor #2027E8
+    ArrowFontStyle bold
+     
+    LifeLineBorderColor black
+     
+    ParticipantBorderColor black
+    ParticipantBackgroundColor white
+    ParticipantFontSize 17
+    ParticipantFontColor black
+     
+    ActorBorderColor black
+    ActorBackgroundColor white
+    ActorFontColor Blue
+    ActorFontSize 17
+    ActorFontName Blue
+    sequenceArrowFontSize  16
+    DividerBackgroundColor #FEFECE
+}
+skinparam note {
+    BackgroundColor #EEEEEE 
+    BorderColor black
+}
+@enduml

@@ -1,14 +1,34 @@
+--- Module which is responsible for loading Mobile and HMI API validation schema.
+--
+-- Dependencies: `api_loader`, `schema_validation`
+--
+-- *Globals:* none
+-- @module load_schema
+-- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
+-- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
 local api_loader = require('api_loader')
 local validator = require('schema_validation')
 
-local module = { }
-module.response = 'response'
-module.request = 'request'
-module.notification = 'notification'
-if (not module.mob_schema) then 
-  module.mob_schema = validator.CreateSchemaValidator(api_loader.init("data/MOBILE_API.xml"))
+--- Table with a Mobile and HMI schema's
+-- @table LoadSchema
+-- @tfield Validator mob_schema Mobile validator
+-- @tfield Validator hmi_schema HMI validator
+-- @tfield string response Const for Response
+-- @tfield string request Const for Request
+-- @tfield string notification Const for Notification
+local LoadSchema = { }
+LoadSchema.response = 'response'
+LoadSchema.request = 'request'
+LoadSchema.notification = 'notification'
+if (not LoadSchema.mob_schema) then
+  LoadSchema.mob_api = api_loader.init("data/MOBILE_API.xml")
+  LoadSchema.mob_api_version = LoadSchema.mob_api.interface["SmartDeviceLink RAPI"].version
+  LoadSchema.mob_schema = validator.CreateSchemaValidator(LoadSchema.mob_api)
 end
-if (not module.hmi_schema) then
-  module.hmi_schema = validator.CreateSchemaValidator(api_loader.init("data/HMI_API.xml"))
+if (not LoadSchema.hmi_schema) then
+  LoadSchema.hmi_api = api_loader.init("data/HMI_API.xml")
+  LoadSchema.hmi_schema = validator.CreateSchemaValidator(LoadSchema.hmi_api)
 end
-return module
+
+return LoadSchema

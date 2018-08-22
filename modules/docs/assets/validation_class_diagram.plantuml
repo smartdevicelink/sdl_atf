@@ -1,0 +1,16 @@
+@startuml
+/'
+It is a source file for ATF SDD diagram.
+For further information, please, follow http://plantuml.com/
+'/
+
+class schema
+note right: Lua table with \na specific xml schema
+
+load_schema ..> api_loader : init
+load_schema "1" o-- "0..2  " schema_validation
+api_loader ..> schema : generate
+schema_validation "1  " o-- "1" schema
+
+
+@enduml

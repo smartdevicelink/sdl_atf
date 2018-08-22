@@ -5,6 +5,12 @@
 #include <QTcpSocket>
 #include <QTcpServer>
 #include <QWebSocket>
+#include <QEventLoop>
+#include <QString>
+#include <unistd.h>
+#include <errno.h>
+#include <cstring>
+#include <cstdio>
 #line 22 "network.nw"
 // TcpClient functions/*{{{*/
 int network_tcp_client(lua_State *L) {/*{{{*/
@@ -16,18 +22,32 @@ int network_tcp_client(lua_State *L) {/*{{{*/
   return 1;
 }/*}}}*/
 int tcp_socket_connect(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
 #line 33 "network.nw"
   const char* ip   = luaL_checkstring(L, 2);
   int         port = luaL_checkinteger(L, 3);
+
+
   tcpSocket->connectToHost(ip, port);
+
+  QTime timer;
+  timer.start();
+  while (!tcpSocket->waitForConnected()) {
+    tcpSocket->connectToHost(ip, port);
+    // Check elapsed time
+    const int time_waiting_ms = 1000;
+    if (timer.elapsed() > time_waiting_ms){
+      fprintf(stderr, "%s\n%s\n", "Error: Connection not established", strerror(errno));
+      return 1;
+    }
+  }
   return 0;
 }/*}}}*/
 int tcp_socket_read(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
@@ -35,7 +55,7 @@ QTcpSocket *tcpSocket =
   int maxSize = luaL_checkinteger(L, 2);
   if(tcpSocket->isOpen()){
     QByteArray result = tcpSocket->read(maxSize);
-    lua_pushlstring(L, result.data(), result.count()); 
+    lua_pushlstring(L, result.data(), result.count());
   } else {
     fprintf(stderr, "Error: Socket not opened");
   }
@@ -44,18 +64,18 @@ QTcpSocket *tcpSocket =
 
 
 int tcp_socket_read_all(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
 #line 40 "network.nw"
   QByteArray result = tcpSocket->readAll();
-  lua_pushlstring(L, result.data(), result.count()); 
+  lua_pushlstring(L, result.data(), result.count());
   return 1;
 }/*}}}*/
 
 int tcp_socket_write(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
@@ -64,14 +84,14 @@ QTcpSocket *tcpSocket =
   const char* data = luaL_checklstring(L, 2, &size);
   if(tcpSocket->isOpen()) {
     int result = tcpSocket->write(data, size);
-    lua_pushinteger(L, result); 
+    lua_pushinteger(L, result);
   } else {
     fprintf(stderr, "Error: Socket not opened");
   }
   return 1;
 }/*}}}*/
 int tcp_socket_close(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
@@ -80,7 +100,7 @@ QTcpSocket *tcpSocket =
   return 0;
 }/*}}}*/
 int tcp_socket_delete(lua_State *L) {/*{{{*/
-  
+
 #line 65 "network.nw"
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
@@ -101,7 +121,7 @@ int network_tcp_server(lua_State *L) {/*{{{*/
 }/*}}}*/
 int tcp_server_listen(lua_State *L)/*{{{*/
 {
-  
+
 #line 111 "network.nw"
 QTcpServer *tcpServer =
   *static_cast<QTcpServer**>(luaL_checkudata(L, 1, "network.TcpServer"));
@@ -115,7 +135,7 @@ QTcpServer *tcpServer =
 }/*}}}*/
 int tcp_server_get_connection(lua_State *L)/*{{{*/
 {
-  
+
 #line 111 "network.nw"
 QTcpServer *tcpServer =
   *static_cast<QTcpServer**>(luaL_checkudata(L, 1, "network.TcpServer"));
@@ -133,7 +153,7 @@ QTcpServer *tcpServer =
   return 1;
 }/*}}}*/
 int tcp_server_delete(lua_State *L) {/*{{{*/
-  
+
 #line 111 "network.nw"
 QTcpServer *tcpServer =
   *static_cast<QTcpServer**>(luaL_checkudata(L, 1, "network.TcpServer"));
@@ -153,19 +173,34 @@ int network_web_socket(lua_State *L) {/*{{{*/
   lua_setmetatable(L, -2);
   return 1;
 }/*}}}*/
+
 int web_socket_open(lua_State *L) {/*{{{*/
-  
+
 #line 153 "network.nw"
 QWebSocket *webSocket =
   *static_cast<QWebSocket**>(luaL_checkudata(L, 1, "network.WebSocket"));
 #line 126 "network.nw"
   QUrl url(luaL_checkstring(L, 2));
   url.setPort(lua_tointegerx(L, 3, NULL));
-  webSocket->open(url);
+
+  QEventLoop loop;
+  #line 170 "network.nw"
+
+  // Create connection when websocket connected
+  QObject::connect(webSocket, SIGNAL(connected()), &loop, SLOT(quit()));
+  QObject::connect(webSocket, SIGNAL(disconnected()), &loop, SLOT(quit()));
+
+  // Wait until socket connection is established
+  while (webSocket->state() != QAbstractSocket::ConnectedState) {
+    webSocket->open(url);
+    loop.exec();
+    usleep(100);
+  }
+
   return 0;
 }/*}}}*/
 int web_socket_close(lua_State *L) {/*{{{*/
-  
+
 #line 153 "network.nw"
 QWebSocket *webSocket =
   *static_cast<QWebSocket**>(luaL_checkudata(L, 1, "network.WebSocket"));
@@ -174,7 +209,7 @@ QWebSocket *webSocket =
   return 0;
 }/*}}}*/
 int web_socket_write(lua_State *L) {/*{{{*/
-  
+
 #line 153 "network.nw"
 QWebSocket *webSocket =
   *static_cast<QWebSocket**>(luaL_checkudata(L, 1, "network.WebSocket"));
@@ -188,7 +223,7 @@ QWebSocket *webSocket =
 }/*}}}*/
 
 int web_socket_delete(lua_State *L) {/*{{{*/
-  
+
 #line 153 "network.nw"
 QWebSocket *webSocket =
   *static_cast<QWebSocket**>(luaL_checkudata(L, 1, "network.WebSocket"));

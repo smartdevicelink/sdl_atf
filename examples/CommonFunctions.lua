@@ -5,7 +5,7 @@ local json = require('json4lua/json/json')
 
 function CommonFunctions:newTestCasesGroup(ParameterOrMessage)
 
-	NewTestSuiteNumber = NewTestSuiteNumber + 1
+	NewTestSuiteNumber =  1
 
 	local message = ""
 

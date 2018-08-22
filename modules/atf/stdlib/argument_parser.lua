@@ -1,6 +1,8 @@
 local std = require "atf.stdlib.std"
 local table = require "atf.stdlib.std.table"
 
+local exit_codes = require('exit_codes')
+
 local validOptList = { }
 local errors = {}
 
@@ -43,13 +45,13 @@ local function errmsg (msg)
   if msg:match ("%.$") == nil then msg = msg .. "." end
   print (prog .. ": error: " .. msg .. "\n")
   print (prog .. ": Try '" .. prog .. " --help' for help.")
-  quit(2)
+  quit(exit_codes.wrong_arg)
 end
 
 local function checkReqOpt(self, arg, val)
   if val:sub (1, 1) == "-" then
     errmsg ("Option '" .. arg .. "' requires an argument.")
-    quit(2)
+    quit(exit_codes.wrong_arg)
   else
     validOptList[self[arg].key] = val
   end
@@ -84,6 +86,7 @@ function module.getopt(argv, opts)
 
   return res
 end
+
 function module.declare_opt (shortname, longname, argument, description)
   local arg = ''
   if (argument == module.RequiredArgument) then
@@ -102,12 +105,15 @@ function module.declare_opt (shortname, longname, argument, description)
   end
 
 end
+
 function module.declare_short_opt(shortname, argument, description)
   module.declare_opt (shortname, '' , argument, description)
 end
+
 function module.declare_long_opt(longname, argument, description)
   module.declare_opt('' ,longname , argument, description)
 end
+
 function module.PrintUsage()
   local _usage = usage
   for _, opt in ipairs(help) do
@@ -118,6 +124,7 @@ function module.PrintUsage()
   print(_usage)
   quit()
 end
+
 function module.PrintVersion()
   print(version)
   quit()
