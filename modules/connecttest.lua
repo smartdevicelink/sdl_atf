@@ -316,6 +316,7 @@ function Test:initHMI_onReady()
       button_capability("PRESET_8"),
       button_capability("PRESET_9"),
       button_capability("OK", true, false, true),
+      button_capability("PLAY_PAUSE"),
       button_capability("SEEKLEFT"),
       button_capability("SEEKRIGHT"),
       button_capability("TUNEUP"),
