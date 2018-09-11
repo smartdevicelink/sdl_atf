@@ -31,8 +31,10 @@ $ git submodule update
 ```
 ## Compilation:
 **1** Install 3d-parties developers libraries
-```sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev```
-```sudo apt-get install openssl```
+```
+sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
+sudo apt-get install openssl
+```
 
 **2** Install Qt5.3+
 
