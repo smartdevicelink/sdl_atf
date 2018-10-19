@@ -114,7 +114,6 @@ end
 --- Close SDL logger connection to SDL
 function SdlLogger.close()
   if(SdlLogger.socket) then SdlLogger.socket:close() end
-  os.execute('bash ./tools/WaitClosingSocket.sh '..config.sdl_logs_port)
 end
 
 return SdlLogger

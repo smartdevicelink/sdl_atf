@@ -80,11 +80,11 @@ local function CheckExistenceOfMandatoryParam(func_schema, user_data, name_of_st
 end
 
 --- Get names of function or structures
-local function GetNames( name )
+local function GetNames(name, schema)
   if (string.find(name, "%.")) then
     return name:match("([^.]+).([^.]+)")
   end
-  return 'SmartDeviceLink RAPI', name
+  return next(schema.interface), name
 end
 
 --- Compare structs. For each structure should be called
@@ -242,7 +242,7 @@ function SchemaValidation.mt.__index:CompareType(data_elem, schemaElem, isArray,
     end
     return false, "Parameter ".. nameofParameter..": got "..elem1..", expected "..schemaElem
   end
-  local interface_name, complex_elem_name = GetNames(schemaElem)
+  local interface_name, complex_elem_name = GetNames(schemaElem, self.schema)
   -- Check element is enum
   if self.schema.interface[interface_name].enum[complex_elem_name] ~= nil then
     if(self.schema.interface[interface_name].enum[complex_elem_name][data_elem] ~= nil) then
@@ -255,10 +255,8 @@ function SchemaValidation.mt.__index:CompareType(data_elem, schemaElem, isArray,
         return true
       else
         -- Workaround for non-existed value in enum
-        if interface_name == "SmartDeviceLink RAPI" then
-          local err_msg = "[WARNING]: got non-existed integer value \"".. tostring(data_elem).. "\" in enum ".. schemaElem
-          return true, err_msg
-        end
+        local err_msg = "[WARNING]: got non-existed integer value \"".. tostring(data_elem).. "\" in enum ".. schemaElem
+        return true, err_msg
         -- Finish workaround
       end
 
@@ -428,7 +426,7 @@ function SchemaValidation.mt.__index:Compare(function_id,function_type, user_dat
     user_data["resultCode"]=success_code
   end
 
-  local interface_name, function_name = GetNames(function_id)
+  local interface_name, function_name = GetNames(function_id, self.schema)
   if not user_data then
     user_data = {}
   end

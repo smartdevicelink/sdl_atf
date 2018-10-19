@@ -11,7 +11,6 @@ local json = require('json')
 local config = require('config')
 local io = require('atf.stdlib.std.io')
 local ford_constants = require("protocol_handler/ford_protocol_constants")
-local rpc_function_id = require('function_id')
 
 --- Singleton table which is used for perform all logging activities for ATF log.
 -- @table Logger
@@ -38,19 +37,48 @@ local Logger =
   }
 }
 
-Logger.mobile_log_format = "%s (%s) [rpcFunction: %s, sessionId: %s, version: %s, frameType: %s, "
-      .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s] : %s \n"
+local controlMessagesSRV = {}
+controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE] = "StartService"
+controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE_ACK] = "StartServiceACK"
+controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE_NACK] = "StartServiceNACK"
+controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE] = "EndService"
+controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE_ACK] = "EndServiceACK"
+controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE_NACK] = "EndServiceNACK"
+
+local controlMessagesHB = {}
+controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT] = "Heartbeat"
+controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT_ACK] = "HeartbeatACK"
+
+Logger.mobile_log_format = "%s (%s) [%s, sessionId: %s, version: %s, frameType: %s, "
+      .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n"
 Logger.hmi_log_format = "%s (%s) : %s \n"
 
+local rpc_function_id
+
 --- Get function name from Mobile API
--- @tparam number function_id Function identifier
+-- @tparam table message Message table
 -- @treturn string Function name
-local function get_function_name(function_id)
-  for name, id in pairs(rpc_function_id) do
-    if id == function_id then
-      return name
+local function get_function_name(message)
+  if message.frameType ~= ford_constants.FRAME_TYPE.CONTROL_FRAME then
+    if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL
+        and message.rpcType == ford_constants.BINARY_RPC_TYPE.NOTIFICATION
+        and message.rpcFunctionId == ford_constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE then
+      return "SSL: Handshake"
+    end
+  else
+    if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL then
+      return "controlMsg: " .. controlMessagesHB[message.frameInfo]
+    else
+      return "controlMsg: " .. controlMessagesSRV[message.frameInfo]
     end
   end
+
+  for name, id in pairs(rpc_function_id) do
+    if id == message.rpcFunctionId then
+      return "rpcFunction: " .. name
+    end
+  end
+
   return "nil"
 end
 
@@ -69,15 +97,26 @@ function Logger.formated_time(without_date)
 end
 
 --- Check message is it HMI tract
+-- @treturn boolean Return true if tract is HMI tract
 local function is_hmi_tract(tract, message)
   local str = string.format("%s", tract)
-  if string.find(str, "HMI") or
-    (message.frameType ~= ford_constants.FRAME_TYPE.CONTROL_FRAME) and
-    (message.serviceType ~= ford_constants.SERVICE_TYPE.PCM) and
-    (message.serviceType ~= ford_constants.SERVICE_TYPE.VIDEO) then
+  if string.find(str, "HMI")
+    or (message.frameType ~= ford_constants.FRAME_TYPE.CONTROL_FRAME)
+    and (message.serviceType ~= ford_constants.SERVICE_TYPE.PCM)
+    and (message.serviceType ~= ford_constants.SERVICE_TYPE.VIDEO) then
     return true
   end
   return false
+end
+
+--- Calculate binary data size
+-- @tparam string binaryData Binary data of message
+-- @treturn number Binary data size
+local function getBinaryDataSize(binaryData)
+  if binaryData then
+    return #binaryData
+  end
+  return 0
 end
 
 --- Store message from mobile application to SDL into ATF log file
@@ -85,8 +124,8 @@ end
 -- @tparam string message String representation of message from mobile application to SDL
 function Logger:MOBtoSDL(tract, message)
   local log_str = string.format(Logger.mobile_log_format,"MOB->SDL ", Logger.formated_time(),
-    get_function_name(message.rpcFunctionId), message.sessionId, message.version, message.frameType,
-    message.encryption, message.serviceType, message.frameInfo, message.messageId, message.payload)
+    get_function_name(message), message.sessionId, message.version, message.frameType,
+    message.encryption, message.serviceType, message.frameInfo, message.messageId, getBinaryDataSize(message.binaryData), message.payload)
   if is_hmi_tract(tract, message) then
     self.atf_log_file:write(log_str)
   end
@@ -112,9 +151,10 @@ function Logger:SDLtoMOB(tract, message)
   if type(payload) == "table" then
     payload = json.encode(payload)
   end
+
   local log_str = string.format(Logger.mobile_log_format,"SDL->MOB", Logger.formated_time(),
-    get_function_name(message.rpcFunctionId), message.sessionId, message.version, message.frameType,
-    message.encryption, message.serviceType, message.frameInfo, message.messageId, payload)
+    get_function_name(message), message.sessionId, message.version, message.frameType,
+    message.encryption, message.serviceType, message.frameInfo, message.messageId, getBinaryDataSize(message.binaryData), payload)
   if is_hmi_tract(tract, message) then
     self.atf_log_file:write(log_str)
   end
@@ -177,6 +217,7 @@ end
 --- Initialization of ATF logger
 -- @tparam string script_name Test script name
 function Logger.init_log(script_name)
+  rpc_function_id = require('function_id')
   Logger.script_file_name = script_name
   Logger.start_file_timestamp = timestamp()
 

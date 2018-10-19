@@ -8,6 +8,7 @@
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 require('atf.util')
+local config = require('config')
 local mobile_session_impl = require('mobile_session_impl')
 
 local MS = {}
@@ -30,7 +31,15 @@ function mt.__index:ExpectAny()
   return self.mobile_session_impl:ExpectAny()
 end
 
---- Expectation of responce with specific correlation_id
+--- Expectation of packet event
+-- @tparam table frameMessage Packet message to expect
+-- @tparam function binaryDataCompareFunc Function used for binary data comparation
+-- @treturn Expectation Expectation for packet event
+function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
+  return self.mobile_session_impl:ExpectFrame(frameMessage, binaryDataCompareFunc)
+end
+
+--- Expectation of response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
@@ -46,8 +55,31 @@ function mt.__index:ExpectNotification(funcName, ...)
    return self.mobile_session_impl:ExpectNotification(funcName, ...)
 end
 
+--- Expectation of encrypted response with specific correlation_id
+-- @tparam number cor_id Correlation identifier of specific rpc event
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for response
+function mt.__index:ExpectEncryptedResponse(cor_id, ...)
+  return self.mobile_session_impl:ExpectEncryptedResponse(cor_id, ...)
+end
 
---- Start video streaming
+--- Expectation of encrypted notification with specific funcName
+-- @tparam string funcName Expected notification name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for notification
+function mt.__index:ExpectEncryptedNotification(funcName, ...)
+   return self.mobile_session_impl:ExpectEncryptedNotification(funcName, ...)
+end
+
+--- Start encrypted audio/video streaming
+-- @tparam number service Service type
+-- @tparam string filename File for streaming
+-- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
+function mt.__index:StartEncryptedStreaming(service, filename, bandwidth)
+  self.mobile_session_impl:StartEncryptedStreaming(self.SessionId.get(), service, filename, bandwidth)
+end
+
+--- Start audio/video streaming
 -- @tparam number service Service type
 -- @tparam string filename File for streaming
 -- @tparam ?number bandwidth Bandwidth in bytes (default value is 30 * 1024)
@@ -55,7 +87,7 @@ function mt.__index:StartStreaming(service, filename, bandwidth)
   self.mobile_session_impl:StartStreaming(self.SessionId.get(), service, filename, bandwidth)
 end
 
---- Stop video streaming
+--- Stop audio/video streaming
 -- @tparam string filename File for streaming
 function mt.__index:StopStreaming(filename)
   self.mobile_session_impl:StopStreaming(filename)
@@ -69,6 +101,13 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendRPC(func, arguments, fileName)
 end
 
+--- Send encrypted RPC
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendEncryptedRPC(func, arguments, fileName)
+  return self.mobile_session_impl:SendEncryptedRPC(func, arguments, fileName)
+end
 
 ---Start specific service
 -- For service == 7 should be used StartRPC() instead of this function
@@ -80,6 +119,13 @@ function mt.__index:StartService(service)
   end
   -- in case StartService(7) it should be change on StartRPC
   return self.mobile_session_impl:StartService(service)
+end
+
+---Start specific secure service
+-- @tparam number service Service type
+-- @treturn Expectation expectation for StartService ACK
+function mt.__index:StartSecureService(service)
+  return self.mobile_session_impl:StartSecureService(service)
 end
 
 ---Stop specific service
@@ -114,14 +160,14 @@ end
 function mt.__index:StartRPC(custom_hb_processor)
   custom_hb_processor = custom_hb_processor
     or function (_,_)
-        self.mobile_session_impl:AddHeartbeatExpectation()
+      -- empty
     end
   return self.mobile_session_impl:StartRPC():Do(custom_hb_processor)
 end
 
 --- Stop RPC service
 function mt.__index:StopRPC()
-  self.mobile_session_impl:StopRPC()
+  return self.mobile_session_impl:StopRPC()
 end
 
 --- Send message from mobile to SDL
@@ -136,22 +182,31 @@ function mt.__index:Send(message)
   return message
 end
 
+--- Send frame from mobile to SDL
+-- @tparam string bytes Bytes to be sent
+function mt.__index:SendPacket(message)
+  self.mobile_session_impl:SendFrame(message)
+end
+
 --- Start rpc service (7) and send RegisterAppInterface rpc
+-- @treturn Expectation Expectation for session is started and app is registered
 function mt.__index:Start()
-  self.mobile_session_impl:Start()
+  return self.mobile_session_impl:Start()
 end
 
 --- Stop rpc service (7) and stop Heartbeat
+-- @treturn Expectation Expectation for stop session
 function mt.__index:Stop()
-  self.mobile_session_impl:Stop()
+  return self.mobile_session_impl:Stop()
 end
 
 --- Construct instance of MobileSession type
 -- @tparam Test test Test which open mobile session
 -- @tparam MobileConnection connection Base connection for open mobile session
 -- @tparam table regAppParams Mobile application parameters
+-- @tparam table securitySettings Session security parameters
 -- @treturn MobileSession Constructed instance
-function MS.MobileSession(test, connection, regAppParams)
+function MS.MobileSession(test, connection, regAppParams, securitySettings)
   local res = { }
   res.correlationId = 1
   res.sessionId = 0
@@ -173,6 +228,9 @@ function MS.MobileSession(test, connection, regAppParams)
   function res.CorrelationId.get()
     return  res.correlationId
   end
+
+  --- Flag which defines whether mobile session activates heartbeat
+  res.activateHeartbeat = true
   --- Flag which defines whether mobile session sends heartbeat to SDL
   res.sendHeartbeatToSDL = true
   --- Flag which defines whether mobile session answers on heartbeat from SDL
@@ -180,7 +238,13 @@ function MS.MobileSession(test, connection, regAppParams)
   --- Flag which defines whether mobile session ignore ACK of heartbeat from SDL
   res.ignoreSDLHeartBeatACK = false
 
---- Property which defines whether mobile session sends heartbeat to SDL
+  --- Property which defines whether mobile session activates heartbeat
+  res.ActivateHeartbeat = {}
+  function res.ActivateHeartbeat.get()
+    return res.activateHeartbeat
+  end
+
+  --- Property which defines whether mobile session sends heartbeat to SDL
   res.SendHeartbeatToSDL = {}
   function res.SendHeartbeatToSDL.get()
     return res.sendHeartbeatToSDL
@@ -198,8 +262,25 @@ function MS.MobileSession(test, connection, regAppParams)
     return res.ignoreSDLHeartBeatACK
   end
 
+  --- Accessor of isSecuredSession variable
+  function res:IsSecuredSession()
+    return self.mobile_session_impl.isSecuredSession
+  end
+
+  securitySettings = securitySettings or {
+    cipherListString = config.cipherListString,
+    serverCertPath = config.serverCertificatePath,
+    serverKeyPath = config.serverPrivateKeyPath,
+    serverCAChainCertPath = config.serverCAChainCertPath,
+    isCheckClientCertificate = config.isCheckClientCertificate,
+    securityProtocol = config.SecurityProtocol,
+    isHandshakeDisplayed = false
+  }
+
+  --- Accessor of mobile_session_impl
   res.mobile_session_impl = mobile_session_impl.MobileSessionImpl(
-  res.SessionId, res.CorrelationId, test, connection, res.SendHeartbeatToSDL, res.AnswerHeartbeatFromSDL, res.IgnoreSDLHeartBeatAck, regAppParams )
+      res.SessionId, res.CorrelationId, test, connection, securitySettings, res.ActivateHeartbeat,
+      res.SendHeartbeatToSDL, res.AnswerHeartbeatFromSDL, res.IgnoreSDLHeartBeatAck, regAppParams )
   setmetatable(res, mt)
   return res
 end

@@ -12,6 +12,7 @@
 -- Communications MOB with SDL
 
 local ph = require('protocol_handler/protocol_handler')
+local constants = require('protocol_handler/ford_protocol_constants')
 
 local MD = {
   mt = { __index = { } }
@@ -42,15 +43,12 @@ function fbuffer_mt.__index:KeepMessage(msg)
 end
 
 --- Read and parse message from SDL to table
--- @treturn table Ford protocol header
 -- @treturn table Ford protocol frame
 function fbuffer_mt.__index:GetMessage()
-  local header = {}
   if self.keep then
     local res = self.keep
-    header = self.protocol_handler:Parse(self.keep)
     self.keep = nil
-    return header, res
+    return res
   end
   local len = self.rfd:read(4)
   if len then
@@ -59,11 +57,9 @@ function fbuffer_mt.__index:GetMessage()
     bit32.lshift(string.byte(string.sub(len, 2, 2)), 8) +
     string.byte(string.sub(len, 1, 1))
     local frame = self.rfd:read(len)
-    local doNotValidateJson = true
-    header = self.protocol_handler:Parse(frame, doNotValidateJson)
-    return header, frame
+    return frame
   end
-  return header, nil
+  return nil
 end
 
 --- Format and write message in output file
@@ -86,20 +82,28 @@ end
 
 --- Construct instance of FileStream type
 -- @tparam string filename File name which used as buffer
+-- @tparam number version SDL protocol version
 -- @tparam string sessionId Mobile session identifier
 -- @tparam string service Mobile service identifier
+-- @tparam boolean encryption True in case of encrypted streaming
 -- @tparam number bandwidth Bandwidth in bytes
--- @tparam number chunksize Size of chunk in bytes
 -- @treturn FileStream Constructed instance
-function MD.FileStream(filename, sessionId, service, bandwidth, chunksize)
+function MD.FileStream(filename, version, sessionId, service, encryption, bandwidth)
+  local errmsg
   local res = { }
   res.filename = filename
+  res.version = version
   res.service = service
   res.sessionId = sessionId
+  res.encryption = encryption
   res.bandwidth = bandwidth
   res.bytesSent = 0
   res.ts = timestamp()
-  res.chunksize = chunksize or 1488
+
+  local frameSize = (constants.FRAME_SIZE["P" .. res.version]
+      - constants.PROTOCOL_HEADER_SIZE)
+
+  res.chunksize = (frameSize < bandwidth) and frameSize or (bandwidth - 1)
   res.protocol_handler = ph.ProtocolHandler()
   res.messageId = 1
   res.rfd, errmsg = io.open(filename, "r")
@@ -115,34 +119,33 @@ function fstream_mt.__index:KeepMessage(msg)
 end
 
 --- Construct message to SDL
--- @treturn table Ford protocol header
 -- @treturn table Ford protocol frame
+-- @treturn number timeout Timeout for next message
 function fstream_mt.__index:GetMessage()
   local timespan = timestamp() - self.ts
-  local header = {}
   if timespan > 5000 then
     self.ts = self.ts + timespan - 1000
     self.bytesSent = self.bytesSent / (timespan / 1000)
     timespan = 1000
   end
   if (self.bytesSent + self.chunksize) / (timespan / 1000) > self.bandwidth then
-    return header, nil, 200
+    return nil, 200
   end
   local res = nil
   if self.keep then
     res = self.keep
     self.keep = nil
-    return header, res
+    return res, nil
   end
   local data = self.rfd:read(self.chunksize)
   if data then
     self.bytesSent = self.bytesSent + #data
     self.messageId = self.messageId + 1
 
-    header =
+    local header =
     {
-      version = config.defaultProtocolVersion or 2,
-      encryption = false,
+      version = self.version,
+      encryption = self.encryption,
       sessionId = self.sessionId,
       frameInfo = 0,
       frameType = 1,
@@ -153,7 +156,7 @@ function fstream_mt.__index:GetMessage()
 
     res = table.concat(self.protocol_handler:Compose(header))
   end
-  return header, res
+  return res, nil
 end
 
 --- Type which provides low level handling of communications between ATF and SDL
@@ -168,14 +171,15 @@ function MD.MessageDispatcher(connection)
   res.generators = { }
   res.idx = 0
   res.connection = connection
-  res.bufferSize = 8192
+  res.bufferSize = constants.FRAME_SIZE["P" .. config.defaultProtocolVersion]
+  -- res.bufferSize = 8192 -- previous hardcoded value
   res.mapped = { }
   res.timer = timers.Timer()
-  res.timer:setSingleShot(true)
+  res.sender = qt.dynamic()
+
   function res._d:timeout()
     self:bytesWritten(0)
   end
-  res.sender = qt.dynamic()
 
   function res.sender:SignalMessageSent() end
 
@@ -184,18 +188,15 @@ function MD.MessageDispatcher(connection)
   function res._d:bytesWritten(c)
     if #res.generators == 0 then return end
     res.bufferSize = res.bufferSize + c
-    for i = 1, #res.generators do
+    for _ = 1, #res.generators do
       if res.idx < #res.generators then
         res.idx = res.idx + 1
       else
         res.idx = 1
       end
-      local header, msg, timeout = res.generators[res.idx]:GetMessage()
-      if header and header.messageId then
-        atf_logger.LOG("SDLtoMOB", header)
-      end
+      local msg, timeout = res.generators[res.idx]:GetMessage()
       if msg and #msg > 0 then
-        if res.bufferSize > #msg then
+        if res.bufferSize >= #msg then
           res.bufferSize = res.bufferSize - #msg
           res.connection:Send({ msg })
           break
@@ -207,7 +208,9 @@ function MD.MessageDispatcher(connection)
       end
     end
   end
-  res.connection:OnDataSent(function(self, num) res._d:bytesWritten(num) end)
+
+  res.timer:setSingleShot(true)
+  res.connection:OnDataSent(function(_, num) res._d:bytesWritten(num) end)
   qt.connect(res.timer, "timeout()", res._d, "timeout()")
   setmetatable(res, MD.mt)
   return res

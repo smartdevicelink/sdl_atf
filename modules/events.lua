@@ -30,14 +30,14 @@ setmetatable(Events.timeoutEvent, event_mt)
 function Events.Event()
   local ret = {
     --- Level of event
-    level = 3
+    level = 2
   }
   setmetatable(ret, event_mt)
   return ret
 end
 
 --- Event comparation function
--- @treturn boolean True if events are equal
+-- @treturn boolean True if event data matched to conditions
 function event_mt.__index:matches() return false end
 
 return Events

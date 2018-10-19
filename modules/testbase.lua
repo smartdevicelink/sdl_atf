@@ -21,6 +21,7 @@ local console = require('console')
 local fmt = require('format')
 local SDL = require('SDL')
 local exit_codes = require('exit_codes')
+local util = require ("atf.util")
 
 local Test = { }
 
@@ -126,14 +127,47 @@ function control.runNextCase()
   if testcase then
     Test.current_case_name = Test.case_names[testcase]
     xmlReporter.AddCase(Test.current_case_name)
+    if Test.caseTitles and Test.caseTitles[Test.current_case_index] then
+      for _, title in pairs(Test.caseTitles[Test.current_case_index]) do
+        print(console.setattr(title, "green", 2))
+        atf_logger.LOGTestCaseStart(title)
+      end
+    end
     atf_logger.LOGTestCaseStart(Test.current_case_name)
     testcase(Test)
+    --- Perform delay for the time defined in 'zeroOccurrenceTimeout' configuration parameter
+    --  Create expectation on a custom event and then raise this event after timeout
+    --  @tparam Connection pConnection Network connection (Mobile or HMI)
+    local function wait(pConnection)
+      local timeout = config.zeroOccurrenceTimeout
+      local event = events.Event()
+      event.level = 3
+      event.matches = function(event1, event2) return event1 == event2 end
+
+      local ret = Expectation("Wait", pConnection)
+      ret.event = event
+      ret:Timeout(timeout + 5000)
+      event_dispatcher:AddEvent(pConnection, event, ret)
+      Test:AddExpectation(ret)
+      --- Raise an event
+      local function toRun()
+        event_dispatcher:RaiseEvent(pConnection, event)
+      end
+      Test:RunAfter(toRun, timeout)
+    end
+
+    for _, v in Test.expectations_list:List() do
+      if v.timesLE == 0 and v.timesGE == 0 then
+        wait(v.connection)
+      end
+    end
+
   else
     if SDL.autoStarted then
       SDL:StopSDL()
     end
     Test.current_case_name = nil
-    print_stopscript()
+    util.runner.print_stopscript()
     xmlReporter:finalize()
     if total_testset_result == false then
       quit(exit_codes.failed)
@@ -160,6 +194,7 @@ local function CheckStatus()
   -- Check the test status
   local success = true
   local errorMessage = {}
+  local warningMessage = {}
   if SDL:CheckStatusSDL() == CRASH then
     if SDL.exitOnCrash == true then
       success = false
@@ -167,7 +202,8 @@ local function CheckStatus()
     print(console.setattr("SDL has unexpectedly crashed or stop responding!", "cyan", 1))
     critical(SDL.exitOnCrash)
     SDL:DeleteFile()
-  elseif Test.expectations_list:Any(function(e) return not e.status end) then return end
+  end
+  if Test.expectations_list:Any(function(e) return not e.status end) then return end
   for _, e in ipairs(Test.expectations_list) do
     if e.status ~= SUCCESS then
       success = false
@@ -179,10 +215,13 @@ local function CheckStatus()
     for k, v in pairs(e.errorMessage) do
       errorMessage[e.name .. ": " .. k] = v
     end
+    for k, v in pairs(e.warningMessage) do
+      warningMessage[e.name .. ": " .. k] = v
+    end
   end
-  fmt.PrintCaseResult(Test.current_case_time, Test.current_case_name, success, errorMessage, timestamp() - Test.ts)
+  fmt.PrintCaseResult(Test.current_case_time, Test.current_case_name, success, errorMessage, warningMessage, timestamp() - Test.ts)
   xmlReporter.CaseMessageTotal(Test.current_case_name,{ ["result"] = success, ["timestamp"] = (timestamp() - Test.ts)} )
-  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILD"}, errorMessage ) end
+  if (not success) then xmlReporter.AddMessage("ErrorMessage", {["Status"] = "FAILED"}, errorMessage ) end
   Test.expectations_list:Clear()
   Test.current_case_name = nil
   if Test.current_case_mandatory and not success then
@@ -219,6 +258,21 @@ function control:checkstatus()
   CheckStatus()
 end
 
+--- Execute 'func' after defined timeout
+local function runAfter(self, func, timeout)
+  local d = qt.dynamic()
+  d.timeout = function(pTimer)
+    func()
+    self.timers[pTimer] = nil
+  end
+
+  local timer = timers.Timer()
+  self.timers[timer] = true
+  qt.connect(timer, "timeout()", d, "timeout()")
+  timer:setSingleShot(true)
+  timer:start(timeout)
+end
+
 --- Testbase module initialization
 local function main()
   setmetatable(Test, mt)
@@ -227,6 +281,7 @@ local function main()
 
   rawset(Test, "FailTestCase", FailTestCase)
   rawset(Test, "SkipTest", SkipTest)
+  rawset(Test, "RunAfter", runAfter)
 
   event_dispatcher = ed.EventDispatcher()
   event_dispatcher:OnPostEvent(CheckStatus)

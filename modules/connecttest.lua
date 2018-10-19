@@ -216,7 +216,7 @@ end
 function Test:initHMI_onReady()
   local function ExpectRequest(name, mandatory, params)
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
@@ -235,7 +235,7 @@ function Test:initHMI_onReady()
   local function ExpectNotification(name, mandatory)
     xmlReporter.AddMessage(debug.getinfo(1, "n").name, tostring(name))
     local event = events.Event()
-    event.level = 2
+    event.level = 1
     event.matches = function(self, data) return data.method == name end
     return
     EXPECT_HMIEVENT(event, name)
@@ -316,6 +316,7 @@ function Test:initHMI_onReady()
       button_capability("PRESET_8"),
       button_capability("PRESET_9"),
       button_capability("OK", true, false, true),
+      button_capability("PLAY_PAUSE"),
       button_capability("SEEKLEFT"),
       button_capability("SEEKRIGHT"),
       button_capability("TUNEUP"),
@@ -663,16 +664,7 @@ function RUN_AFTER(func, timeout, funcName)
   end
   xmlReporter.AddMessage(debug.getinfo(1, "n").name, func_name_str,
     {["functionLine"] = debug.getinfo(func, "S").linedefined, ["Timeout"] = tostring(timeout)})
-  local d = qt.dynamic()
-  d.timeout = function(self)
-    func()
-    Test.timers[self] = nil
-  end
-  local timer = timers.Timer()
-  Test.timers[timer] = true
-  qt.connect(timer, "timeout()", d, "timeout()")
-  timer:setSingleShot(true)
-  timer:start(timeout)
+  Test:RunAfter(func, timeout)
 end
 
 --- Create expectation for specific mobile response from default session and add it to expectation list

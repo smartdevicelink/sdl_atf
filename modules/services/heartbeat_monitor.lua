@@ -12,109 +12,127 @@ local constants = require('protocol_handler/ford_protocol_constants')
 
 local HbMonitor = {}
 local mt = { __index = { } }
-local d = qt.dynamic()
-local time_offset = 1000
 
 --- Type which represents Heartbeat monitor. It responsible for all heartbeat emulation activities.
 -- @type HeartBeatMonitor
 
+--- Check whether message is heartbeat
+-- @tparam table message Message for check
+-- @treturn boolean True if message is heartbeat
+local function isHeartbeatMessage(message)
+  return message.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+    and message.serviceType == constants.SERVICE_TYPE.CONTROL
+    and message.frameInfo == constants.FRAME_INFO.HEARTBEAT
+end
+
+--- Check whether message is heartbeat ACK
+-- @tparam table message Message for check
+-- @treturn boolean True if message is heartbeat ACK
+local function isHeartbeatAckMessage(message)
+  return message.frameType == constants.FRAME_TYPE.CONTROL_FRAME
+    and message.serviceType == constants.SERVICE_TYPE.CONTROL
+    and message.frameInfo == constants.FRAME_INFO.HEARTBEAT_ACK
+end
+
 --- Create and register expectation for heartbeat ACK from SDL
-function mt.__index:ExpectHeartbeatAck()
-  self.session.connection:OnInputData(function(_, msg)
-    if self.session.sessionId.get() ~= msg.sessionId then
-      return
-    end
-    if self.heartbeatEnabled then
-        if msg.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
-           msg.frameInfo == constants.FRAME_INFO.HEARTBEAT_ACK and
-           self.IgnoreHeartBeatAck.get() then
-            return
-        end
-        self.heartbeatFromSDLTimer:reset()
-    end
-  end)
+-- @tparam HeartBeatMonitor heartBeatMonitor Heartbeat monitor instance
+local function ExpectHeartbeatAck(heartBeatMonitor)
+  local event = events.Event()
+  event.matches = function(_, data)
+    return data.sessionId == heartBeatMonitor.session.sessionId.get()
+      and isHeartbeatAckMessage(data)
+  end
+  heartBeatMonitor.expectations:ExpectEvent(event, "HeartbeatACK")
+  :Do(function(_, _)
+      heartBeatMonitor.isHeartbeatConfirmedBySDL = true
+    end)
+end
+
+--- Send Heartbeat to SDL
+-- @tparam HeartBeatMonitor heartBeatMonitor Heartbeat monitor instance
+local function SendHeartbeat(heartBeatMonitor)
+  heartBeatMonitor.control_services:SendControlMessage( {frameInfo = constants.FRAME_INFO.HEARTBEAT } )
 end
 
 --- Send Heartbeat ACK to SDL
-function mt.__index:SendHeartbeatAck()
-  self.control_services:SendControlMessage( {frameInfo = constants.FRAME_INFO.HEARTBEAT_ACK } )
+-- @tparam HeartBeatMonitor heartBeatMonitor Heartbeat monitor instance
+local function SendHeartbeatAck(heartBeatMonitor)
+  heartBeatMonitor.control_services:SendControlMessage( {frameInfo = constants.FRAME_INFO.HEARTBEAT_ACK } )
 end
 
 --- Create and register expectation for heartbeat
-function mt.__index:AddHeartbeatExpectation()
+-- @tparam HeartBeatMonitor heartBeatMonitor Heartbeat monitor instance
+local function AddHeartbeatExpectation(heartBeatMonitor)
   local event = events.Event()
-  event.matches = function(s, data)
-    return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME and
-    data.serviceType == constants.SERVICE_TYPE.CONTROL and
-    data.frameInfo == constants.FRAME_INFO.HEARTBEAT   and
-    self.session.sessionId.get() == data.sessionId
+  event.matches = function(_, data)
+    return data.sessionId == heartBeatMonitor.session.sessionId.get()
+      and isHeartbeatMessage(data)
   end
-  self.expectations:ExpectEvent(event, "Heartbeat")
+  heartBeatMonitor.expectations:ExpectEvent(event, "Heartbeat")
   :Pin()
   :Times(AnyNumber())
-  :Do(function(data)
-      if self.heartbeatEnabled and self.AnswerHeartbeatFromSDL.get() then
-        self:SendHeartbeatAck()
+  :Do(function(_, _)
+      if heartBeatMonitor.heartbeatEnabled and heartBeatMonitor.AnswerHeartbeatFromSDL.get() then
+        SendHeartbeatAck(heartBeatMonitor)
       end
     end)
 end
 
 --- Start heartbeat
 function mt.__index:StartHeartbeat()
-  self.heartbeatEnabled = true
-
-  function d.SendHeartbeat()
-    if self.heartbeatEnabled and self.SendHeartbeatToSDL.get() then
-      self.control_services:SendControlMessage( { frameInfo = constants.FRAME_INFO.HEARTBEAT } )
-      if not self.IgnoreHeartBeatAck.get() then
-        self.heartbeatToSDLTimer:reset()
+  if not self.heartbeatEnabled then
+    self.heartbeatEnabled = true
+    if not self.isHeartbeatConfirmedBySDL then
+      if self.IgnoreHeartBeatAck.get() then
+        self.isHeartbeatConfirmedBySDL = true
+      else
+        ExpectHeartbeatAck(self)
       end
+
+      AddHeartbeatExpectation(self)
     end
-  end
 
-  function d.CloseSession()
-    if self.heartbeatEnabled then
-      print("\27[31m SDL didn't send anything for " .. self.heartbeatFromSDLTimer:interval()
-        .. " msecs. Closing session # " .. self.session.sessionId.get().."\27[0m")
-      self.control_services:StopService(7)
-      :Do(self:StopHeartbeat())
+    if not self.heartbeatToSDLTimerRegistered then
+      qt.connect(self.heartbeatToSDLTimer, "timeout()", self.qtproxy, "SendHeartbeat()")
+      self.heartbeatToSDLTimerRegistered = true
     end
-  end
 
-  xmlReporter.AddMessage("StartHearbeat", "True", (config.heartbeatTimeout + time_offset))
-  if self.heartbeatToSDLTimer then
-    self.heartbeatToSDLTimer:start(config.heartbeatTimeout)
-    qt.connect(self.heartbeatToSDLTimer, "timeout()", d, "SendHeartbeat()")
-  end
+    if self.SendHeartbeatToSDL.get() then
+      self.heartbeatToSDLTimer:start(self.heartbeatTimeout)
+      self.heartbeatToSDLTimerStarted = true
+    end
 
-  if self.heartbeatFromSDLTimer then
-    self.heartbeatFromSDLTimer:start(config.heartbeatTimeout + time_offset)
-    qt.connect(self.heartbeatFromSDLTimer, "timeout()", d, "CloseSession()")
+    SendHeartbeat(self)
+    xmlReporter.AddMessage("StartHearbeat", "True", (self.heartbeatTimeout))
   end
-
-  self:ExpectHeartbeatAck()
 end
 
 --- Stop heartbeat
 function mt.__index:StopHeartbeat()
   if self.heartbeatEnabled then
     self.heartbeatEnabled = false
-    if self.heartbeatToSDLTimer then
+
+    if self.heartbeatToSDLTimerStarted then
       self.heartbeatToSDLTimer:stop()
     end
-    if self.heartbeatFromSDLTimer then
-      self.heartbeatFromSDLTimer:stop()
-    end
-  xmlReporter.AddMessage("StopHearbeat", "True")
+
+    xmlReporter.AddMessage("StopHearbeat", "True")
   end
 end
 
 --- Set heartbeat interval
 -- @tparam number timeout Heartbeat interval in msec
 function mt.__index:SetHeartbeatTimeout(timeout)
-  if self.heartbeatToSDLTimer and self.sessionheartbeatFromSDLTimer then
-    self.heartbeatToSDLTimer:setInterval(timeout)
-    self.heartbeatFromSDLTimer:setInterval(timeout + time_offset)
+  self.heartbeatTimeout = timeout
+  self.heartbeatToSDLTimer:setInterval(timeout)
+end
+
+--- Callback on sent message event
+-- @tparam table message Message which was sent
+function mt.__index:OnMessageSent(message)
+  if not (isHeartbeatMessage(message) or isHeartbeatAckMessage(message))
+      and self.heartbeatToSDLTimerStarted then
+    self.heartbeatToSDLTimer:reset()
   end
 end
 
@@ -123,13 +141,21 @@ end
 -- @treturn HeartBeatMonitor Constructed instance
 function HbMonitor.HeartBeatMonitor(session)
   local res = { }
+  res.qtproxy = qt.dynamic()
+
+  function res.qtproxy.SendHeartbeat()
+    if res.heartbeatEnabled and res.SendHeartbeatToSDL.get() then
+      SendHeartbeat(res)
+    end
+  end
+
+  res.heartbeatTimeout = config.heartbeatTimeout
   res.session = session
   res.sessionId = session.sessionId
   res.control_services = session.control_services
   res.expectations = session.mobile_expectations
 
   res.heartbeatToSDLTimer = timers.Timer()
-  res.heartbeatFromSDLTimer = timers.Timer()
 
   res.SendHeartbeatToSDL = {}
   function res.SendHeartbeatToSDL.get()
@@ -146,7 +172,10 @@ function HbMonitor.HeartBeatMonitor(session)
     return session.ignoreHeartBeatAck.get()
   end
 
-  res.heartbeatEnabled = true
+  res.heartbeatEnabled = false
+  res.isHeartbeatConfirmedBySDL = false
+  res.heartbeatToSDLTimerRegistered = false
+  res.heartbeatToSDLTimerStarted = false
   setmetatable(res, mt)
   return res
 end

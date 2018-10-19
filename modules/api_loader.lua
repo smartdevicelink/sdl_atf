@@ -60,6 +60,7 @@ local function LoadParamsInFunction(param, interface)
   data["maxsize"] = tonumber(param:attr("maxsize"))
   data["minvalue"] = tonumber(param:attr("minvalue"))
   data["maxvalue"] = tonumber(param:attr("maxvalue"))
+  data["defvalue"] = tonumber(param:attr("defvalue"))
   data["resultCodes"] = result_codes
   return name, data
 end
@@ -125,12 +126,28 @@ local function LoadFunction( api, dest  )
   end
 end
 
+local function GetAPIVersion(version_str)
+  local version_arr = {0,0,0}
+  local index = 0
+  for i in string.gmatch(version_str, "([^.]+)") do
+      version_arr[index] = i
+      index = index + 1
+  end
+  local version = {
+      majorVersion = version_arr[0],
+      minorVersion = version_arr[1],
+      patchVersion = version_arr[2]
+  }
+  return version
+end
+
 --- Load interfaces from api. Each function, enum and struct will be
 -- kept inside appropriate interface
 local function LoadInterfaces( api, dest )
   local interfaces = api:xpath("//interface")
   for _, s in ipairs(interfaces) do
     name = s:attr("name")
+    version_str = s:attr("version")
     dest.interface[name] ={}
     dest.interface[name].body = s
     dest.interface[name].type={}
@@ -142,6 +159,7 @@ local function LoadInterfaces( api, dest )
     dest.interface[name].type['notification'].functions={}
     dest.interface[name].enum={}
     dest.interface[name].struct={}
+    dest.interface[name].version = GetAPIVersion(version_str)
   end
 end
 
@@ -151,7 +169,7 @@ end
 -- @tparam string path Path to the xml file
 -- @tparam string include_parent_name Parent name
 -- @treturn table lua table with all xml RPCs
- function apiLoader.init(path, include_parent_name)
+function apiLoader.init(path, include_parent_name)
   apiLoader.include_parent_name = include_parent_name
   local result = {}
   result.interface = { }
@@ -165,6 +183,6 @@ end
 
   LoadFunction(_api, result)
   return result
- end
+end
 
- return apiLoader
+return apiLoader

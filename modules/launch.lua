@@ -2,34 +2,35 @@
 --
 -- *Dependencies:* `atf.util`
 --
--- *Globals:* `declare_opt()`, declare_long_opt()`, `declare_short_opt()`, `print_startscript()`, `script_execute()`
+-- *Globals:* none
 -- @script launch
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
-require ("atf.util")
+local util = require ("atf.util")
 
-declare_opt("-c", "--config-file", RequiredArgument, "Config file")
-declare_long_opt("--mobile-connection", RequiredArgument, "Mobile connection IP")
-declare_long_opt("--mobile-connection-port", RequiredArgument, "Mobile connection port")
-declare_long_opt("--hmi-connection", RequiredArgument, "HMI connection IP")
-declare_long_opt("--hmi-connection-port", RequiredArgument, "HMI connection port")
-declare_long_opt("--perflog-connection", RequiredArgument, "PerfLog connection IP")
-declare_long_opt("--perflog-connection-port", RequiredArgument, "Perflog connection port")
-declare_long_opt("--report-path", RequiredArgument, "Path for a report collecting.")
-declare_long_opt("--report-mark", RequiredArgument, "Specify label of string for marking test report.")
-declare_short_opt("-r", NoArgument, "Recursively scan of folders")
-declare_short_opt("-p", NoArgument, "Parallel script running mode")
-declare_long_opt("--storeFullSDLLogs", NoArgument, "Store Full SDL Logs enable")
-declare_long_opt("--heartbeat", RequiredArgument, "Hearbeat timeout value")
-declare_long_opt("--sdl-core", RequiredArgument, "Path to folder with SDL binary")
-declare_long_opt("--report-mark", RequiredArgument, "Marker of testing report")
+util.commandLine.declare_opt("-c", "--config-file", util.commandLine.consts.RequiredArgument, "Config file")
+util.commandLine.declare_long_opt("--mobile-connection", util.commandLine.consts.RequiredArgument, "Mobile connection IP")
+util.commandLine.declare_long_opt("--mobile-connection-port", util.commandLine.consts.RequiredArgument, "Mobile connection port")
+util.commandLine.declare_long_opt("--hmi-connection", util.commandLine.consts.RequiredArgument, "HMI connection IP")
+util.commandLine.declare_long_opt("--hmi-connection-port", util.commandLine.consts.RequiredArgument, "HMI connection port")
+util.commandLine.declare_long_opt("--perflog-connection", util.commandLine.consts.RequiredArgument, "PerfLog connection IP")
+util.commandLine.declare_long_opt("--perflog-connection-port", util.commandLine.consts.RequiredArgument, "Perflog connection port")
+util.commandLine.declare_long_opt("--report-path", util.commandLine.consts.RequiredArgument, "Path for a report collecting.")
+util.commandLine.declare_long_opt("--report-mark", util.commandLine.consts.RequiredArgument, "Specify label of string for marking test report.")
+util.commandLine.declare_short_opt("-r", util.commandLine.consts.NoArgument, "Recursively scan of folders")
+util.commandLine.declare_short_opt("-p", util.commandLine.consts.NoArgument, "Parallel script running mode")
+util.commandLine.declare_long_opt("--storeFullSDLLogs", util.commandLine.consts.NoArgument, "Store Full SDL Logs enable")
+util.commandLine.declare_long_opt("--heartbeat", util.commandLine.consts.RequiredArgument, "Hearbeat timeout value")
+util.commandLine.declare_long_opt("--sdl-core", util.commandLine.consts.RequiredArgument, "Path to folder with SDL binary")
+util.commandLine.declare_long_opt("--report-mark", util.commandLine.consts.RequiredArgument, "Marker of testing report")
+util.commandLine.declare_long_opt("--security-protocol", util.commandLine.consts.RequiredArgument, "Security protocol type")
+util.commandLine.declare_long_opt("--sdl-interfaces", util.commandLine.consts.RequiredArgument, "Path to folder with APIs")
 
-local script_files = parse_cmdl()
-
+local script_files = util.commandLine.parse_cmdl()
 if (#script_files > 0) then
   for _,scpt in ipairs(script_files) do
-    print_startscript(scpt)
-    script_execute(scpt)
+    util.runner.print_startscript(scpt)
+    util.runner.script_execute(scpt)
   end
 end

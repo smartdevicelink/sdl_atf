@@ -1,8 +1,8 @@
 --- The module which is responsible for managing SDL from ATF
 --
--- *Dependencies:* `os`, `sdl_logger`, `config`, `atf.util`
+-- *Dependencies:* `os`, `sdl_logger`, `config`, `atf.util`, `console`
 --
--- *Globals:* `sleep()`, `CopyFile()`, `CopyInterface()`, `xmlReporter`, `console`
+-- *Globals:* `sleep()`, `CopyFile()`, `CopyInterface()`, `xmlReporter`
 -- @module SDL
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -11,6 +11,7 @@ require('os')
 local sdl_logger = require('sdl_logger')
 local config = require('config')
 local console = require('console')
+local util = require ("atf.util")
 local SDL = { }
 
 require('atf.util')
@@ -37,13 +38,13 @@ local usedBuildOptions = {
   }
 }
 
---- Read specified parameter from CMakeCache.txt file
+--- Read specified parameter from build_config.txt file
 -- @tparam string paramName Parameter to read value
 -- @treturn string The main result. Value read of parameter.
 -- Can be nil in case parameter was not found.
 -- @treturn string Type of read parameter
-local function readParameterFromCMakeCacheFile(paramName)
-  local pathToFile = config.pathToSDL .. "/CMakeCache.txt"
+local function readParameterFromBuildConfigFile(paramName)
+  local pathToFile = config.pathToSDL .. "/build_config.txt"
   if is_file_exists(pathToFile) then
     local paramValue, paramType
     for line in io.lines(pathToFile) do
@@ -62,13 +63,9 @@ end
 -- @tparam string sdlBuildParam SDL build parameter to read value
 -- @tparam string defaultValue Default value of set option
 local function setSdlBuildOption(self, optionName, sdlBuildParam, defaultValue)
-  local value, paramType = readParameterFromCMakeCacheFile(sdlBuildParam)
+  local value, paramType = readParameterFromBuildConfigFile(sdlBuildParam)
   if value == nil then
     value = defaultValue
-    local msg = "SDL build option " ..
-      sdlBuildParam .. " is unavailable.\nAssume that SDL was built with " ..
-      sdlBuildParam .. " = " .. defaultValue
-    print(console.setattr(msg, "cyan", 1))
   else
     if paramType == "UNINITIALIZED" then
       value = nil
@@ -119,7 +116,7 @@ function SDL:StartSDL(pathToSDL, smartDeviceLinkCore, ExitOnCrash)
   if result then
     msg = "SDL started"
     if config.storeFullSDLLogs == true then
-      sdl_logger.init_log(get_script_file_name())
+      sdl_logger.init_log(util.runner.get_script_file_name())
     end
   else
     msg = "SDL had already started not from ATF or unexpectedly crashed"
@@ -136,19 +133,16 @@ function SDL:StopSDL()
   self.autoStarted = false
   local status = self:CheckStatusSDL()
   if status == self.RUNNING then
-    local result = os.execute ('./tools/StopSDL.sh')
-    if result then
-      if config.storeFullSDLLogs == true then
-        sdl_logger.close()
-      end
-      return true
-    end
+    os.execute('./tools/StopSDL.sh')
   else
     local msg = "SDL had already stopped"
     xmlReporter.AddMessage("StopSDL", {["message"] = msg})
     print(console.setattr(msg, "cyan", 1))
-    return nil, msg
   end
+  if config.storeFullSDLLogs == true then
+    sdl_logger.close()
+  end
+  sleep(1)
 end
 
 --- SDL status check

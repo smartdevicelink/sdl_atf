@@ -4,11 +4,12 @@
 --
 -- *Dependencies:* `cardinalities`
 --
--- *Globals:* `list`
+-- *Globals:* `list`, `timestamp()`
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 local cardinalities = require('cardinalities')
+local config = require('config')
 
 local Expectations = { }
 --- Predefined table that represents failed expectation
@@ -22,7 +23,7 @@ function Expectations.Expectation(name, connection)
   local mt = { __index = { } }
 
   --- Perform actions from actions list
-  -- @tparam ??? data ??? Data for actions
+  -- @tparam table data Data for actions
   function mt.__index:Action(data)
     for i = 1, #self.actions do
       self.actions[i](self, data)
@@ -95,6 +96,11 @@ function Expectations.Expectation(name, connection)
 
   --- Perform base validation of expectation and set result into `Test`
   function mt.__index:validate()
+    if self.isAtLeastOneFail == true then
+      if config.checkAllValidations == false or self.timesGE == nil or self.occurences == self.timesGE then
+        self.status = Expectations.FAILED
+      end
+    end
     -- Check Timeout status
     if not self.status and timestamp() - self.ts > self.timeout then
       self.status = Expectations.FAILED
@@ -127,13 +133,20 @@ function Expectations.Expectation(name, connection)
     if not self.verifyData then self.verifyData = {} end
     self.verifyData[#self.verifyData + 1] = function(self, data)
       local valid, msg = func(self, data)
-
       if not valid then
-        self.status = Expectations.FAILED
-        self.errorMessage["ValidIf"] = msg
+        self.isAtLeastOneFail = true
+        if not self.errorMessage["ValidIf"] then
+          self.errorMessage["ValidIf"] = ""
+        end
+        if msg ~= nil and msg ~= "" then
+          self.errorMessage["ValidIf"] = self.errorMessage["ValidIf"] .. "\n" .. tostring(msg)
+        end
       else
         if msg ~= nil and msg ~= "" then
-          self.errorMessage["WARNING"] = msg
+          if not self.warningMessage["WARNING"] then
+            self.warningMessage["WARNING"] = ""
+          end
+          self.warningMessage["WARNING"] = self.warningMessage["WARNING"] .. "\n" .. tostring(msg)
         end
       end
     end
@@ -153,9 +166,11 @@ function Expectations.Expectation(name, connection)
     connection = connection, -- Network connection
     occurences = 0, -- Expectation complience times
     errorMessage = { }, -- If failed, error message to display
+    warningMessage = { }, -- Warning message to display
     actions = { }, -- Sequence of actions to be executed when complied
     pinned = false, -- True if the expectation is pinned
-    list = nil -- ExpectationsList the expectation belongs to
+    list = nil, -- ExpectationsList the expectation belongs to
+    isAtLeastOneFail = false -- True if at least one validation fails
   }
 
   setmetatable(e, mt)
@@ -166,27 +181,30 @@ end
 -- @type ExpectationsList
 function Expectations.ExpectationsList()
   local mt = { __index = {} }
-  function mt.__index:Add(e)
-    if e.pinned then
-      table.insert(self.pinned, e)
-      e.index = #self.pinned
+
+  --- Add expectation into list of expectations
+  -- @tparam Expectation exp Expectation to add
+  function mt.__index:Add(exp)
+    if exp.pinned then
+      table.insert(self.pinned, exp)
+      exp.index = #self.pinned
     else
-      table.insert(self.expectations, e)
-      e.index = self.expectations
+      table.insert(self.expectations, exp)
+      exp.index = #self.expectations
     end
   end
 
   --- Remove expectation from list of expectations
-  -- @tparam Expectation e Expectation to remove
-  function mt.__index:Remove(e)
-    if e.pinned then
-      table.remove(self.pinned, e.index)
-      for i = e.index, #self.pinned do
+  -- @tparam Expectation exp Expectation to remove
+  function mt.__index:Remove(exp)
+    if exp.pinned then
+      table.remove(self.pinned, exp.index)
+      for i = exp.index, #self.pinned do
         self.pinned[i].index = i
       end
     else
-      table.remove(self.expectations)
-      for i = e.index, #self.expectations do
+      table.remove(self.expectations, exp.index)
+      for i = exp.index, #self.expectations do
         self.expectations[i].index = i
       end
     end
@@ -248,7 +266,7 @@ function Expectations.ExpectationsList()
 
   --- Set expectation as not pinned (expected during one test step where was defined)
   -- @tparam Expectation e Expectation to be unpinned
-  function mt.__index.Unpin(e)
+  function mt.__index:Unpin(e)
     for i = 1, #self.pinned do
       if self.pinned[i] == e then
         table.remove(self.pinned, i)
