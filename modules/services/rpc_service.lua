@@ -21,13 +21,10 @@ local Expectation = expectations.Expectation
 local Event = events.Event
 
 local RpcService = {}
-RpcService.notification_counter = 0
 local mt = { __index = { } }
 
 --- Type which represents RPC service
 -- @type RPCService
-
-mt.__index.cor_id_func_map = { }
 
 --- Basic function to create expectation for response from SDL and register it in expectation list
 -- @tparam RPCService RPCService Instance of RPCService
@@ -36,17 +33,17 @@ mt.__index.cor_id_func_map = { }
 -- @treturn Expectation Created expectation
 local function baseExpectResponse(RPCService, cor_id, ...)
   local temp_cor_id = cor_id
-  local func_name = RPCService.cor_id_func_map[cor_id]
+  local func_name = RPCService.session.cor_id_func_map[cor_id]
   local tbl_corr_id = {}
   if func_name then
-    RPCService.cor_id_func_map[cor_id] = nil
+    RPCService.session.cor_id_func_map[cor_id] = nil
   else
     if type(cor_id) == 'string' then
-      for fid, fname in pairs(RPCService.cor_id_func_map) do
+      for fid, fname in pairs(RPCService.session.cor_id_func_map) do
         if fname == cor_id then
           func_name = fname
           table.insert(tbl_corr_id, fid)
-          table.removeKey(RPCService.cor_id_func_map, fid)
+          table.removeKey(RPCService.session.cor_id_func_map, fid)
         end
       end
       cor_id = tbl_corr_id[1]
@@ -127,10 +124,10 @@ local function baseExpectNotification(RPCService, funcName, ...)
         else
           arguments = args[exp.occurences]
         end
-        RpcService.notification_counter = RpcService.notification_counter + 1
-        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
+        RPCService.session.notification_counter = RPCService.session.notification_counter + 1
+        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RpcService.notification_counter,
+        xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
         if (not _res) then
@@ -148,6 +145,8 @@ end
 function RpcService.RPCService(session)
   local res = { }
   res.session = session
+  res.session.notification_counter = 0
+  res.session.cor_id_func_map = { }
   setmetatable(res, mt)
   return res
 end
@@ -163,10 +162,10 @@ function mt.__index:CheckCorrelationID(message)
     self.session.correlationId.set(cor_id + 1)
     message_correlation_id = cor_id
   end
-  if not self.cor_id_func_map[message_correlation_id] then
+  if not self.session.cor_id_func_map[message_correlation_id] then
     for fname, fid in pairs(functionId) do
       if fid == message.rpcFunctionId then
-        self.cor_id_func_map[message_correlation_id] = fname
+        self.session.cor_id_func_map[message_correlation_id] = fname
         break
       end
     end
