@@ -14,7 +14,7 @@ SOURCES= src/lua_interpreter.cc \
 	src/qdatetime.cc \
 	src/timers.cc
 
-all: interp modules/libxml.so modules/libmq.so modules/libluaopenssl.so
+all: interp modules/libxml.so modules/libluaopenssl.so
 
 interp: $(PROJECT).mk $(SOURCES)
 	make -f $<
@@ -22,11 +22,6 @@ interp: $(PROJECT).mk $(SOURCES)
 
 modules/libxml.so: src/lua_xml.cc
 	$(CXX) $(CXXFLAGS) -shared -std=c++11 $< -o modules/libxml.so -g -I/usr/include/libxml2 -llua5.2 -lxml2 -fPIC
-
-modules/libmq.so:
-	cd ./modules/luamq/; make
-	cp -f ./modules/luamq/src/mq.so ./modules/libmq.so
-	rm -f ./modules/luamq/src/mq.so ./modules/luamq/src/lua-mq.o
 
 modules/libluaopenssl.so: src/lua_openssl.cc
 	$(CXX) $(CXXFLAGS) -shared -std=c++11 $< -o modules/libluaopenssl.so -g -I/usr/include/openssl -llua5.2 -lssl -lcrypto -fPIC
