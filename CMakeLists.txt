@@ -47,6 +47,8 @@ target_link_libraries(${PROJECT_NAME}
                        lua::lua
                        )
 
+include("BSON.cmake")
+
 install(
   TARGETS ${PROJECT_NAME}
   DESTINATION "${CMAKE_INSTALL_PREFIX}"
@@ -77,6 +79,13 @@ install(
   DESTINATION "${CMAKE_INSTALL_PREFIX}"
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
   COMPONENT sdl_atf
+)
+
+install(CODE "execute_process( \
+    COMMAND ${CMAKE_COMMAND} -E create_symlink \
+    ../lib/libluabson.so \
+    ${CMAKE_INSTALL_PREFIX}/modules/libbson4lua.so \
+    )"
 )
 
 add_subdirectory(src/luaxml)
