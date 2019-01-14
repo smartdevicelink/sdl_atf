@@ -9,12 +9,32 @@
 local config = { }
 --- Flag which defines usage of color for reporting
 config.color = true
---- Define URL for HMI connection
-config.hmiUrl = "ws://localhost"
---- Define port for HMI connection
-config.hmiPort = 8087
+
+--- Remote cofiguration
+config.remoteConnection = {}
+config.remoteConnection.enabled = true
+--- Define host for default remote connection
+config.remoteConnection.url = "127.0.0.1"
+config.remoteConnection.port = 5555
+
+--- HMI configuration
+config.hmiAdapterConfig = {}
+config.hmiAdapterConfig.hmiAdapterType = "Remote"
+--- Define configuration parameters for HMI connection on WebSocket base
+config.hmiAdapterConfig.WebSocket = {}
+config.hmiAdapterConfig.WebSocket.url = "ws://localhost"
+config.hmiAdapterConfig.WebSocket.port = 8087
+--- Define configuration parameters for Remote HMI connection
+config.hmiAdapterConfig.Remote = {}
+--- Define configuration parameters for HMI connection on WebSocket base
+-- for Remote HMI connection
+config.hmiAdapterConfig.Remote.WebSocketConfig = {}
+config.hmiAdapterConfig.Remote.WebSocketConfig.host = "127.0.0.1"
+config.hmiAdapterConfig.Remote.WebSocketConfig.port = 8087
+
+
 --- Define host for default mobile device connection
-config.mobileHost = "localhost"
+config.mobileHost = "127.0.0.1"
 --- Define port for default mobile device connection
 config.mobilePort = 12345
 --- Define timeout for Heartbeat in msec
@@ -34,12 +54,16 @@ config.defaultProtocolVersion = 3
 --- Define path to SDL binary
 -- Example: "/home/user/sdl_build/bin"
 config.pathToSDL = ""
+--- Define path to SDL .INI file
+config.pathToSDLConfig = ""
+--- Define path to SDL Policy database
+config.pathToSDLPolicyDB = ""
 --- Define path to SDL interfaces
 -- Example: "/home/user/sdl_panasonic/src/components/interfaces"
 config.pathToSDLInterfaces = ""
 --- Define SDL modification
 config.SDL = "smartDeviceLinkCore"
---- Definehost for SDL logs
+--- Define host for SDL logs
 config.sdl_logs_host = "localhost"
 --- Define port for SDL logs
 config.sdl_logs_port = 6676

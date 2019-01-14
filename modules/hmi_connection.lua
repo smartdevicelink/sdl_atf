@@ -140,7 +140,7 @@ end
 function HmiConnection.Connection(connection)
   local res = { }
   res.connection = connection
-  res.requestId = 0
+  res.requestId = 1000
   setmetatable(res, HmiConnection.mt)
   return res
 end
