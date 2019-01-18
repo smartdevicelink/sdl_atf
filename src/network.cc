@@ -38,7 +38,7 @@ QTcpSocket *tcpSocket =
   while (!tcpSocket->waitForConnected()) {
     tcpSocket->connectToHost(ip, port);
     // Check elapsed time
-    const int time_waiting_ms = 1000;
+    const int time_waiting_ms = 3000;
     if (timer.elapsed() > time_waiting_ms){
       fprintf(stderr, "%s\n%s\n", "Error: Connection not established", strerror(errno));
       return 1;

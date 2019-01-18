@@ -1,2 +1,2 @@
-#!/bin/sh
-./ATF modules/launch.lua $@ 2> ErrorLog.txt
+#!/usr/bin/env bash
+./ATF modules/launch.lua $@

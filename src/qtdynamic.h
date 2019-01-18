@@ -1,4 +1,5 @@
 #line 16 "dynamic_object.nw"
+#pragma once
 #include <QObject>
 #include <QMetaObject>
 #include <QHash>
