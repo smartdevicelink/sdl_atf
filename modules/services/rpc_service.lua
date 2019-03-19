@@ -42,6 +42,7 @@ local function baseExpectRequest(RPCService, funcName, ...)
   requestEvent.matches = function(_, data)
     return data.rpcFunctionId == functionId[funcName]
       and data.sessionId == RPCService.session.sessionId.get()
+      and data.rpcType == constants.BINARY_RPC_TYPE.REQUEST
   end
   local ret = RPCService.session:ExpectEvent(requestEvent, funcName .. " request")
   if #args > 0 then
@@ -53,7 +54,7 @@ local function baseExpectRequest(RPCService, funcName, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
 
         if (not _res) then return _res, _err end
@@ -98,7 +99,9 @@ local function baseExpectResponse(RPCService, cor_id, ...)
   if(#tbl_corr_id > 0) then
     responseEvent.matches = function(_, data)
         for _, v in pairs(tbl_corr_id) do
-          if data.rpcCorrelationId == v and data.sessionId == RPCService.session.sessionId.get() then
+          if data.rpcCorrelationId == v 
+              and data.sessionId == RPCService.session.sessionId.get()
+              and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE then
             return true
           end
         end
@@ -108,6 +111,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
     responseEvent.matches = function(_, data)
         return data.rpcCorrelationId == cor_id
           and data.sessionId == RPCService.session.sessionId.get()
+          and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE 
       end
   end
   local ret = RPCService.session:ExpectEvent(responseEvent, "Response to " .. cor_id)
@@ -120,7 +124,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
 
         if (not _res) then return _res, _err end
@@ -139,7 +143,8 @@ local function baseExpectNotification(RPCService, funcName, ...)
   local notificationEvent = Event()
   notificationEvent.matches = function(_, data)
     return data.rpcFunctionId == functionId[funcName]
-    and data.sessionId == RPCService.session.sessionId.get()
+      and data.sessionId == RPCService.session.sessionId.get()
+      and data.rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
   end
   local args = table.pack(...)
 
@@ -165,7 +170,7 @@ local function baseExpectNotification(RPCService, funcName, ...)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+          ["name"] = tostring(funcName),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
         if (not _res) then
           return _res,_err
