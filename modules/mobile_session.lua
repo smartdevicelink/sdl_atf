@@ -39,6 +39,14 @@ function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
   return self.mobile_session_impl:ExpectFrame(frameMessage, binaryDataCompareFunc)
 end
 
+--- Expectation of request
+-- @tparam number funcName Expected request name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for request
+function mt.__index:ExpectRequest(funcName, ...)
+  return self.mobile_session_impl:ExpectRequest(funcName, ...)
+end
+
 --- Expectation of response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
@@ -53,6 +61,14 @@ end
 -- @treturn Expectation Expectation for notification
 function mt.__index:ExpectNotification(funcName, ...)
    return self.mobile_session_impl:ExpectNotification(funcName, ...)
+end
+
+--- Expectation of encrypted request with specific funcName
+-- @tparam number funcName Expected request name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for response
+function mt.__index:ExpectEncryptedRequest(funcName, ...)
+  return self.mobile_session_impl:ExpectEncryptedRequest(funcName, ...)
 end
 
 --- Expectation of encrypted response with specific correlation_id
@@ -101,6 +117,23 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendRPC(func, arguments, fileName)
 end
 
+--- Send RPC response
+-- @tparam string func RPC name
+-- @tparam string cor_id Correlation identifier
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendResponse(func, cor_id, arguments, fileName)
+  return self.mobile_session_impl:SendResponse(func, cor_id, arguments, fileName)
+end
+
+--- Send notification
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendNotification(func, arguments, fileName)
+  return self.mobile_session_impl:SendNotification(func, arguments, fileName)
+end
+
 --- Send encrypted RPC
 -- @tparam string func RPC name
 -- @tparam table arguments Arguments for RPC function
@@ -108,6 +141,24 @@ end
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   return self.mobile_session_impl:SendEncryptedRPC(func, arguments, fileName)
 end
+
+--- Send encrypted RPC response
+-- @tparam string func RPC name
+-- @tparam string cor_id Correlation identifier
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendEncryptedResponse(func, cor_id, arguments, fileName)
+  return self.mobile_session_impl:SendEncryptedResponse(func, cor_id, arguments, fileName)
+end
+
+--- Send encrypted notification
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendEncryptedNotification(func, arguments, fileName)
+  return self.mobile_session_impl:SendEncryptedNotification(func, arguments, fileName)
+end
+
 
 ---Start specific service
 -- For service == 7 should be used StartRPC() instead of this function

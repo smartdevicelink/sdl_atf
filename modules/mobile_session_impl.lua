@@ -48,6 +48,13 @@ function mt.__index:ExpectAny()
   return self.mobile_expectations:ExpectAny()
 end
 
+--- Expectation of request
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for request
+function mt.__index:ExpectRequest(funcName, ...)
+  return self.rpc_services:ExpectRequest(funcName, ...)
+end
+
 --- Expectation of response with specific correlation_id
 -- @tparam number cor_id Correlation identifier of specific rpc event
 -- @tparam table ... Expectation parameters
@@ -62,6 +69,19 @@ end
 -- @treturn Expectation Expectation for notification
 function mt.__index:ExpectNotification(funcName, ...)
    return self.rpc_services:ExpectNotification(funcName, ...)
+end
+
+--- Expectation of encrypted request with specific funcName
+-- @tparam number funcName Expected request name
+-- @tparam table ... Expectation parameters
+-- @treturn Expectation Expectation for response
+function mt.__index:ExpectEncryptedRequest(funcName, ...)
+  if not (self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC)) then
+    print("Error: Can not create expectation for encrypted response. "
+      .. "Secure service was not established. Session: " .. self.sessionId.get())
+  end
+
+  return self.rpc_services:ExpectEncryptedRequest(funcName, ...)
 end
 
 --- Expectation of encrypted response with specific correlation_id
@@ -126,6 +146,23 @@ function mt.__index:SendRPC(func, arguments, fileName)
   return self.rpc_services:SendRPC(func, arguments, fileName, securityConstants.ENCRYPTION.OFF)
 end
 
+--- Send RPC response
+-- @tparam string func RPC name
+-- @tparam string cor_id Correlation identifier
+-- @tparam table arguments Arguments for RPC response
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendResponse(func, cor_id, arguments, fileName)
+  return self.rpc_services:SendResponse(func, cor_id, arguments, fileName, securityConstants.ENCRYPTION.OFF)
+end
+
+--- Send notification
+-- @tparam string func notification name
+-- @tparam table arguments Arguments for RPC notification
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendNotification(func, arguments, fileName)
+  return self.rpc_services:SendNotification(func, arguments, fileName, securityConstants.ENCRYPTION.OFF)
+end
+
 --- Send encrypted RPC
 -- @tparam string func RPC name
 -- @tparam table arguments Arguments for RPC function
@@ -133,6 +170,33 @@ end
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
   if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
     return self.rpc_services:SendRPC(func, arguments, fileName, securityConstants.ENCRYPTION.ON)
+  end
+  print("Error: Can not send encrypted request. "
+    .. "Secure service was not established. Session: " .. self.sessionId.get())
+  return -1
+end
+
+--- Send encrypted RPC response
+-- @tparam string func RPC name
+-- @tparam string cor_id Correlation identifier
+-- @tparam table arguments Arguments for RPC response
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendEncryptedResponse(func, cor_id, arguments, fileName)
+  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
+    return self.rpc_services:SendResponse(func, cor_id, arguments, fileName, securityConstants.ENCRYPTION.ON)
+  end
+  print("Error: Can not send encrypted response. "
+    .. "Secure service was not established. Session: " .. self.sessionId.get())
+  return -1
+end
+
+--- Send encrypted RPC
+-- @tparam string func RPC name
+-- @tparam table arguments Arguments for RPC function
+-- @tparam string fileName Path to file with binary data
+function mt.__index:SendEncryptedNotification(func, arguments, fileName)
+  if self.isSecuredSession and self.security:checkSecureService(constants.SERVICE_TYPE.RPC) then
+    return self.rpc_services:SendNotification(func, arguments, fileName, securityConstants.ENCRYPTION.ON)
   end
   print("Error: Can not send encrypted request. "
     .. "Secure service was not established. Session: " .. self.sessionId.get())
