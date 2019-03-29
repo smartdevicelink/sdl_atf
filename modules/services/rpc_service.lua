@@ -26,6 +26,44 @@ local mt = { __index = { } }
 --- Type which represents RPC service
 -- @type RPCService
 
+--- Basic function to create expectation for request from SDL and register it in expectation list
+-- @tparam RPCService RPCService Instance of RPCService
+-- @tparam string funcName Function name
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
+local function baseExpectRequest(RPCService, funcName, ...)
+  local tbl_corr_id = {}
+  local args = table.pack(...)
+  local requestEvent = Event()
+  if type(funcName) ~= 'string' then
+    error("ExpectResponse: argument 1 (funcName) must be string")
+    return nil
+  end
+  requestEvent.matches = function(_, data)
+    return data.rpcFunctionId == functionId[funcName]
+      and data.sessionId == RPCService.session.sessionId.get()
+      and data.rpcType == constants.BINARY_RPC_TYPE.REQUEST
+  end
+  local ret = RPCService.session:ExpectEvent(requestEvent, funcName .. " request")
+  if #args > 0 then
+    ret:ValidIf(function(exp, data)
+        local arguments
+        if exp.occurences > #args then
+          arguments = args[#args]
+        else
+          arguments = args[exp.occurences]
+        end
+        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
+        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
+        local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
+
+        if (not _res) then return _res, _err end
+        return compareValues(arguments, data.payload, "payload")
+      end)
+  end
+  return ret
+end
+
 --- Basic function to create expectation for response from SDL and register it in expectation list
 -- @tparam RPCService RPCService Instance of RPCService
 -- @tparam number cor_id Correlation identificator
@@ -61,7 +99,9 @@ local function baseExpectResponse(RPCService, cor_id, ...)
   if(#tbl_corr_id > 0) then
     responseEvent.matches = function(_, data)
         for _, v in pairs(tbl_corr_id) do
-          if data.rpcCorrelationId == v and data.sessionId == RPCService.session.sessionId.get() then
+          if data.rpcCorrelationId == v 
+              and data.sessionId == RPCService.session.sessionId.get()
+              and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE then
             return true
           end
         end
@@ -71,6 +111,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
     responseEvent.matches = function(_, data)
         return data.rpcCorrelationId == cor_id
           and data.sessionId == RPCService.session.sessionId.get()
+          and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE 
       end
   end
   local ret = RPCService.session:ExpectEvent(responseEvent, "Response to " .. cor_id)
@@ -83,7 +124,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
 
         if (not _res) then return _res, _err end
@@ -102,7 +143,8 @@ local function baseExpectNotification(RPCService, funcName, ...)
   local notificationEvent = Event()
   notificationEvent.matches = function(_, data)
     return data.rpcFunctionId == functionId[funcName]
-    and data.sessionId == RPCService.session.sessionId.get()
+      and data.sessionId == RPCService.session.sessionId.get()
+      and data.rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
   end
   local args = table.pack(...)
 
@@ -128,7 +170,7 @@ local function baseExpectNotification(RPCService, funcName, ...)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+          ["name"] = tostring(funcName),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
         if (not _res) then
           return _res,_err
@@ -218,6 +260,77 @@ function mt.__index:SendRPC(func, arguments, fileName, encrypt)
   return correlationId
 end
 
+--- Send RPC response
+-- @tparam string func Mobile function name
+-- @tparam number cor_id Correlation identifier
+-- @tparam table arguments RPC parameters
+-- @tparam string fileName RPC binary data
+-- @tparam boolean encrypt If True RPC payload will be encrypted
+function mt.__index:SendResponse(func, cor_id, arguments, fileName, encrypt)
+  local encryptFlag = false
+  if encrypt == securityConstants.ENCRYPTION.ON then encryptFlag = true end
+  local correlationId = cor_id
+  local msg =
+  {
+    encryption = encryptFlag,
+    serviceType = constants.SERVICE_TYPE.RPC,
+    frameInfo = 0,
+    rpcType = constants.BINARY_RPC_TYPE.RESPONSE,
+    rpcFunctionId = setFunctionId(func),
+    rpcCorrelationId = correlationId,
+    payload = json.encode(arguments)
+  }
+  if fileName then
+    local f = assert(io.open(fileName))
+    msg.binaryData = f:read("*all")
+    io.close(f)
+  end
+  self.session:Send(msg)
+
+  return correlationId
+end
+
+--- Send RPC notification
+-- @tparam string func Mobile function name
+-- @tparam table arguments RPC parameters
+-- @tparam string fileName RPC binary data
+-- @tparam boolean encrypt If True RPC payload will be encrypted
+function mt.__index:SendNotification(func, arguments, fileName, encrypt)
+  local encryptFlag = false
+  if encrypt == securityConstants.ENCRYPTION.ON then encryptFlag = true end
+  local msg =
+  {
+    encryption = encryptFlag,
+    serviceType = constants.SERVICE_TYPE.RPC,
+    frameInfo = 0,
+    rpcType = constants.BINARY_RPC_TYPE.NOTIFICATION,
+    rpcFunctionId = setFunctionId(func),
+    rpcCorrelationId = -1,
+    payload = json.encode(arguments)
+  }
+  if fileName then
+    local f = assert(io.open(fileName))
+    msg.binaryData = f:read("*all")
+    io.close(f)
+  end
+  self.session:Send(msg)
+end
+
+--- Create expectation for request from SDL and register it in expectation list
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
+function mt.__index:ExpectRequest(funcName, ...)
+  return baseExpectRequest(self, funcName, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
+        print("Expected not encrypted message. Received encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
+        return false
+      end
+      return true
+    end)
+end
+
 --- Create expectation for response from SDL and register it in expectation list
 -- @tparam number cor_id Correlation identificator
 -- @tparam table ... Expectations parameters
@@ -245,6 +358,22 @@ function mt.__index:ExpectNotification(funcName, ...)
   :ValidIf(function(_, data)
       if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.NO_ENCRYPTION then
         print("Expected not encrypted message. Received encrypted or corrupted message.")
+        return false
+      end
+      return true
+    end)
+end
+
+--- Create expectation for encrypted request from SDL and register it in expectation list
+-- @tparam string funcName Request name
+-- @tparam table ... Expectations parameters
+-- @treturn Expectation Created expectation
+function mt.__index:ExpectEncryptedRequest(funcName, ...)
+  return baseExpectRequest(self, funcName, ...)
+  :ValidIf(function(_, data)
+      if data._technical.decryptionStatus ~= securityConstants.SECURITY_STATUS.SUCCESS then
+        print("Expected encrypted message. Received not encrypted or corrupted message.")
+        print("Decryption status is: " .. data._technical.decryptionStatus)
         return false
       end
       return true

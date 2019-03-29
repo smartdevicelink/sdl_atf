@@ -196,7 +196,8 @@ function Test:initHMI()
           "BasicCommunication.PlayTone",
           "BasicCommunication.OnSDLClose",
           "SDL.OnSDLConsentNeeded",
-          "BasicCommunication.OnResumeAudioSource"
+          "BasicCommunication.OnResumeAudioSource",
+          "BasicCommunication.OnSystemCapabilityUpdated"
         })
       registerComponent("UI",
         {
@@ -207,6 +208,10 @@ function Test:initHMI()
         {
           "Navigation.OnAudioDataStreaming",
           "Navigation.OnVideoDataStreaming"
+        })
+      registerComponent("AppService", 
+        {
+          "AppService.OnAppServiceData"
         })
     end)
   self.hmiConnection:Connect()
