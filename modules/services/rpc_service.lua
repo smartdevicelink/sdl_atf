@@ -35,12 +35,13 @@ local function baseExpectRequest(RPCService, funcName, ...)
   local tbl_corr_id = {}
   local args = table.pack(...)
   local requestEvent = Event()
-  if type(funcName) ~= 'string' then
+  if type(funcName) ~= 'string' and type(funcName) ~= 'number' then
     error("ExpectResponse: argument 1 (funcName) must be string")
     return nil
   end
   requestEvent.matches = function(_, data)
-    return data.rpcFunctionId == functionId[funcName]
+    return ((type(funcName) == 'string' and data.rpcFunctionId == functionId[funcName]) 
+         or (type(funcName) == 'number' and data.rpcFunctionId == funcName))
       and data.sessionId == RPCService.session.sessionId.get()
       and data.rpcType == constants.BINARY_RPC_TYPE.REQUEST
   end
@@ -54,10 +55,13 @@ local function baseExpectRequest(RPCService, funcName, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
-        local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
+        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
 
-        if (not _res) then return _res, _err end
+        if type(funcName) == 'string' then
+          local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
+
+          if (not _res) then return _res, _err end
+        end
         return compareValues(arguments, data.payload, "payload")
       end)
   end
@@ -111,7 +115,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
     responseEvent.matches = function(_, data)
         return data.rpcCorrelationId == cor_id
           and data.sessionId == RPCService.session.sessionId.get()
-          and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE 
+          and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE
       end
   end
   local ret = RPCService.session:ExpectEvent(responseEvent, "Response to " .. cor_id)
@@ -124,10 +128,12 @@ local function baseExpectResponse(RPCService, cor_id, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
-        local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        if type(funcName) == 'string' then
+          local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
 
-        if (not _res) then return _res, _err end
+          if (not _res) then return _res, _err end
+        end
         return compareValues(arguments, data.payload, "payload")
       end)
   end
@@ -170,7 +176,7 @@ local function baseExpectNotification(RPCService, funcName, ...)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "AVAILABLE_RESULT"}, data.payload)
+          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
         if (not _res) then
           return _res,_err
@@ -211,6 +217,9 @@ function mt.__index:CheckCorrelationID(message)
         break
       end
     end
+    if not self.session.cor_id_func_map[message_correlation_id] then
+      self.session.cor_id_func_map[message_correlation_id] = message.rpcFunctionId
+    end
   else
     print("RPC service Warning: Message with correlationId: " .. message_correlation_id
       .. " in session " .. self.session.sessionId.get() .. " was sent earlier by ATF")
@@ -239,13 +248,19 @@ function mt.__index:SendRPC(func, arguments, fileName, encrypt)
   if encrypt == securityConstants.ENCRYPTION.ON then encryptFlag = true end
   self.session.correlationId.set(self.session.correlationId.get() + 1)
   local correlationId = self.session.correlationId.get()
+  local functionId
+  if type(func) == 'string' then
+    functionId = setFunctionId(func)
+  elseif type(func) == 'number' then
+    functionId = func
+  end
   local msg =
   {
     encryption = encryptFlag,
     serviceType = constants.SERVICE_TYPE.RPC,
     frameInfo = 0,
     rpcType = constants.BINARY_RPC_TYPE.REQUEST,
-    rpcFunctionId = setFunctionId(func),
+    rpcFunctionId = functionId,
     rpcCorrelationId = correlationId,
     payload = json.encode(arguments)
   }
@@ -270,13 +285,19 @@ function mt.__index:SendResponse(func, cor_id, arguments, fileName, encrypt)
   local encryptFlag = false
   if encrypt == securityConstants.ENCRYPTION.ON then encryptFlag = true end
   local correlationId = cor_id
+  local functionId
+  if type(func) == 'string' then
+    functionId = setFunctionId(func)
+  elseif type(func) == 'number' then
+    functionId = func
+  end
   local msg =
   {
     encryption = encryptFlag,
     serviceType = constants.SERVICE_TYPE.RPC,
     frameInfo = 0,
     rpcType = constants.BINARY_RPC_TYPE.RESPONSE,
-    rpcFunctionId = setFunctionId(func),
+    rpcFunctionId = functionId,
     rpcCorrelationId = correlationId,
     payload = json.encode(arguments)
   }
