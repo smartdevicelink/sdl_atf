@@ -55,7 +55,7 @@ local function baseExpectRequest(RPCService, funcName, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        xmlReporter.AddMessage("EXPECT_REQUEST",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
 
         if type(funcName) == 'string' then
           local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
@@ -128,7 +128,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
           arguments = args[exp.occurences]
         end
         xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "EXPECTED_RESULT"}, arguments)
-        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+        xmlReporter.AddMessage("EXPECT_RESPONSE",{["id"] = tostring(cor_id),["name"] = tostring(func_name),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         if type(funcName) == 'string' then
           local _res, _err = mob_schema:Validate(func_name, load_schema.response, data.payload)
 
@@ -176,7 +176,7 @@ local function baseExpectNotification(RPCService, funcName, ...)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
           ["name"] = tostring(funcName),["Type"]= "EXPECTED_RESULT"}, arguments)
         xmlReporter.AddMessage("EXPECT_NOTIFICATION",{["Id"] = RPCService.session.notification_counter,
-          ["name"] = tostring(funcName),["Type"]= "AVALIABLE_RESULT"}, data.payload)
+          ["name"] = tostring(funcName),["Type"]= "AVAILABLE_RESULT"}, data.payload)
         local _res, _err = mob_schema:Validate(funcName, load_schema.notification, data.payload)
         if (not _res) then
           return _res,_err
