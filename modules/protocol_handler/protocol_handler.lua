@@ -42,6 +42,16 @@ local function int32ToBytes(val)
   return res
 end
 
+--- Convert unsigned 32 bit integer value to signed 32 bit integer value
+-- @tparam value unsigned 32 bit integer value
+-- @treturn signed 32 bit integer value
+local function uint32ToInt32(val)
+  if val >= 2 ^ 31 then
+    return val - 2 ^ 32
+  end
+  return val
+end
+
 --- Build int32 value from its byte representation
 -- @tparam string val Byte representation of int32
 -- @tparam number offset Offset
@@ -65,7 +75,7 @@ local function rpcPayload(msg)
     bit32.rshift(bit32.band(msg.rpcFunctionId, 0xff0000), 16),
     bit32.rshift(bit32.band(msg.rpcFunctionId, 0xff00), 8),
     bit32.band(msg.rpcFunctionId, 0xff)) ..
-  int32ToBytes(msg.rpcCorrelationId) ..
+  int32ToBytes(uint32ToInt32(msg.rpcCorrelationId)) ..
   int32ToBytes(#msg.payload) ..
   msg.payload .. msg.binaryData
 
@@ -172,7 +182,7 @@ local function parseBinaryHeader(message, validateJson)
   message.rpcType = rpcType
   message.rpcFunctionId = rpcFunctionId
   message.rpcJsonSize = rpcJsonSize
-  message.rpcCorrelationId = bytesToInt32(message.binaryData, 5)
+  message.rpcCorrelationId = uint32ToInt32(bytesToInt32(message.binaryData, 5))
   if message.rpcJsonSize > 0 then
     if not validateJson then
       message.payload = json.decode(string.sub(message.binaryData, BINARY_HEADER_SIZE + 1, BINARY_HEADER_SIZE + message.rpcJsonSize))

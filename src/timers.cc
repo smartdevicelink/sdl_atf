@@ -4,6 +4,7 @@
 int timer_create(lua_State *L) {
   QTimer **p = static_cast<QTimer**>(lua_newuserdata(L, sizeof(QTimer*)));
   *p = new QTimer();
+  (*p)->setTimerType(Qt::PreciseTimer);
   luaL_getmetatable(L, "timers.Timer");
   lua_setmetatable(L, -2);
   return 1;

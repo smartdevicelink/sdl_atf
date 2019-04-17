@@ -102,8 +102,9 @@ function MD.FileStream(filename, version, sessionId, service, encryption, bandwi
 
   local frameSize = (constants.FRAME_SIZE["P" .. res.version]
       - constants.PROTOCOL_HEADER_SIZE)
-
-  res.chunksize = (frameSize < bandwidth) and frameSize or (bandwidth - 1)
+  local chunkSize = (frameSize < bandwidth) and frameSize or (bandwidth)
+  local numberOfChunksPerSecond = 2
+  res.chunksize = math.floor(chunkSize / numberOfChunksPerSecond + 0.5) -- allow to send 2 chunks per 1 second
   res.protocol_handler = ph.ProtocolHandler()
   res.messageId = 1
   res.rfd, errmsg = io.open(filename, "r")
@@ -123,13 +124,8 @@ end
 -- @treturn number timeout Timeout for next message
 function fstream_mt.__index:GetMessage()
   local timespan = timestamp() - self.ts
-  if timespan > 5000 then
-    self.ts = self.ts + timespan - 1000
-    self.bytesSent = self.bytesSent / (timespan / 1000)
-    timespan = 1000
-  end
   if (self.bytesSent + self.chunksize) / (timespan / 1000) > self.bandwidth then
-    return nil, 200
+    return nil, 250 -- timeout for next message
   end
   local res = nil
   if self.keep then
