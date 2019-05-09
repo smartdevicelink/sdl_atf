@@ -281,6 +281,7 @@ function mt.__index:StopRPC()
   return ret
     :Do(function(_, _)
       self.security:unregisterAllSecureServices()
+      self.security:unregisterSessionSecurity()
     end)
 end
 
