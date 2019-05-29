@@ -359,7 +359,7 @@ function mt.__index:Compose(message)
     -- Create message firstframe
     local firstFrameMessage = {
       version = message.version,
-      encryption = message.encryption,
+      encryption = false, -- 1st frame has to be always unencrypted
       frameType = constants.FRAME_TYPE.FIRST_FRAME,
       serviceType = message.serviceType,
       frameInfo = 0,
