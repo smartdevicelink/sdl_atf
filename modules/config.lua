@@ -86,8 +86,8 @@ config.application1 =
   {
     syncMsgVersion =
     {
-      majorVersion = 5,
-      minorVersion = 1
+      majorVersion = 6,
+      minorVersion = 0
     },
     appName = "Test Application",
     isMediaApplication = true,
@@ -114,8 +114,8 @@ config.application2 =
   {
     syncMsgVersion =
     {
-      majorVersion = 5,
-      minorVersion = 1
+      majorVersion = 6,
+      minorVersion = 0
     },
     appName = "Test Application2",
     isMediaApplication = true,
@@ -142,8 +142,8 @@ config.application3 =
   {
     syncMsgVersion =
     {
-      majorVersion = 5,
-      minorVersion = 1
+      majorVersion = 6,
+      minorVersion = 0
     },
     appName = "Test Application3",
     isMediaApplication = true,
@@ -170,8 +170,8 @@ config.application4 =
   {
     syncMsgVersion =
     {
-      majorVersion = 5,
-      minorVersion = 1
+      majorVersion = 6,
+      minorVersion = 0
     },
     appName = "Test Application4",
     isMediaApplication = true,
@@ -198,8 +198,8 @@ config.application5 =
   {
     syncMsgVersion =
     {
-      majorVersion = 5,
-      minorVersion = 1
+      majorVersion = 6,
+      minorVersion = 0
     },
     appName = "Test Application5",
     isMediaApplication = true,
