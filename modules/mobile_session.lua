@@ -40,7 +40,7 @@ function mt.__index:ExpectPacket(frameMessage, binaryDataCompareFunc)
 end
 
 --- Expectation of request
--- @tparam number funcName Expected request name
+-- @tparam ?string|number funcName Function name or function id
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for request
 function mt.__index:ExpectRequest(funcName, ...)
@@ -64,7 +64,7 @@ function mt.__index:ExpectNotification(funcName, ...)
 end
 
 --- Expectation of encrypted request with specific funcName
--- @tparam number funcName Expected request name
+-- @tparam ?string|number funcName Function name or function id
 -- @tparam table ... Expectation parameters
 -- @treturn Expectation Expectation for response
 function mt.__index:ExpectEncryptedRequest(funcName, ...)
@@ -110,7 +110,7 @@ function mt.__index:StopStreaming(filename)
 end
 
 --- Send RPC
--- @tparam string func RPC name
+-- @tparam ?string|number func RPC name or RPC id
 -- @tparam table arguments Arguments for RPC function
 -- @tparam string fileName Path to file with binary data
 function mt.__index:SendRPC(func, arguments, fileName)
@@ -118,7 +118,7 @@ function mt.__index:SendRPC(func, arguments, fileName)
 end
 
 --- Send RPC response
--- @tparam string func RPC name
+-- @tparam ?string|number func RPC name or RPC id
 -- @tparam string cor_id Correlation identifier
 -- @tparam table arguments Arguments for RPC function
 -- @tparam string fileName Path to file with binary data
@@ -135,7 +135,7 @@ function mt.__index:SendNotification(func, arguments, fileName)
 end
 
 --- Send encrypted RPC
--- @tparam string func RPC name
+-- @tparam ?string|number func RPC name or RPC id
 -- @tparam table arguments Arguments for RPC function
 -- @tparam string fileName Path to file with binary data
 function mt.__index:SendEncryptedRPC(func, arguments, fileName)
@@ -143,7 +143,7 @@ function mt.__index:SendEncryptedRPC(func, arguments, fileName)
 end
 
 --- Send encrypted RPC response
--- @tparam string func RPC name
+-- @tparam ?string|number func RPC name or RPC id
 -- @tparam string cor_id Correlation identifier
 -- @tparam table arguments Arguments for RPC function
 -- @tparam string fileName Path to file with binary data
