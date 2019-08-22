@@ -46,6 +46,9 @@ function Expectations.Expectation(name, connection)
     else
       error("Expectation:Times() must be called with number or Cardinality argument")
     end
+    if self.timesLE == 0 and self.timesGE == 0 then
+      self.isDelayNeedsToBeApplied = true
+    end
     return self
   end
 
@@ -170,7 +173,8 @@ function Expectations.Expectation(name, connection)
     actions = { }, -- Sequence of actions to be executed when complied
     pinned = false, -- True if the expectation is pinned
     list = nil, -- ExpectationsList the expectation belongs to
-    isAtLeastOneFail = false -- True if at least one validation fails
+    isAtLeastOneFail = false, -- True if at least one validation fails
+    isDelayNeedsToBeApplied = false -- True if delay for zero occurrence expectation needs to be applied
   }
 
   setmetatable(e, mt)
