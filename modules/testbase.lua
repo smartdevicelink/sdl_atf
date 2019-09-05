@@ -135,32 +135,7 @@ function control.runNextCase()
     end
     atf_logger.LOGTestCaseStart(Test.current_case_name)
     testcase(Test)
-    --- Perform delay for the time defined in 'zeroOccurrenceTimeout' configuration parameter
-    --  Create expectation on a custom event and then raise this event after timeout
-    --  @tparam Connection pConnection Network connection (Mobile or HMI)
-    local function wait(pConnection)
-      local timeout = config.zeroOccurrenceTimeout
-      local event = events.Event()
-      event.level = 3
-      event.matches = function(event1, event2) return event1 == event2 end
 
-      local ret = Expectation("Wait", pConnection)
-      ret.event = event
-      ret:Timeout(timeout + 5000)
-      event_dispatcher:AddEvent(pConnection, event, ret)
-      Test:AddExpectation(ret)
-      --- Raise an event
-      local function toRun()
-        event_dispatcher:RaiseEvent(pConnection, event)
-      end
-      Test:RunAfter(toRun, timeout)
-    end
-
-    for _, v in Test.expectations_list:List() do
-      if v.timesLE == 0 and v.timesGE == 0 then
-        wait(v.connection)
-      end
-    end
 
   else
     if SDL.autoStarted then
@@ -202,6 +177,27 @@ local function CheckStatus()
     print(console.setattr("SDL has unexpectedly crashed or stop responding!", "cyan", 1))
     critical(SDL.exitOnCrash)
     SDL:DeleteFile()
+  end
+  --- Perform delay for the time defined in 'zeroOccurrenceTimeout' configuration parameter
+  --  Create expectation on a custom event and then raise this event after timeout
+  --  @tparam Connection pConnection Network connection (Mobile or HMI)
+  local function wait(pConnection)
+    local timeout = config.zeroOccurrenceTimeout
+    local event = events.Event()
+    event.level = 3
+    event.matches = function(event1, event2) return event1 == event2 end
+    local ret = Expectation("Wait", pConnection)
+    ret.event = event
+    ret:Timeout(timeout + 5000)
+    event_dispatcher:AddEvent(pConnection, event, ret)
+    Test:AddExpectation(ret)
+    Test:RunAfter(function() event_dispatcher:RaiseEvent(pConnection, event) end, timeout)
+  end
+  for _, v in Test.expectations_list:List() do
+    if v.isDelayNeedsToBeApplied then
+      v.isDelayNeedsToBeApplied = false
+      wait(v.connection)
+    end
   end
   if Test.expectations_list:Any(function(e) return not e.status end) then return end
   for _, e in ipairs(Test.expectations_list) do
