@@ -23,7 +23,8 @@ function ProtocolHandler.ProtocolHandler()
   local ret =
   {
     buffer = "",
-    frames = { }
+    frames = { },
+    totalSize = { }
   }
   setmetatable(ret, mt)
   return ret
@@ -276,24 +277,25 @@ function mt.__index:Parse(binary, validateJson, frameHandler)
        or msg._technical.decryptionStatus == securityConstants.SECURITY_STATUS.ERROR then
       table.insert(res, msg)
     else
+      local key = "s"..msg.sessionId.."m"..msg.messageId
       if msg.frameType == constants.FRAME_TYPE.CONTROL_FRAME then
         table.insert(res, msg)
       elseif msg.frameType == constants.FRAME_TYPE.FIRST_FRAME then
-        self.frames[msg.messageId] = ""
-        self.totalSize = msg.size
+        self.frames[key] = ""
+        self.totalSize[key] = msg.size
       elseif msg.frameType == constants.FRAME_TYPE.SINGLE_FRAME then
         if isBinaryDataHasHeader(msg) then
           parseBinaryHeader(msg, validateJson)
         end
         table.insert(res, msg)
       elseif msg.frameType == constants.FRAME_TYPE.CONSECUTIVE_FRAME then
-        self.frames[msg.messageId] = self.frames[msg.messageId] .. msg.binaryData
-        self.totalSize = self.totalSize + msg.size
+        self.frames[key] = self.frames[key] .. msg.binaryData
+        self.totalSize[key] = self.totalSize[key] + msg.size
         if msg.frameInfo == constants.FRAME_INFO.LAST_FRAME then
-          msg.binaryData = self.frames[msg.messageId]
-          msg.size = self.totalSize
-          self.frames[msg.messageId] = nil
-          self.totalSize = nil
+          msg.binaryData = self.frames[key]
+          msg.size = self.totalSize[key]
+          self.frames[key] = nil
+          self.totalSize[key] = nil
           if isBinaryDataHasHeader(msg) then
             parseBinaryHeader(msg, validateJson)
           end
