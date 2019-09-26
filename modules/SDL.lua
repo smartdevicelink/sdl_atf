@@ -190,12 +190,12 @@ local function updateSDLLogProperties()
         value = "%%-5p [%%d{yyyy-MM-dd HH:mm:ss,SSS}][%%t][%%c] %%F:%%L %%M: %%m"
       },
       {
-        name = "log4j.appender.TransportManagerLogFile.File",
-        value = "/dev/null"
+        name = "log4j.appender.TransportManagerLogFile",
+        value = "SafeFileAppender\nlog4j.appender.TransportManagerLogFile.Threshold=OFF"
       },
       {
-        name = "log4j.appender.ProtocolFordHandlingLogFile.File",
-        value = "/dev/null"
+        name = "log4j.appender.ProtocolFordHandlingLogFile",
+        value = "SafeFileAppender\nlog4j.appender.ProtocolFordHandlingLogFile.Threshold=OFF"
       }
     }
 
