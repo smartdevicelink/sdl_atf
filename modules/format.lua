@@ -1,8 +1,8 @@
 --- Module which is responsible for formated output into console
 --
--- *Dependencies:* `console`, `config`
+-- *Dependencies:* `console`
 --
--- *Globals:* `console`
+-- *Globals:* `config`
 -- @module format
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
@@ -11,7 +11,6 @@
 -- @table Format
 local Format = { }
 local console = require('console')
-local config = require('config')
 
 --- Print formated information about test step result into console
 -- @tparam string startCaseTime String representation of time of test step start
@@ -22,10 +21,10 @@ local config = require('config')
 -- @treturn Format Module Format
 function Format.PrintCaseResult(startCaseTime, caseName, success, errorMessage, warningMessage, timespan)
   caseName = tostring(caseName)
-  if #caseName > 85 then
-    caseName = string.sub(caseName, 1, 82) .. "..."
+  if #caseName > config.length then
+    caseName = string.sub(caseName, 1, config.length - 3) .. "..."
   else
-    caseName = caseName .. string.rep(' ', 85 - #caseName)
+    caseName = caseName .. string.rep(' ', config.length - #caseName)
   end
 
   local result
