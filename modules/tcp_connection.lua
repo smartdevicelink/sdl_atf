@@ -16,11 +16,12 @@ local Tcp = { mt = { __index = {} } }
 -- @tparam string host SDL host address
 -- @tparam string port SDL port
 -- @treturn Connection Constructed instance
-function Tcp.Connection(host, port)
+function Tcp.Connection(host, port, source)
   local res =
   {
-    host = host,
-    port = port
+    targetHost = host,
+    targetPort = port,
+    sourceHost = source
   }
   res.socket = network.TcpClient()
   setmetatable(res, Tcp.mt)
@@ -52,7 +53,7 @@ end
 function Tcp.mt.__index:Connect()
   xmlReporter.AddMessage("tcp_connection","Connect")
   checkSelfArg(self)
-  self.socket:connect(self.host, self.port)
+  self.socket:connect(self.targetHost, self.targetPort, self.sourceHost)
 end
 
 --- Send pack of messages from mobile to SDL
@@ -82,7 +83,7 @@ end
 function Tcp.mt.__index:OnDataSent(func)
   local d = qt.dynamic()
   local this = self
-  
+
   function d:bytesWritten(num)
     func(this, num)
   end
