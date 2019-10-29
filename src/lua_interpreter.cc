@@ -78,7 +78,7 @@ LuaInterpreter::LuaInterpreter(QObject *parent, const QStringList::iterator& arg
   // extend package.cpath
   lua_getglobal(lua_state, "package");
   assert(!lua_isnil(lua_state, -1));
-  lua_pushstring(lua_state, "./modules/lib?.so;./lib?.so;");
+  lua_pushstring(lua_state, "./lib/lib?.so;./lib?.so;");
   lua_getfield(lua_state, -2, "cpath");
   assert(!lua_isnil(lua_state, -1));
   lua_concat(lua_state, 2);
