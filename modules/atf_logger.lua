@@ -49,9 +49,9 @@ local controlMessagesHB = {}
 controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT] = "Heartbeat"
 controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT_ACK] = "HeartbeatACK"
 
-Logger.mobile_log_format = "%s (%s) [%s, sessionId: %s, version: %s, frameType: %s, "
-      .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n"
-Logger.hmi_log_format = "%s (%s) : %s \n"
+Logger.mobile_log_format = "%s [%s] [%s, sessionId: %s, version: %s, frameType: %s, "
+      .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n\n"
+Logger.hmi_log_format = "%s [%s] %s \n"
 
 local rpc_function_id
 
@@ -93,7 +93,7 @@ function Logger.formated_time(without_date)
   if without_date == true then
     return qdatetime.get_datetime("hh:mm:ss,zzz")
   end
-  return qdatetime.get_datetime("dd MM yyyy hh:mm:ss, zzz")
+  return qdatetime.get_datetime("dd-MM-yyyy hh:mm:ss,zzz")
 end
 
 --- Check message is it HMI tract
@@ -123,7 +123,7 @@ end
 -- @tparam string tract Tract information
 -- @tparam string message String representation of message from mobile application to SDL
 function Logger:MOBtoSDL(tract, message)
-  local log_str = string.format(Logger.mobile_log_format,"MOB->SDL ", Logger.formated_time(),
+  local log_str = string.format(Logger.mobile_log_format,"MOB->SDL", Logger.formated_time(),
     get_function_name(message), message.sessionId, message.version, message.frameType,
     message.encryption, message.serviceType, message.frameInfo, message.messageId, getBinaryDataSize(message.binaryData), message.payload)
   if is_hmi_tract(tract, message) then
@@ -167,7 +167,7 @@ end
 -- @tparam string tract Tract information
 -- @tparam string message String representation of message from HMI to SDL
 function Logger:HMItoSDL(tract, message)
-  local log_str = string.format(Logger.hmi_log_format, "HMI->SDL", Logger.formated_time(), message)
+  local log_str = string.format(Logger.hmi_log_format, "HMI->SDL", Logger.formated_time(), message .. "\n")
   if is_hmi_tract(tract, message) then
     self.atf_log_file:write(log_str)
   end
@@ -244,10 +244,9 @@ function Logger.init_log(script_name)
   return Logger
 end
 
---- Store auxiliary message about start of new test step of test scenario into ATF log file (only if `config.excludeReport` is set to `false`)
+--- Store auxiliary message about start of new test step of test scenario into ATF log file
 -- @tparam string test_case Test step name
 function Logger.LOGTestCaseStart(test_case)
-  if config.excludeReport then return end
   Logger:StartTestCase(test_case)
 end
 
@@ -255,7 +254,6 @@ end
 -- @tparam string tract Tract information
 -- @tparam string message String representation of message
 function Logger.LOG(tract, message)
-  if config.excludeReport then return end
   Logger[tract](Logger, tract, message)
 end
 

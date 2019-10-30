@@ -133,6 +133,10 @@ function security_mt.__index:registerSessionSecurity()
   end
 end
 
+function security_mt.__index:unregisterSessionSecurity()
+  SecurityManager.mobileSecurities[self.session.sessionId.get()] = nil
+end
+
 --- Register service into mobile session security. Service assumed as secure
 -- @tparam number service Service number
 function security_mt.__index:registerSecureService(service)
