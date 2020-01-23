@@ -47,8 +47,9 @@ void HmiAdapterClient::connect() {
     LOG_INFO("{0} Is already connected", __func__);
     response_type result = remote_adapter_client_ptr_->content_call(
         constants::open_handle, connection_parameters_);
-    if (error_codes::SUCCESS == result.second)
+    if (error_codes::SUCCESS == result.second) {
       emit connected();
+    }
     return;
   }
 
@@ -62,12 +63,10 @@ void HmiAdapterClient::connect() {
       auto &future = future_;
       listener_ptr_.reset(new std::thread([this, &future] {
         try {
-
           while (future.wait_for(std::chrono::milliseconds(25)) ==
                  std::future_status::timeout) {
             this->receive();
           }
-
         } catch (std::future_error &e) {
           std::cerr << "Exception in: " << __func__ << " " << e.what() << "\n"
                     << std::flush;
