@@ -18,7 +18,7 @@ HmiAdapterClient::HmiAdapterClient(
 
   remote_adapter_client_ptr_ = client_ptr;
   try {
-    future_ = exitSignal_.get_future();
+    future_ = exit_signal_.get_future();
   } catch (std::future_error &e) {
     std::cerr << __func__ << " " << e.what() << "\n" << std::flush;
   }
@@ -28,14 +28,14 @@ HmiAdapterClient::~HmiAdapterClient() {
   LOG_INFO("{0}", __func__);
   if (listener_ptr_) {
     try {
-      exitSignal_.set_value();
+      exit_signal_.set_value();
     } catch (std::future_error &e) {
       std::cerr << __func__ << " " << e.what() << "\n" << std::flush;
     }
     listener_ptr_->join();
   }
 
-  if (isconnected_) {
+  if (is_connected_) {
     remote_adapter_client_ptr_->content_call(constants::close_handle,
                                              connection_parameters_);
   }
@@ -43,7 +43,7 @@ HmiAdapterClient::~HmiAdapterClient() {
 
 void HmiAdapterClient::connect() {
   LOG_INFO("{0}", __func__);
-  if (isconnected_ || listener_ptr_) {
+  if (is_connected_ || listener_ptr_) {
     LOG_INFO("{0} Is already connected", __func__);
     response_type result = remote_adapter_client_ptr_->content_call(
         constants::open_handle, connection_parameters_);
@@ -58,7 +58,7 @@ void HmiAdapterClient::connect() {
 
   if (error_codes::SUCCESS == result.second) {
     try {
-      isconnected_ = true;
+      is_connected_ = true;
       emit connected();
       auto &future = future_;
       listener_ptr_.reset(new std::thread([this, &future] {
@@ -85,7 +85,7 @@ void HmiAdapterClient::connect() {
 
 int HmiAdapterClient::send(const std::string &data) {
   LOG_INFO("{0}", __func__);
-  if (isconnected_) {
+  if (is_connected_) {
     std::vector<parameter_type> parameters(connection_parameters_);
     parameters.push_back(std::make_pair(data, constants::param_types::STRING));
     response_type result =
@@ -106,7 +106,7 @@ int HmiAdapterClient::send(const std::string &data) {
 }
 
 response_type HmiAdapterClient::receive() {
-  if (isconnected_) {
+  if (is_connected_) {
     response_type result = remote_adapter_client_ptr_->content_call(
         constants::receive, connection_parameters_);
     if (error_codes::SUCCESS == result.second) {
@@ -125,8 +125,8 @@ response_type HmiAdapterClient::receive() {
 
 void HmiAdapterClient::connectionLost() {
   LOG_INFO("{0}", __func__);
-  if (isconnected_) {
-    isconnected_ = false;
+  if (is_connected_) {
+    is_connected_ = false;
     emit disconnected();
   }
 }

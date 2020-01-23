@@ -56,11 +56,11 @@ private:
    */
   void connectionLost();
 
-  bool isconnected_ = false;
+  bool is_connected_ = false;
   std::vector<parameter_type> connection_parameters_;
   RemoteClient *remote_adapter_client_ptr_;
   std::unique_ptr<std::thread> listener_ptr_;
-  std::promise<void> exitSignal_;
+  std::promise<void> exit_signal_;
   std::future<void> future_;
 };
 
