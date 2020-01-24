@@ -27,11 +27,10 @@ target_link_libraries(${PROJECT_NAME}
     $<$<BOOL:${QNXNTO}>:backtrace.a>
     $<$<BOOL:${QNXNTO}>:stdc++>)
 
-target_include_directories${PROJECT_NAME} PRIVATE
-   ${CMAKE_CURRENT_SOURCE_DIR}/..
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../../common
-   PRIVATE ${RPCLIB_DEPENDENCIES}/include
-)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../common
+    PRIVATE ${RPCLIB_DEPENDENCIES}/include)
 
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
