@@ -73,7 +73,7 @@ set(BOOST_LIBRARIES
     "${BOOST_LIBRARY_DIRS}/libboost_system.a"
     "${BOOST_LIBRARY_DIRS}/libboost_filesystem.a")
 
-include_directories("${BOOST_INCLUDE_DIRS}" )
+include_directories("${BOOST_INCLUDE_DIRS}")
 
 if (NOT ${Boost_FOUND})
     add_dependencies(${PROJECT_NAME} Boost)

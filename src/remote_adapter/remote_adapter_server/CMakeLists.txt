@@ -19,7 +19,7 @@ FetchContent_GetProperties(rpclib)
 if(NOT rpclib_POPULATED)
     FetchContent_Populate(rpclib)
     add_subdirectory("${rpclib_SOURCE_DIR}" "${rpclib_BINARY_DIR}")
-    find_package( Threads REQUIRED )
+    find_package(Threads REQUIRED)
     add_library(rpc::rpclib ALIAS rpc)
 endif()
 
@@ -31,7 +31,7 @@ set(DEP_SOURCES
     ${RPCLIB_DEPENDENCIES}/src/format.cc
     ${RPCLIB_DEPENDENCIES}/src/posix.cc)
 
-find_package( Threads REQUIRED )
+find_package(Threads REQUIRED)
 add_executable(${PROJECT_NAME}
     main.cc
     remote_adapter_plugin_manager.cc
@@ -50,7 +50,7 @@ target_link_libraries(${PROJECT_NAME}
     ${BOOST_LIBRARIES}
 	-ldl)
 
-target_include_directories( ${PROJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     PRIVATE ${RPCLIB_DEPENDENCIES}/include)
 

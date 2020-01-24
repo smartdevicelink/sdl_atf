@@ -25,4 +25,4 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         -Wno-exit-time-destructors -Wno-switch-enum -Wno-format-nonliteral -Wno-unused-parameter -Wno-disabled-macro-expansion)
 endif()
 
-add_test (NAME ${TEST_PROJECT_NAME} COMMAND ${TEST_PROJECT_NAME} )
+add_test (NAME ${TEST_PROJECT_NAME} COMMAND ${TEST_PROJECT_NAME})
