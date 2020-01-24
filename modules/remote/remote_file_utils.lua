@@ -10,7 +10,7 @@
 local constants = require("remote/remote_constants")
 
 local RemoteFileUtils = {
-	mt = { __index = {} }
+  mt = { __index = {} }
 }
 
 local function HandleResult(isResultBoolean, result, data)
@@ -85,9 +85,9 @@ end
 function RemoteFileUtils.mt.__index:CreateFile(remotePathToFile, fileName, fileContent)
   local result, isExists = self:IsFileExists(remotePathToFile, fileName)
   if not result or (result and isExists) then
-		return false
-	end
-	return self:UpdateFileContent(remotePathToFile, fileName, fileContent)
+    return false
+  end
+  return self:UpdateFileContent(remotePathToFile, fileName, fileContent)
 end
 
 --- Delete file on remote host

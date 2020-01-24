@@ -161,7 +161,7 @@ local function deleteFolder(pPathToFolder)
     local p, n = getPathAndName(pPathToFolder)
     ATF.remoteUtils.file:DeleteFolder(p, n)
   else
-    os.execute( "rm -rf " .. pPathToFolder)
+    os.execute("rm -rf " .. pPathToFolder)
   end
 end
 
@@ -221,8 +221,8 @@ local function restore(pFilePath)
       local p, n = getPathAndName(pFilePath)
       ATF.remoteUtils.file:RestoreFile(p, n)
     else
-      os.execute(" cp " .. pFilePath .. "_origin " .. pFilePath )
-      os.execute( " rm -f " .. pFilePath .. "_origin" )
+      os.execute("cp " .. pFilePath .. "_origin " .. pFilePath)
+      os.execute("rm -f " .. pFilePath .. "_origin")
     end
   end
 end
@@ -233,7 +233,7 @@ local function backup(pFilePath)
     local p, n = getPathAndName(pFilePath)
     ATF.remoteUtils.file:BackupFile(p, n)
   else
-    os.execute(" cp " .. pFilePath .. " " .. pFilePath .. "_origin" )
+    os.execute("cp " .. pFilePath .. " " .. pFilePath .. "_origin")
   end
 end
 
