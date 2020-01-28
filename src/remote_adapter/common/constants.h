@@ -22,7 +22,7 @@ static std::string close_handle = "close";
 static std::string send = "send";
 static std::string receive = "receive";
 
-static const size_t kMaxSizeData = 1048576; //1MB
+static const size_t kMaxSizeData = 1048576; // 1MB
 static const std::string kTmpPath = "/tmp/";
 
 namespace stat_app_codes {
@@ -47,6 +47,7 @@ static const int NO_CONNECTION = -7;
 static const int EXCEPTION_THROWN = -8;
 static const int TIMEOUT_EXPIRED = -9;
 static const int ALREADY_EXISTS = -10;
+static const int READ_EOF = -11;
 } // namespace error_codes
 
 namespace error_msg {
