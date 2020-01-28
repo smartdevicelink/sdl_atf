@@ -69,7 +69,7 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
                             constants::error_codes::FAILED);
     }
 
-    if (constants::error_codes::SUCCESS != response.second) {
+    if (constants::error_codes::READ_EOF != response.second) {
       size_t offset_parameter_idx = parameters.size() - 2;
       do {
         fwrite(response.first.c_str(), response.first.length(), 1, hFile);
