@@ -27,7 +27,8 @@ RemoteConstants.ERROR_CODE = {
   NO_CONNECTION = -7,
   EXCEPTION_THROWN = -8,
   TIMEOUT_EXPIRED = -9,
-  ALREADY_EXISTS = -10
+  ALREADY_EXISTS = -10,
+  READ_EOF = -11
 }
 
 RemoteConstants.PARAMETER_TYPE = {
