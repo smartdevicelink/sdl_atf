@@ -44,18 +44,21 @@ RpcConnectionImpl<Args...>::get_connection_state() const {
 }
 
 template <typename... Args>
-int RpcConnectionImpl<Args...>::handleRpcError(rpc::rpc_error &e) {
-  LOG_ERROR("EXCEPTION Occured in function: {}", e.get_function_name());
-  LOG_ERROR("[Error type]: {}", e.what());
-  auto err = e.get_error().as<std::pair<int, std::string>>();
+int RpcConnectionImpl<Args...>::handleRpcError(
+    rpc::rpc_error &handle_rpc_error) {
+  LOG_ERROR("EXCEPTION Occured in function: {}",
+            handle_rpc_error.get_function_name());
+  LOG_ERROR("[Error type]: {}", handle_rpc_error.what());
+  auto err = handle_rpc_error.get_error().as<std::pair<int, std::string>>();
   LOG_ERROR("[Error code]: {0} \n[Error description]: {1}", err.first,
             err.second);
   return err.first;
 }
 
 template <typename... Args>
-int RpcConnectionImpl<Args...>::handleRpcTimeout(rpc::timeout &t) {
-  LOG_ERROR("TIMEOUT expired: {}", t.what());
+int RpcConnectionImpl<Args...>::handleRpcTimeout(
+    rpc::timeout &handle_rpc_timeout) {
+  LOG_ERROR("TIMEOUT expired: {}", handle_rpc_timeout.what());
   return constants::error_codes::TIMEOUT_EXPIRED;
 }
 

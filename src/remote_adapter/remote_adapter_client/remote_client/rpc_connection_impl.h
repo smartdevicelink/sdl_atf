@@ -14,8 +14,8 @@ public:
   rpc::client::connection_state get_connection_state() const override;
 
 private:
-  int handleRpcError(rpc::rpc_error &e);
-  int handleRpcTimeout(rpc::timeout &t);
+  int handleRpcError(rpc::rpc_error &handle_rpc_error);
+  int handleRpcTimeout(rpc::timeout &handle_rpc_timeout);
   RPCLIB_MSGPACK::object_handle error_pack(const response_type &response) const;
 
   rpc::client client_;

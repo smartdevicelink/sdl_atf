@@ -42,9 +42,6 @@ public:
                              const std::vector<parameter_type> &parameters);
 
 private:
-  int handleRpcError(rpc::rpc_error &e);
-  int handleRpcTimeout(rpc::timeout &t);
-
   connection_ptr connection_;
   friend struct HmiAdapterClientLuaWrapper;
 };
