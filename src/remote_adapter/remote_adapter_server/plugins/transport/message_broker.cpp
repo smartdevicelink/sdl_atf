@@ -490,7 +490,7 @@ MessageBroker<TCPListener>::Receive(const std::string &address,
                                             int(error_codes::NO_CONNECTION));
   }
 
-  SendUnprocessedMsg(context, MakeEndpoint(address, port));
+  FlushPendingMsg(context, MakeEndpoint(address, port));
 
   std::string msg = context->listener_->GetSession().GetMessage();
 
@@ -498,7 +498,7 @@ MessageBroker<TCPListener>::Receive(const std::string &address,
 }
 
 template <class TCPListener>
-void MessageBroker<TCPListener>::SendUnprocessedMsg(
+void MessageBroker<TCPListener>::FlushPendingMsg(
     Context *context, const tcp::endpoint &endpoint) {
   LOG_INFO("{0}", __func__);
 

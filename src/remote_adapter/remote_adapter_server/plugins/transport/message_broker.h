@@ -53,7 +53,7 @@ public:
   std::string PluginName() override;
 
 private:
-  void SendUnprocessedMsg(Context *context, const tcp::endpoint &endpoint);
+  void FlushPendingMsg(Context *context, const tcp::endpoint &endpoint);
   Context *MakeContext(const std::string &address, const int port, int threads);
   Context *GetContext(const std::string &address, const int port);
   tcp::endpoint MakeEndpoint(const std::string &address, int port);
