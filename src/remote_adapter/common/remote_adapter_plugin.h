@@ -15,7 +15,19 @@ class UtilsPlugin {
 public:
   UtilsPlugin() {}
   virtual ~UtilsPlugin() {}
+  /*
+   * @brief Binds a functor to a name so it becomes callable via UtilsPlugin.
+   *
+   * @param server full path to the application folder
+   * @param server rpclib server
+   * @return code from error_codes namespace, SUCCESS or FAILED
+   */
   virtual void Bind(rpc::server &server) = 0;
+  /*
+   * @brief Get plugin name.
+   *
+   * @return plugin name
+   */
   virtual std::string PluginName() = 0;
 
 private:
