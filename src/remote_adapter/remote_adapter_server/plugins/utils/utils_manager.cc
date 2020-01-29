@@ -71,14 +71,14 @@ static void *thread_monitor_app(void *pid) {
 //------------------------------------------------------------------------------
 template <const constants::param_types::type nType, typename ParameterType,
           typename Type>
-bool GetValue(ParameterType &paramter, Type &value) {
+bool GetValue(ParameterType &parameter, Type &value) {
 
-  if (nType != paramter.second) {
+  if (nType != parameter.second) {
     return false;
   }
 
   try {
-    value = boost::lexical_cast<Type>(paramter.first);
+    value = boost::lexical_cast<Type>(parameter.first);
   } catch (const boost::bad_lexical_cast &e) {
     LOG_ERROR("{0}: {1}", __func__, e.what());
     return false;

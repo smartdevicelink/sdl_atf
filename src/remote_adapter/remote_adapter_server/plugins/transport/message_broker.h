@@ -27,27 +27,23 @@ class WebsocketSession;
 template <class TCPListener = WebsocketListener<WebsocketSession>>
 class MessageBroker : public remote_adapter::UtilsPlugin {
 public:
-  typedef std::shared_ptr<TCPListener> HandleListener;
-  typedef std::vector<std::thread> ArrayThreads;
-  typedef tcp::endpoint ConnectionIdent;
   typedef struct ListenerContext {
     // The io_context is required for all I/O
     io_context ioc_;
-    HandleListener listener_;
-    ArrayThreads aThreads_;
-    std::promise<void> exitSignal_;
+    std::shared_ptr<TCPListener> listener_;
+    std::vector<std::thread> thread_list_;
+    std::promise<void> exit_signal_;
     std::future<void> future_;
-    ListenerContext(const int threads, const ConnectionIdent &connectIdent)
+    ListenerContext(const int threads, const tcp::endpoint &endpoint)
         : ioc_(threads),
-          listener_(std::make_shared<TCPListener>(ioc_, connectIdent)) {
-      aThreads_.reserve(threads);
-      future_ = exitSignal_.get_future();
+          listener_(std::make_shared<TCPListener>(ioc_, endpoint)) {
+      thread_list_.reserve(threads);
+      future_ = exit_signal_.get_future();
     }
   } Context;
-  typedef std::shared_ptr<Context> HandleContext;
-  typedef std::map<ConnectionIdent, HandleContext> HandlesListeners;
-  typedef std::map<ConnectionIdent, std::queue<std::string>> UnprocessedMessage;
-  typedef int status;
+  typedef std::shared_ptr<Context> ContextSPtr;
+  typedef std::map<tcp::endpoint, ContextSPtr> ContextMap;
+  typedef std::map<tcp::endpoint, std::queue<std::string>> MessageMap;
   typedef std::pair<std::string, int> ReceiveResult;
 
   MessageBroker(){};
@@ -57,22 +53,20 @@ public:
   std::string PluginName() override;
 
 private:
-  void SendUnprocessedMsg(Context *context,
-                          const ConnectionIdent &connect_ident);
-  Context *MakeContext(const std::string &sAddress, const int port,
-                       int threads);
-  Context *GetContext(const std::string &sAddress, const int port);
-  ConnectionIdent MakeConnectIdent(const std::string &sAddress, int port);
+  void SendUnprocessedMsg(Context *context, const tcp::endpoint &endpoint);
+  Context *MakeContext(const std::string &address, const int port, int threads);
+  Context *GetContext(const std::string &address, const int port);
+  tcp::endpoint MakeEndpoint(const std::string &address, int port);
 
-  HandlesListeners aHandles_;
-  UnprocessedMessage unprocessed_msg_;
+  ContextMap listener_context_;
+  MessageMap msg_queue_;
 
-  status OpenConnection(const std::string &sAddress, const int port,
-                        const int threads = 2);
-  status CloseConnection(const std::string &sAddress, const int port);
-  ReceiveResult Send(const std::string &sAddress, const int port,
+  int OpenConnection(const std::string &address, const int port,
+                     const int threads = 2);
+  int CloseConnection(const std::string &address, const int port);
+  ReceiveResult Send(const std::string &address, const int port,
                      const std::string &sData);
-  ReceiveResult Receive(const std::string &sAddress, const int port);
+  ReceiveResult Receive(const std::string &address, const int port);
 
   MessageBroker(const MessageBroker &) = delete;
   MessageBroker &operator=(const MessageBroker &) = delete;
@@ -92,12 +86,38 @@ public:
   WebsocketSession &operator=(const WebsocketSession &) = delete;
   WebsocketSession(WebsocketSession &&) = delete;
   WebsocketSession &operator=(WebsocketSession &&) = delete;
-
+  /*
+   * @brief Accept the websocket handshake and
+   * start the asynchronous operation.
+   *
+   * @param host the name of the remote host
+   */
   void Run(const std::string &host);
-  int Write(const std::string &sData);
+  /*
+   * @brief This function is used to write a complete message.
+   *
+   * @param data string containing the message to send
+   * @return code from error_codes namespace, SUCCESS or WRITE_FAILURE
+   */
+  int Write(const std::string &data);
+  /*
+   * @brief This function is used to get a complete message from message queue
+   *
+   * @return complete message from message queue
+   */
   std::string GetMessage();
+  /*
+   * @brief This function is used to asynchronously send
+   * a close frame on the stream
+   */
   void Close();
-  bool IsOpen();
+  /*
+   * @brief The stream is open after a successful handshake, and when no error
+   * has occurred.
+   *
+   * @return true if the stream is open
+   */
+  bool IsOpen(); //
 
 private:
   void AsyncRead();
@@ -124,20 +144,31 @@ public:
   WebsocketListener &operator=(const WebsocketListener &) = delete;
   WebsocketListener(WebsocketListener &&) = delete;
   WebsocketListener &operator=(WebsocketListener &&) = delete;
-
+  /*
+   * @brief Look up the domain name and start the asynchronous operation.
+   */
   void Run();
+  /*
+   * @brief Stop the io_context object's event processing loop
+   * and close the WebSocket connection
+   */
   void Stop();
+  /*
+   * @brief This function is used to access read, write operations.
+   *
+   * @return object related to host and port
+   */
+  Session &GetSession();
+
+private:
   void DoResolve();
   void OnResolve(boost::system::error_code ec,
                  tcp::resolver::results_type results);
 
-  Session &GetSession();
-
-private:
   tcp::resolver resolver_;
   tcp::socket socket_;
   tcp::endpoint endpoint_;
-  std::shared_ptr<Session> session_handler_;
+  std::shared_ptr<Session> session_;
 
   RPCLIB_CREATE_LOG_CHANNEL(WebsocketListener)
 };

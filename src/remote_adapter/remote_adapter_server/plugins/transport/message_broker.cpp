@@ -129,11 +129,11 @@ void WebsocketSession::OnRead(boost::system::error_code ec,
   AsyncRead();
 }
 
-int WebsocketSession::Write(const std::string &sData) {
-  LOG_INFO("{0} data:{1}", __func__, sData);
+int WebsocketSession::Write(const std::string &data) {
+  LOG_INFO("{0} data:{1}", __func__, data);
 
   boost::system::error_code ec;
-  ws_.write(boost::asio::buffer(sData), ec);
+  ws_.write(boost::asio::buffer(data), ec);
 
   if (ec) {
     Fail(ec, "WebsocketSession::Write");
@@ -200,8 +200,8 @@ template <class Session> void WebsocketListener<Session>::Run() {
 template <class Session> void WebsocketListener<Session>::Stop() {
   LOG_INFO("{0}", __func__);
   resolver_.get_io_context().stop();
-  if (session_handler_.use_count()) {
-    session_handler_->Close();
+  if (session_.use_count()) {
+    session_->Close();
   }
 }
 
@@ -236,33 +236,33 @@ void WebsocketListener<Session>::OnResolve(
   }
 
   // Create the session and run it
-  session_handler_ = std::make_shared<Session>(std::move(socket_));
-  session_handler_->Run(endpoint_.address().to_string());
+  session_ = std::make_shared<Session>(std::move(socket_));
+  session_->Run(endpoint_.address().to_string());
 }
 
 template <class Session> Session &WebsocketListener<Session>::GetSession() {
   LOG_INFO("{0}", __func__);
 
-  if (session_handler_) {
-    return *(session_handler_).get();
+  if (session_) {
+    return *(session_).get();
   }
 
-  LOG_ERROR("{0} Session can't created returned dummy_socket", __func__);
+  LOG_ERROR("{0} Session can't created return dummy_socket", __func__);
 
   static boost::asio::io_context ioc{1};
   tcp::socket dummy_socket(ioc);
 
-  session_handler_ = std::make_shared<Session>(std::move(dummy_socket));
+  session_ = std::make_shared<Session>(std::move(dummy_socket));
 
-  return *(session_handler_).get();
+  return *(session_).get();
 }
 
 // //------------------------------------------------------------------------------
 template <class TCPListener> MessageBroker<TCPListener>::~MessageBroker() {
   LOG_INFO("{0}", __func__);
 
-  for (auto &handle : aHandles_) {
-    CloseConnection(handle.first.address().to_string(), handle.first.port());
+  for (auto &context : listener_context_) {
+    CloseConnection(context.first.address().to_string(), context.first.port());
   }
 }
 
@@ -381,34 +381,34 @@ std::string MessageBroker<TCPListener>::PluginName() {
 }
 
 template <class TCPListener>
-typename MessageBroker<TCPListener>::status
-MessageBroker<TCPListener>::OpenConnection(const std::string &sAddress,
-                                           const int port, const int threads) {
-  LOG_INFO("{0}: address:{1} Port:{2} Threads:{3}", __func__, sAddress, port,
+int MessageBroker<TCPListener>::OpenConnection(const std::string &address,
+                                               const int port,
+                                               const int threads) {
+  LOG_INFO("{0}: address:{1} Port:{2} Threads:{3}", __func__, address, port,
            threads);
 
-  if (GetContext(sAddress,
+  if (GetContext(address,
                  port)) { // this check needed for correct running test sets
-    CloseConnection(sAddress, port);
+    CloseConnection(address, port);
   }
 
-  Context *context = MakeContext(sAddress, port, threads);
+  Context *context = MakeContext(address, port, threads);
 
   if (nullptr == context) {
     LOG_ERROR("{0}: ALREADY_EXISTS address:{1} Port:{2} Threads:{3}", __func__,
-              sAddress, port, threads);
+              address, port, threads);
     return error_codes::ALREADY_EXISTS;
   }
 
   context->listener_->Run();
 
   auto &io_context = context->ioc_;
-  auto &aThreads = context->aThreads_;
+  auto &thread_list = context->thread_list_;
   auto &future = context->future_;
 
   // Run the I/O service on the requested number of threads
   for (auto i = threads ? threads : 1; i > 0; --i) {
-    aThreads.emplace_back([&io_context, &future] {
+    thread_list.emplace_back([&io_context, &future] {
       while (future.wait_for(std::chrono::milliseconds(1)) ==
              std::future_status::timeout) {
         io_context.run();
@@ -420,48 +420,47 @@ MessageBroker<TCPListener>::OpenConnection(const std::string &sAddress,
 }
 
 template <class TCPListener>
-typename MessageBroker<TCPListener>::status
-MessageBroker<TCPListener>::CloseConnection(const std::string &sAddress,
-                                            const int port) {
-  LOG_INFO("{0}: address:{1} port:{2}", __func__, sAddress, port);
+int MessageBroker<TCPListener>::CloseConnection(const std::string &address,
+                                                const int port) {
+  LOG_INFO("{0}: address:{1} port:{2}", __func__, address, port);
 
-  const ConnectionIdent connectIdent = MakeConnectIdent(sAddress, port);
+  const tcp::endpoint endpoint = MakeEndpoint(address, port);
 
-  auto itHandler = aHandles_.find(connectIdent);
+  auto it_context = listener_context_.find(endpoint);
 
-  if (aHandles_.end() == itHandler) {
+  if (listener_context_.end() == it_context) {
     return error_codes::NO_CONNECTION;
   }
 
-  if (0 == itHandler->second.use_count()) {
+  if (0 == it_context->second.use_count()) {
     return error_codes::NO_CONNECTION;
   }
 
-  Context *context = itHandler->second.get();
+  Context *context = it_context->second.get();
 
-  context->exitSignal_.set_value();
+  context->exit_signal_.set_value();
   context->listener_->Stop();
 
-  auto &aThreads = context->aThreads_;
-  for (auto &thread : aThreads) {
+  auto &thread_list = context->thread_list_;
+  for (auto &thread : thread_list) {
     thread.join();
   }
 
-  aHandles_.erase(itHandler);
+  listener_context_.erase(it_context);
 
-  unprocessed_msg_.erase(connectIdent);
+  msg_queue_.erase(endpoint);
 
   return error_codes::SUCCESS;
 }
 
 template <class TCPListener>
 typename MessageBroker<TCPListener>::ReceiveResult
-MessageBroker<TCPListener>::Send(const std::string &sAddress, const int port,
+MessageBroker<TCPListener>::Send(const std::string &address, const int port,
                                  const std::string &sData) {
-  LOG_INFO("{0}: to address:{1} port:{2} data:{3}", __func__, sAddress, port,
+  LOG_INFO("{0}: to address:{1} port:{2} data:{3}", __func__, address, port,
            sData);
 
-  Context *context = GetContext(sAddress, port);
+  Context *context = GetContext(address, port);
 
   if (nullptr == context) {
     return std::make_pair(std::string(), int(error_codes::NO_CONNECTION));
@@ -474,24 +473,24 @@ MessageBroker<TCPListener>::Send(const std::string &sAddress, const int port,
     return std::make_pair(session.GetMessage(), result);
   }
 
-  unprocessed_msg_[MakeConnectIdent(sAddress, port)].push(sData);
+  msg_queue_[MakeEndpoint(address, port)].push(sData);
   return std::make_pair(std::string(), error_codes::WRITE_FAILURE);
 }
 
 template <class TCPListener>
 typename MessageBroker<TCPListener>::ReceiveResult
-MessageBroker<TCPListener>::Receive(const std::string &sAddress,
+MessageBroker<TCPListener>::Receive(const std::string &address,
                                     const int port) {
-  LOG_INFO("{0}: from address:{1} port:{2}", __func__, sAddress, port);
+  LOG_INFO("{0}: from address:{1} port:{2}", __func__, address, port);
 
-  Context *context = GetContext(sAddress, port);
+  Context *context = GetContext(address, port);
 
   if (nullptr == context) {
     return std::make_pair<std::string, int>("",
                                             int(error_codes::NO_CONNECTION));
   }
 
-  SendUnprocessedMsg(context, MakeConnectIdent(sAddress, port));
+  SendUnprocessedMsg(context, MakeEndpoint(address, port));
 
   std::string msg = context->listener_->GetSession().GetMessage();
 
@@ -500,10 +499,10 @@ MessageBroker<TCPListener>::Receive(const std::string &sAddress,
 
 template <class TCPListener>
 void MessageBroker<TCPListener>::SendUnprocessedMsg(
-    Context *context, const ConnectionIdent &connect_ident) {
+    Context *context, const tcp::endpoint &endpoint) {
   LOG_INFO("{0}", __func__);
 
-  auto &unpr_msg = unprocessed_msg_[connect_ident];
+  auto &unpr_msg = msg_queue_[endpoint];
 
   if (unpr_msg.empty()) {
     return;
@@ -528,16 +527,16 @@ void MessageBroker<TCPListener>::SendUnprocessedMsg(
 }
 template <class TCPListener>
 typename MessageBroker<TCPListener>::Context *
-MessageBroker<TCPListener>::MakeContext(const std::string &sAddress,
+MessageBroker<TCPListener>::MakeContext(const std::string &address,
                                         const int port, int threads) {
   LOG_INFO("{0}", __func__);
 
-  const ConnectionIdent connectIdent = MakeConnectIdent(sAddress, port);
+  const tcp::endpoint endpoint = MakeEndpoint(address, port);
 
   threads = std::max<int>(1, threads);
 
-  auto result = aHandles_.insert(std::make_pair(
-      connectIdent, std::make_shared<Context>(threads, connectIdent)));
+  auto result = listener_context_.insert(
+      std::make_pair(endpoint, std::make_shared<Context>(threads, endpoint)));
 
   if (result.second) {
     return result.first->second.get();
@@ -548,30 +547,30 @@ MessageBroker<TCPListener>::MakeContext(const std::string &sAddress,
 
 template <class TCPListener>
 typename MessageBroker<TCPListener>::Context *
-MessageBroker<TCPListener>::GetContext(const std::string &sAddress,
+MessageBroker<TCPListener>::GetContext(const std::string &address,
                                        const int port) {
   LOG_INFO("{0}", __func__);
 
-  const ConnectionIdent connectIdent = MakeConnectIdent(sAddress, port);
+  const tcp::endpoint endpoint = MakeEndpoint(address, port);
 
-  const auto itHandler = aHandles_.find(connectIdent);
+  auto const it_context = listener_context_.find(endpoint);
 
-  if (itHandler != aHandles_.end()) {
-    return itHandler->second.get();
+  if (it_context != listener_context_.end()) {
+    return it_context->second.get();
   }
 
   return nullptr;
 }
 
 template <class TCPListener>
-typename MessageBroker<TCPListener>::ConnectionIdent
-MessageBroker<TCPListener>::MakeConnectIdent(const std::string &sAddress,
-                                             const int port) {
+tcp::endpoint
+MessageBroker<TCPListener>::MakeEndpoint(const std::string &address,
+                                         const int port) {
   LOG_INFO("{0}", __func__);
 
-  auto const address = boost::asio::ip::make_address(sAddress.c_str());
+  auto const ip_address = boost::asio::ip::make_address(address.c_str());
 
-  return ConnectionIdent{address, port};
+  return tcp::endpoint{ip_address, port};
 }
 
 #define LIBRARY_API extern "C"
