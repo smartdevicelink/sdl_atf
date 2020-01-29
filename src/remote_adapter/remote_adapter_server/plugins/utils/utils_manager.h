@@ -14,9 +14,6 @@ typedef int procfs_info;
 
 class UtilsManager : public remote_adapter::UtilsPlugin {
 public:
-  typedef std::pair<std::string, int> ReceiveResult;
-  typedef std::vector<int> ArrayPid;
-
   void Bind(rpc::server &server) override;
   std::string PluginName() override;
 
@@ -41,7 +38,7 @@ public:
    * @param app_name app name
    * @return code from stat_app_codes namespace, NOT_RUNNING,RUNNING or CRASHED
    */
-  static int CheckStatusApp(const std::string &app_name);
+  static int CheckAppStatus(const std::string &app_name);
   /*
    * @brief Create backup of given file
    *
@@ -134,18 +131,20 @@ public:
    * @brief Run the bash command
    *
    * @param bash_command bash command
-   * @return pair first value - command outputcode, second
-   * - code from error_codes namespace, SUCCESS if
-   * successful, otherwise FAILED
+   * @return pair
+   *         first - command outputcode
+   *         second - code from error_codes namespace
+   * SUCCESS if successful, otherwise FAILED
    */
-  static ReceiveResult ExecuteCommand(const std::string &bash_command);
+  static std::pair<std::string, int>
+  ExecuteCommand(const std::string &bash_command);
 
 private:
-  static ArrayPid GetPidApp(const std::string &app_name);
-  static std::string GetNameApp(int pid, procfs_info *proc_info = 0);
+  static std::vector<int> GetAppPids(const std::string &app_name);
+  static std::string GetAppName(int pid, procfs_info *proc_info = 0);
   static int KillApp(const pid_t app_pid, const int sig,
                      const char *app_name = 0);
-  static bool IsExistsApp(const pid_t app_pid);
+  static bool AppExists(const pid_t app_pid);
   static std::string JoinPath(const std::string &path,
                               const std::string &part_path);
 };

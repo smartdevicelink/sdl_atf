@@ -158,7 +158,7 @@ void UtilsManager::Bind(rpc::server &server) {
           LOG_ERROR("{0}: {1}", __func__, error_msg::kBadTypeValue);
           return response_type(error_msg::kBadTypeValue, error_codes::FAILED);
         }
-        const int res = UtilsManager::CheckStatusApp(app_name);
+        const int res = UtilsManager::CheckAppStatus(app_name);
         return response_type(std::to_string(res), error_codes::SUCCESS);
       });
 
@@ -437,10 +437,10 @@ int UtilsManager::StartApp(const std::string &app_path,
 int UtilsManager::StopApp(const std::string &app_name, const int sig) {
   LOG_INFO("{0}: {1}", __func__, app_name);
 
-  ArrayPid arr_pid = GetPidApp(app_name);
+  auto pid_list = GetAppPids(app_name);
   bool is_all_killed = true;
 
-  for (const auto &app_pid : arr_pid) {
+  for (const auto &app_pid : pid_list) {
     if (error_codes::FAILED == KillApp(app_pid, sig, app_name.c_str())) {
       is_all_killed = false;
     }
@@ -451,8 +451,8 @@ int UtilsManager::StopApp(const std::string &app_name, const int sig) {
   }
 
   is_all_killed = true;
-  for (const auto &app_pid : arr_pid) {
-    if (IsExistsApp(app_pid)) {
+  for (const auto &app_pid : pid_list) {
+    if (AppExists(app_pid)) {
       if (error_codes::FAILED == KillApp(app_pid, SIGKILL, app_name.c_str())) {
         is_all_killed = false;
       }
@@ -462,10 +462,10 @@ int UtilsManager::StopApp(const std::string &app_name, const int sig) {
   return is_all_killed ? error_codes::SUCCESS : error_codes::FAILED;
 }
 
-int UtilsManager::CheckStatusApp(const std::string &app_name) {
+int UtilsManager::CheckAppStatus(const std::string &app_name) {
   LOG_INFO("{}", __func__);
-  ArrayPid arr_pid = GetPidApp(app_name);
-  if (0 == arr_pid.size()) {
+  auto pid_list = GetAppPids(app_name);
+  if (0 == pid_list.size()) {
     LOG_INFO("{} is NOT_RUNNING", app_name);
     return stat_app_codes::NOT_RUNNING;
   }
@@ -474,8 +474,8 @@ int UtilsManager::CheckStatusApp(const std::string &app_name) {
 
   procfs_info info;
 
-  for (const auto &app_pid : arr_pid) {
-    GetNameApp(app_pid, &info);
+  for (const auto &app_pid : pid_list) {
+    GetAppName(app_pid, &info);
 #ifdef __QNX__
     num_threads += info.num_threads;
 #else
@@ -553,37 +553,37 @@ std::string UtilsManager::GetFileContent(const std::string &file_path,
                                          long int &offset,
                                          const size_t max_size_content) {
   LOG_INFO("{}", __func__);
-  FILE *hfile = fopen(JoinPath(file_path, file_name).c_str(), "rb");
-  if (!hfile) {
+  FILE *file = fopen(JoinPath(file_path, file_name).c_str(), "rb");
+  if (!file) {
     LOG_ERROR("Unable to open file: {}", JoinPath(file_path, file_name));
     offset = error_codes::FAILED;
     return std::string();
   }
 
-  fseek(hfile, 0, SEEK_END);
-  unsigned long fileLen = ftell(hfile) - offset;
-  fseek(hfile, offset, SEEK_SET);
-  LOG_INFO("File offset: {0} rest size of the file: {1}", offset, fileLen);
+  fseek(file, 0, SEEK_END);
+  unsigned long file_len = ftell(file) - offset;
+  fseek(file, offset, SEEK_SET);
+  LOG_INFO("File offset: {0} rest size of the file: {1}", offset, file_len);
   if (max_size_content) {
-    fileLen = max_size_content > fileLen ? fileLen : max_size_content;
+    file_len = max_size_content > file_len ? file_len : max_size_content;
   }
 
-  char *buffer = (char *)malloc(fileLen);
+  char *buffer = (char *)malloc(file_len);
   if (!buffer) {
     LOG_TRACE("Memory error!");
-    fclose(hfile);
+    fclose(file);
     offset = error_codes::FAILED;
     return std::string();
   }
 
-  fread(buffer, fileLen, 1, hfile);
-  fseek(hfile, 0, SEEK_END);
+  fread(buffer, file_len, 1, file);
+  fseek(file, 0, SEEK_END);
 
-  size_t read = fileLen;
-  fileLen = ftell(hfile);
-  fclose(hfile);
+  size_t read = file_len;
+  file_len = ftell(file);
+  fclose(file);
 
-  offset = (read + offset) == fileLen ? error_codes::READ_EOF : read + offset;
+  offset = (read + offset) == file_len ? error_codes::READ_EOF : read + offset;
 
   std::string file_content(buffer, read);
 
@@ -610,7 +610,7 @@ int UtilsManager::FolderDelete(const std::string &folder_path) {
     res = 0;
 
     while (!res && (ent_dir = readdir(dir))) {
-      char *buff;
+      char *buf;
       size_t len;
 
       if (!strcmp(ent_dir->d_name, ".") || !strcmp(ent_dir->d_name, "..")) {
@@ -619,21 +619,21 @@ int UtilsManager::FolderDelete(const std::string &folder_path) {
 
       res = -1;
       len = path_len + strlen(ent_dir->d_name) + 2;
-      buff = static_cast<char *>(malloc(len));
+      buf = static_cast<char *>(malloc(len));
 
-      if (buff) {
+      if (buf) {
         struct stat statbuf;
-        snprintf(buff, len, "%s/%s", folder_path.c_str(), ent_dir->d_name);
+        snprintf(buf, len, "%s/%s", folder_path.c_str(), ent_dir->d_name);
 
-        if (!stat(buff, &statbuf)) {
+        if (!stat(buf, &statbuf)) {
           if (S_ISDIR(statbuf.st_mode)) {
-            res = FolderDelete(buff);
+            res = FolderDelete(buf);
           } else {
-            res = unlink(buff);
+            res = unlink(buf);
           }
         }
 
-        free(buff);
+        free(buf);
       }
     }
     closedir(dir);
@@ -657,7 +657,7 @@ int UtilsManager::FolderCreate(const std::string &folder_path) {
   return error_codes::SUCCESS;
 }
 
-UtilsManager::ReceiveResult
+std::pair<std::string, int>
 UtilsManager::ExecuteCommand(const std::string &bash_command) {
   LOG_INFO("{0}: {1}", __func__, bash_command);
   std::string command_output;
@@ -690,7 +690,7 @@ UtilsManager::ExecuteCommand(const std::string &bash_command) {
   return std::make_pair(command_output, term_status);
 }
 
-UtilsManager::ArrayPid UtilsManager::GetPidApp(const std::string &app_name) {
+std::vector<int> UtilsManager::GetAppPids(const std::string &app_name) {
 
   struct dirent *dirent;
   DIR *dir;
@@ -699,26 +699,26 @@ UtilsManager::ArrayPid UtilsManager::GetPidApp(const std::string &app_name) {
   if (!(dir = opendir("/proc"))) {
     fprintf(stderr, "\ncouldn't open /proc, errno %d\n", errno);
     perror(NULL);
-    return ArrayPid();
+    return std::vector<int>();
   }
 
-  ArrayPid arr_pid;
+  std::vector<int> pid_list;
 
   while (dirent = readdir(dir)) {
     if (isdigit(*dirent->d_name)) {
       app_pid = atoi(dirent->d_name);
-      if (0 == app_name.compare(GetNameApp(app_pid))) {
-        arr_pid.push_back(app_pid);
+      if (0 == app_name.compare(GetAppName(app_pid))) {
+        pid_list.push_back(app_pid);
       }
     }
   }
 
   closedir(dir);
 
-  return arr_pid;
+  return pid_list;
 }
 
-std::string UtilsManager::GetNameApp(int app_pid, procfs_info *proc_info) {
+std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
 
   char paths[PATH_MAX];
 #ifdef __QNX__
@@ -780,9 +780,9 @@ std::string UtilsManager::GetNameApp(int app_pid, procfs_info *proc_info) {
   }
 
   sprintf(paths, "/proc/%d/cmdline", app_pid);
-  if (FILE *hFile = fopen(paths, "r")) {
-    size_t size = fread(paths, sizeof(char), sizeof(paths), hFile);
-    fclose(hFile);
+  if (FILE *file = fopen(paths, "r")) {
+    size_t size = fread(paths, sizeof(char), sizeof(paths), file);
+    fclose(file);
     if (size > 0) {
       if ('\n' == paths[size - 1]) {
         paths[size - 1] = '\0';
@@ -807,7 +807,7 @@ int UtilsManager::KillApp(const pid_t app_pid, const int sig,
     return constants::error_codes::SUCCESS;
   }
 
-  if (false == IsExistsApp(app_pid)) {
+  if (false == AppExists(app_pid)) {
     LOG_INFO("Succes kill pid: {0} app: {1}\n", app_pid,
              app_name ? app_name : "");
     return constants::error_codes::SUCCESS;
@@ -845,7 +845,7 @@ int UtilsManager::KillApp(const pid_t app_pid, const int sig,
   return constants::error_codes::FAILED;
 }
 
-bool UtilsManager::IsExistsApp(const pid_t app_pid) {
+bool UtilsManager::AppExists(const pid_t app_pid) {
 
   struct stat stat_buff;
   char proc_path[PATH_MAX];
