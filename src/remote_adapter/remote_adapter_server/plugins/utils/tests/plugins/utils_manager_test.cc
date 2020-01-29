@@ -19,7 +19,7 @@ LIBRARY_API remote_adapter::adapter_plugin_ptr create_plugin();
 static constexpr uint16_t kRpcTestPort = rpc::constants::DEFAULT_PORT;
 static constexpr const char *kTestAddress = "127.0.0.1";
 static constexpr const char *kAppHelper = "helper";
-static constexpr const char *kPostFixBackup = "_origin";
+static constexpr const char *kBackupSuffix = "_origin";
 
 class UtilsManager_Test : public testing::Test {
 public:
@@ -37,7 +37,7 @@ public:
   response_type StartApp(const std::string &app_path,
                          const std::string &app_name);
   response_type StopApp(const std::string &app_name);
-  response_type CheckStatusApp(const std::string &app_name);
+  response_type CheckAppStatus(const std::string &app_name);
   response_type FileBackup(const std::string &file_path,
                            const std::string &file_name);
   response_type FileRestore(const std::string &file_path,
@@ -118,7 +118,7 @@ response_type UtilsManager_Test::StopApp(const std::string &app_name) {
   return app_stop.get().as<response_type>();
 }
 
-response_type UtilsManager_Test::CheckStatusApp(const std::string &app_name) {
+response_type UtilsManager_Test::CheckAppStatus(const std::string &app_name) {
   rpc::client client(kTestAddress, kRpcTestPort);
 
   std::vector<parameter_type> parameters = {
@@ -318,7 +318,7 @@ TEST_F(UtilsManager_Test, StartApp_Expect_FAILED) {
   EXPECT_EQ(constants::error_codes::FAILED, response.second);
 }
 
-TEST_F(UtilsManager_Test, StoptApp_Expect_SUCCES) {
+TEST_F(UtilsManager_Test, StopApp_Expect_SUCCES) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
@@ -330,25 +330,25 @@ TEST_F(UtilsManager_Test, StoptApp_Expect_SUCCES) {
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_NOT_RUNNING) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_NOT_RUNNING) {
   std::string app_name;
   const bool res = GetPathProperties(nullptr, &app_name);
   EXPECT_TRUE(res);
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
   EXPECT_EQ(std::to_string(stat_app_codes::NOT_RUNNING), response.first);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_RUNNING) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_RUNNING) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
 
   StartApp(app_path, app_name);
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   StopApp(app_name);
 
@@ -356,7 +356,7 @@ TEST_F(UtilsManager_Test, CheckStatusApp_Expect_RUNNING) {
   EXPECT_EQ(std::to_string(stat_app_codes::RUNNING), response.first);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_CRASHED) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_CRASHED) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
@@ -365,7 +365,7 @@ TEST_F(UtilsManager_Test, CheckStatusApp_Expect_CRASHED) {
 
   std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   StopApp(app_name);
 
