@@ -52,7 +52,7 @@ int RpcConnectionImpl<Args...>::handleRpcError(
   auto err = handle_rpc_error.get_error().as<std::pair<int, std::string>>();
   LOG_ERROR("[Error code]: {0} \n[Error description]: {1}", err.first,
             err.second);
-  return err.first;
+  return constants::error_codes::FAILED;
 }
 
 template <typename... Args>
