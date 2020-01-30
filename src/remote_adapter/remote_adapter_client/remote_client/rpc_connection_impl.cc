@@ -17,9 +17,9 @@ RpcConnectionImpl<Args...>::call(std::string const &func_name,
                                  Args... args) try {
   return client_.call(func_name, args...);
 } catch (rpc::rpc_error &e) {
-  return error_pack(response_type(e.what(), handleRpcError(e)));
+  return error_pack(response_type(e.what(), handle_rpc_error(e)));
 } catch (rpc::timeout &t) {
-  return error_pack(response_type(t.what(), handleRpcTimeout(t)));
+  return error_pack(response_type(t.what(), handle_rpc_timeout(t)));
 }
 
 template <typename... Args>
@@ -27,9 +27,9 @@ RPCLIB_MSGPACK::object_handle
 RpcConnectionImpl<Args...>::call(std::string const &func_name) try {
   return client_.call(func_name);
 } catch (rpc::rpc_error &e) {
-  return error_pack(response_type(e.what(), handleRpcError(e)));
+  return error_pack(response_type(e.what(), handle_rpc_error(e)));
 } catch (rpc::timeout &t) {
-  return error_pack(response_type(t.what(), handleRpcTimeout(t)));
+  return error_pack(response_type(t.what(), handle_rpc_timeout(t)));
 }
 
 template <typename... Args>
@@ -44,21 +44,18 @@ RpcConnectionImpl<Args...>::get_connection_state() const {
 }
 
 template <typename... Args>
-int RpcConnectionImpl<Args...>::handleRpcError(
-    rpc::rpc_error &handle_rpc_error) {
-  LOG_ERROR("EXCEPTION Occured in function: {}",
-            handle_rpc_error.get_function_name());
-  LOG_ERROR("[Error type]: {}", handle_rpc_error.what());
-  auto err = handle_rpc_error.get_error().as<std::pair<int, std::string>>();
+int RpcConnectionImpl<Args...>::handle_rpc_error(rpc::rpc_error &e) {
+  LOG_ERROR("EXCEPTION Occured in function: {}", e.get_function_name());
+  LOG_ERROR("[Error type]: {}", e.what());
+  auto err = e.get_error().as<std::pair<int, std::string>>();
   LOG_ERROR("[Error code]: {0} \n[Error description]: {1}", err.first,
             err.second);
   return constants::error_codes::FAILED;
 }
 
 template <typename... Args>
-int RpcConnectionImpl<Args...>::handleRpcTimeout(
-    rpc::timeout &handle_rpc_timeout) {
-  LOG_ERROR("TIMEOUT expired: {}", handle_rpc_timeout.what());
+int RpcConnectionImpl<Args...>::handle_rpc_timeout(rpc::timeout &t) {
+  LOG_ERROR("TIMEOUT expired: {}", t.what());
   return constants::error_codes::TIMEOUT_EXPIRED;
 }
 
