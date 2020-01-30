@@ -767,11 +767,14 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
     struct dirent *dirent;
     DIR *dir;
 
+    // The number of entries in /proc/pid/task
+    // is the number of threads in the process
     sprintf(paths, "/proc/%d/task", app_pid);
 
     if (dir = opendir(paths)) {
       while (dirent = readdir(dir)) {
         if (isdigit(*dirent->d_name)) {
+          // Count the number of threads for the application
           ++(*proc_info);
         }
       }
@@ -779,6 +782,8 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
     }
   }
 
+  // This file(/proc/pid/cmdline) contains command line arguments.
+  // The first is the name of the application.
   sprintf(paths, "/proc/%d/cmdline", app_pid);
   if (FILE *file = fopen(paths, "r")) {
     size_t size = fread(paths, sizeof(char), sizeof(paths), file);
@@ -787,7 +792,9 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
       if ('\n' == paths[size - 1]) {
         paths[size - 1] = '\0';
       }
+      // Find last backslash
       if (char *app_name = strrchr(paths, '/')) {
+        // Get name of application and skipping backslash
         return std::string(app_name + 1);
       }
       return std::string(paths);
