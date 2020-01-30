@@ -400,6 +400,10 @@ TEST_F(UtilsManager_Test, FileRestore_Expect_SUCCESS) {
   const bool res = GetPathProperties(&file_path, nullptr);
   EXPECT_TRUE(res);
 
+  FileUpdate(file_path, kAppHelper, kAppHelper);
+  FileBackup(file_path, kAppHelper);
+  FileDelete(file_path, kAppHelper);
+
   auto response = FileRestore(file_path, kAppHelper);
 
   struct stat stat_buff;
