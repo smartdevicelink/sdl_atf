@@ -29,7 +29,7 @@ extern char **environ; // need for posix_spawn
 
 namespace utils_wrappers {
 
-const char *const kPostFixBackup = "_origin";
+const char *const kBackupSuffix = "_origin";
 
 using namespace constants;
 
@@ -496,7 +496,7 @@ int UtilsManager::FileBackup(const std::string &file_path,
                              const std::string &file_name) {
   LOG_INFO("{}", __func__);
   std::string file_dest_path =
-      JoinPath(file_path, file_name).append(kPostFixBackup);
+      JoinPath(file_path, file_name).append(kBackupSuffix);
 
   std::ifstream src(JoinPath(file_path, file_name).c_str(), std::ios::binary);
   std::ofstream dest(file_dest_path.c_str(), std::ios::binary);
@@ -509,13 +509,13 @@ int UtilsManager::FileRestore(const std::string &file_path,
                               const std::string &file_name) {
   LOG_INFO("{}", __func__);
   std::string file_src_path =
-      JoinPath(file_path, file_name).append(kPostFixBackup);
+      JoinPath(file_path, file_name).append(kBackupSuffix);
 
   std::ifstream src(file_src_path.c_str(), std::ios::binary);
   std::ofstream dest(JoinPath(file_path, file_name).c_str(), std::ios::binary);
   dest << src.rdbuf();
 
-  FileDelete(file_path, std::string(file_name).append(kPostFixBackup));
+  FileDelete(file_path, std::string(file_name).append(kBackupSuffix));
 
   return src && dest ? error_codes::SUCCESS : error_codes::FAILED;
 }
