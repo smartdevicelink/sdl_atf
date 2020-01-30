@@ -35,6 +35,10 @@ local usedBuildOptions = {
   extendedPolicy =  {
     sdlBuildParameter = "EXTENDED_POLICY",
     defaultValue = "PROPRIETARY"
+  },
+  webSocketServerSupport =  {
+    sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT",
+    defaultValue = "ON"
   }
 }
 

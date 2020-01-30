@@ -14,7 +14,7 @@
 require('atf.util')
 local Test = require('testbase')
 local mobile = require("mobile_connection")
-local tcp = require("tcp_connection")
+local mobile_adapter_controller = require("mobile_adapter/mobile_adapter_controller")
 local file_connection = require("file_connection")
 local mobile_session = require("mobile_session")
 local websocket = require('websocket_connection')
@@ -40,10 +40,14 @@ local FAILED = expectations.FAILED
 
 --- HMI connection
 Test.hmiConnection = hmi_connection.Connection(websocket.WebSocketConnection(config.hmiUrl, config.hmiPort))
-local tcpConnection = tcp.Connection(config.mobileHost, config.mobilePort)
-local fileConnection = file_connection.FileConnection("mobile.out", tcpConnection)
 
 --- Default mobile connection
+function Test.getDefaultMobileAdapter(tcpHost, tcpPort)
+  return mobile_adapter_controller.getDefaultAdapter(tcpHost, tcpPort)
+end
+
+local mobileAdapter = Test.getDefaultMobileAdapter()
+local fileConnection = file_connection.FileConnection("mobile.out", mobileAdapter)
 Test.mobileConnection = mobile.MobileConnection(fileConnection)
 event_dispatcher:AddConnection(Test.hmiConnection)
 event_dispatcher:AddConnection(Test.mobileConnection)
@@ -209,7 +213,7 @@ function Test:initHMI()
           "Navigation.OnAudioDataStreaming",
           "Navigation.OnVideoDataStreaming"
         })
-      registerComponent("AppService", 
+      registerComponent("AppService",
         {
           "AppService.OnAppServiceData"
         })
@@ -491,6 +495,10 @@ function Test:initHMI_onReady()
       end
     end)
 
+  EXPECT_HMICALL("BasicCommunication.UpdateDeviceList")
+  :Do(function(_, data) self.hmiConnection:SendResponse(data.id, data.method, "SUCCESS", {}) end)
+  :Times(SDL.buildOptions.webSocketServerSupport == "ON" and AtLeast(1) or AnyNumber())
+
   self.hmiConnection:SendNotification("BasicCommunication.OnReady")
 end
 
@@ -504,8 +512,9 @@ function Test:connectMobile()
       print("Disconnected!!!")
       quit(exit_codes.aborted)
     end)
-  self.mobileConnection:Connect()
-  return EXPECT_EVENT(events.connectedEvent, "Connected")
+    local ret = EXPECT_EVENT(events.connectedEvent, "Connected")
+    self.mobileConnection:Connect()
+    return ret
 end
 
 --- Start default mobile session on default mobile conection
