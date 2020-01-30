@@ -47,7 +47,6 @@ static const int NO_CONNECTION = -7;
 static const int EXCEPTION_THROWN = -8;
 static const int TIMEOUT_EXPIRED = -9;
 static const int ALREADY_EXISTS = -10;
-static const int READ_EOF = -11;
 } // namespace error_codes
 
 namespace error_msg {
