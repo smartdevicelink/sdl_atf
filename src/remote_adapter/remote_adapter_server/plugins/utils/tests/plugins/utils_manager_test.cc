@@ -385,11 +385,11 @@ TEST_F(UtilsManager_Test, FileBackup_Expect_SUCCESS) {
   FileDelete(file_path, kAppHelper);
 
   struct stat stat_buff;
-  EXPECT_EQ(0, stat((file_path + "/" + kAppHelper + kPostFixBackup).c_str(),
+  EXPECT_EQ(0, stat((file_path + "/" + kAppHelper + kBackupSuffix).c_str(),
                     &stat_buff));
 
   auto file_content =
-      GetFileContent(file_path, std::string(kAppHelper) + kPostFixBackup, 0);
+      GetFileContent(file_path, std::string(kAppHelper) + kBackupSuffix, 0);
 
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
   EXPECT_EQ(file_content.first, kAppHelper);
