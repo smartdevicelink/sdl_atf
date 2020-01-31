@@ -67,10 +67,13 @@ bool UtilsManager_Test::GetPathProperties(std::string *app_path,
 
   char *name = 0;
   char path[PATH_MAX] = {0};
+  // This file "/proc/self/exe" contain full path to the executable
+  // of the current process
   ssize_t len = readlink("/proc/self/exe", path, PATH_MAX);
   if (-1 == len) {
     return false;
   }
+  // Find last backslash and skip or simple get name
   (name = strrchr(path, '/')) ? ++name : (name = path);
   path[name - path - 1] = '\0';
   if (name == path) {
