@@ -394,6 +394,8 @@ TEST_F(UtilsManager_Test, FileBackup_Expect_SUCCESS) {
   auto file_content =
       GetFileContent(file_path, std::string(kAppHelper) + kBackupSuffix, 0);
 
+  FileDelete(file_path, std::string(kAppHelper) + kBackupSuffix);
+
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
   EXPECT_EQ(file_content.first, kAppHelper);
 }
