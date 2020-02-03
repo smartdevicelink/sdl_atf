@@ -583,7 +583,7 @@ std::string UtilsManager::GetFileContent(const std::string &file_path,
   file_len = ftell(file);
   fclose(file);
 
-  offset = (read + offset) == file_len ? 0 : read + offset;
+  offset = (read + offset) == file_len ? error_codes::SUCCESS : read + offset;
 
   std::string file_content(buffer, read);
 
