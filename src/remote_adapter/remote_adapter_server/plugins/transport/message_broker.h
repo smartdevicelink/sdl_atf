@@ -117,7 +117,7 @@ public:
    *
    * @return true if the stream is open
    */
-  bool IsOpen(); //
+  bool IsOpen();
 
 private:
   void AsyncRead();
