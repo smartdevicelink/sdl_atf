@@ -145,7 +145,7 @@ public:
 
 private:
   static std::vector<int> GetAppPids(const std::string &app_name);
-  static std::string GetAppName(int pid, procfs_info *proc_info = 0);
+  static std::string GetAppStatus(int pid, int *num_threads = 0);
   static int KillApp(const pid_t app_pid, const int sig,
                      const char *app_name = 0);
   static bool AppExists(const pid_t app_pid);

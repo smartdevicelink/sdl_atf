@@ -471,16 +471,11 @@ int UtilsManager::CheckAppStatus(const std::string &app_name) {
   }
 
   int num_threads = 0;
-
-  procfs_info info;
+  int pid_num_threads = 0;
 
   for (const auto &app_pid : pid_list) {
-    GetAppName(app_pid, &info);
-#ifdef __QNX__
-    num_threads += info.num_threads;
-#else
-    num_threads += info;
-#endif
+    GetAppStatus(app_pid, &pid_num_threads);
+    num_threads += pid_num_threads;
   }
 
   LOG_INFO("{0} has: {1} thread", app_name, num_threads);
@@ -707,7 +702,7 @@ std::vector<int> UtilsManager::GetAppPids(const std::string &app_name) {
   while (dirent = readdir(dir)) {
     if (isdigit(*dirent->d_name)) {
       app_pid = atoi(dirent->d_name);
-      if (0 == app_name.compare(GetAppName(app_pid))) {
+      if (0 == app_name.compare(GetAppStatus(app_pid))) {
         pid_list.push_back(app_pid);
       }
     }
@@ -718,7 +713,7 @@ std::vector<int> UtilsManager::GetAppPids(const std::string &app_name) {
   return pid_list;
 }
 
-std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
+std::string UtilsManager::GetAppStatus(int app_pid, int *num_threads) {
 
   char paths[PATH_MAX];
 #ifdef __QNX__
@@ -742,12 +737,16 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
     }
   }
 
-  if (proc_info) {
-    int sts = devctl(fd, DCMD_PROC_INFO, proc_info, sizeof(procfs_info), NULL);
+  if (num_threads) {
+    procfs_info proc_info;
+    int sts = devctl(fd, DCMD_PROC_INFO, &proc_info, sizeof(procfs_info), NULL);
     if (sts != EOK) {
+      *num_threads = 0;
       fprintf(stderr, "\n%s: DCMD_PROC_INFO pid %d errno %d (%s)",
               strrchr(name.info.path, '/') + 1, app_pid, errno,
               strerror(errno));
+    } else {
+      *num_threads = proc_info.num_threads;
     }
   }
 
@@ -761,8 +760,8 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
 
 #else
 
-  if (proc_info) {
-    *proc_info = 0;
+  if (num_threads) {
+    *num_threads = 0;
 
     struct dirent *dirent;
     DIR *dir;
@@ -775,7 +774,7 @@ std::string UtilsManager::GetAppName(int app_pid, procfs_info *proc_info) {
       while (dirent = readdir(dir)) {
         if (isdigit(*dirent->d_name)) {
           // Count the number of threads for the application
-          ++(*proc_info);
+          ++(*num_threads);
         }
       }
       closedir(dir);
