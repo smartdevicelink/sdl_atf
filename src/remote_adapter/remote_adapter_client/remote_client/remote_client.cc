@@ -53,8 +53,7 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
     response_type response =
         connection_->call(rpc_name, parameters).as<response_type>();
 
-    if (error_codes::FAILED == response.second ||
-        error_codes::TIMEOUT_EXPIRED == response.second) {
+    if (0 > response.second) {
       LOG_ERROR("{0}:\nExit Get file data from HU Failed!!!", __func__);
       return response;
     }
@@ -71,9 +70,9 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
       return std::make_pair(std::string("Can't create file"),
                             error_codes::FAILED);
     }
-    // The respond.second contain next offset which need for server to read data
-    // or in error case error_codes
-    if (response.second) {
+    // A response which includes a non-zero offset indicates
+    // that there is more data to read
+    if (0 < response.second) {
       auto remains_bytes = response.second;
       size_t offset_parameter_idx = parameters.size() - 2;
       do {
@@ -83,13 +82,12 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
             std::to_string(remains_bytes), constants::param_types::INT);
         response = connection_->call(rpc_name, parameters).as<response_type>();
         remains_bytes = response.second;
-        if (error_codes::FAILED == response.second ||
-            error_codes::TIMEOUT_EXPIRED == response.second) {
+        if (0 > response.second) {
           fclose(hFile);
           remove(tmp_path.c_str());
           return std::make_pair(std::string(), error_codes::FAILED);
         }
-      } while (remains_bytes);
+      } while (remains_bytes > 0);
     }
 
     fwrite(response.first.c_str(), response.first.length(), 1, hFile);
