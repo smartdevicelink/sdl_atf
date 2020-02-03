@@ -93,7 +93,11 @@ public:
    *
    * @param file_path full path to the file folder
    * @param file_name file name
-   * @param offset  number of bytes to offset from beginning of file
+   * @param offset  number of bytes from beginning of file,
+   *        this parameter is modified during function call
+   *        it contains file offset for next function call
+   *        if the end of the file is not reached
+   *        or error code SUCCESS if it is reached
    * @param max_size_content maximum size in bytes to be read at one time
    * @return file contents, set FAILED code from error_codes namespace to
    * offset, in case of failure
