@@ -52,7 +52,7 @@ end
 function Tcp.mt.__index:Connect()
   xmlReporter.AddMessage("tcp_connection","Connect")
   checkSelfArg(self)
-  self.socket:connect(self.host, self.port)
+  self.socket:connect(self.host, self.port, config.connectionTimeout)
 end
 
 --- Send pack of messages from mobile to SDL

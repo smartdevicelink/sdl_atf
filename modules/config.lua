@@ -54,6 +54,8 @@ config.wssPrivateKeyPath = "./data/cert/wss/client-key.pem"
 config.heartbeatTimeout = 7000
 --- Define timeout to wait for the events that should not occur
 config.zeroOccurrenceTimeout = 2000
+--- Define timeout to wait for connection to be established
+config.connectionTimeout = 5000
 --- Flag which defines whether ATF checks all validations for particular expectation or just till the first which fails
 config.checkAllValidations = false
 --- Define default version of Ford protocol

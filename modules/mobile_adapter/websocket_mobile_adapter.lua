@@ -66,7 +66,7 @@ function WebEngineWS.mt.__index:Connect()
   --   print("SSL errors have occurred")
   -- end
   -- qt.connect(self.socket, "sslErrors(QList<QSslError>)", self.qtproxy, "onSslErrors(QList<QSslError>)")
-  self.socket:open(self.url, self.port, self.ssl)
+  self.socket:open(self.url, self.port, config.connectionTimeout, self.ssl)
 end
 
 --- Send pack of messages from mobile to SDL

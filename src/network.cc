@@ -36,7 +36,7 @@ QTcpSocket *tcpSocket =
 #line 33 "network.nw"
   const char* ip   = luaL_checkstring(L, 2);
   int         port = luaL_checkinteger(L, 3);
-
+  const int time_waiting_ms = lua_tointegerx(L, 4, NULL);
 
   tcpSocket->connectToHost(ip, port);
 
@@ -45,9 +45,9 @@ QTcpSocket *tcpSocket =
   while (!tcpSocket->waitForConnected()) {
     tcpSocket->connectToHost(ip, port);
     // Check elapsed time
-    const int time_waiting_ms = 1000;
     if (timer.elapsed() > time_waiting_ms){
-      fprintf(stderr, "%s\n%s\n", "Error: Connection not established", strerror(errno));
+      fprintf(stderr, "Error: TCP Connection not established during %d ms\n%s\n",
+        time_waiting_ms, strerror(errno));
       return 1;
     }
   }
@@ -206,17 +206,18 @@ QWebSocket *webSocket =
 #line 126 "network.nw"
   QUrl url(luaL_checkstring(L, 2));
   url.setPort(lua_tointegerx(L, 3, NULL));
+  const int time_waiting_ms = lua_tointegerx(L, 4, NULL);
   // check wheather ssl parameters passed then construct and set QSslConfiguration
-  if (!lua_isnoneornil(L, 4)) {
-    lua_getfield(L, 4, "protocol");
+  if (!lua_isnoneornil(L, 5)) {
+    lua_getfield(L, 5, "protocol");
     const QSsl::SslProtocol protocol = static_cast<QSsl::SslProtocol>(lua_tointeger(L, -1));
     lua_pop(L, 1);
 
-    lua_getfield(L, 4, "cypherListString");
+    lua_getfield(L, 5, "cypherListString");
     const QString cypherListString = lua_tostring(L, -1);
     lua_pop(L, 1);
 
-    lua_getfield(L, 4, "caCertPath");
+    lua_getfield(L, 5, "caCertPath");
     const QString caCertPath = lua_tostring(L, -1);
     lua_pop(L, 1);
     QFile caCertFile(caCertPath);
@@ -226,7 +227,7 @@ QWebSocket *webSocket =
     QList<QSslCertificate> caCertificates;
     caCertificates << caCertificate;
 
-    lua_getfield(L, 4, "certPath");
+    lua_getfield(L, 5, "certPath");
     const QString certPath = lua_tostring(L, -1);
     lua_pop(L, 1);
     QFile certFile(certPath);
@@ -234,7 +235,7 @@ QWebSocket *webSocket =
     QSslCertificate certificate(&certFile, QSsl::Pem);
     certFile.close();
 
-    lua_getfield(L, 4, "keyPath");
+    lua_getfield(L, 5, "keyPath");
     const QString keyPath = lua_tostring(L, -1);
     lua_pop(L, 1);
     QFile keyFile(keyPath);
@@ -259,7 +260,6 @@ QWebSocket *webSocket =
   QObject::connect(webSocket, SIGNAL(connected()), &loop, SLOT(quit()));
   QObject::connect(webSocket, SIGNAL(disconnected()), &loop, SLOT(quit()));
 
-  const int time_waiting_ms = 1000;
   QTime timer;
   timer.start();
   // Wait until socket connection is established
@@ -268,7 +268,8 @@ QWebSocket *webSocket =
     loop.exec();
     usleep(100);
     if (timer.elapsed() > time_waiting_ms){
-      fprintf(stderr, "%s\n%s\n", "Error: WS Connection not established", strerror(errno));
+      fprintf(stderr, "Error: WS Connection not established during %d ms\n%s\n",
+        time_waiting_ms, strerror(errno));
       return 0;
     }
   }

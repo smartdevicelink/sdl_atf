@@ -108,7 +108,7 @@ end
 function SdlLogger.Connect(self)
   self.qtproxy.dataReady = function() SdlLogger.dataReady() end
   qt.connect(SdlLogger.socket, "readyRead()", self.qtproxy, "dataReady()")
-  SdlLogger.socket:connect(self.host, self.port)
+  SdlLogger.socket:connect(self.host, self.port, config.connectionTimeout)
 end
 
 --- Close SDL logger connection to SDL
