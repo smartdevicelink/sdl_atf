@@ -43,6 +43,8 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
   LOG_INFO("{0}: of: {1} with {2} parameters", __func__, rpc_name,
            parameters.size());
 
+  namespace error_codes = constants::error_codes;
+
   if (connected()) {
     parameters.push_back(
         std::make_pair(std::to_string(0), constants::param_types::INT));
@@ -51,7 +53,7 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
     response_type response =
         connection_->call(rpc_name, parameters).as<response_type>();
 
-    if (constants::error_codes::FAILED == response.second) {
+    if (0 > response.second) {
       LOG_ERROR("{0}:\nExit Get file data from HU Failed!!!", __func__);
       return response;
     }
@@ -66,18 +68,26 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
       LOG_ERROR("{0}:\nExit with Failed: \nCan't create file: {1}", __func__,
                 tmp_path);
       return std::make_pair(std::string("Can't create file"),
-                            constants::error_codes::FAILED);
+                            error_codes::FAILED);
     }
-
-    if (constants::error_codes::SUCCESS != response.second) {
+    // A response which includes a non-zero offset indicates
+    // that there is more data to read
+    if (0 < response.second) {
+      auto remains_bytes = response.second;
       size_t offset_parameter_idx = parameters.size() - 2;
       do {
         fwrite(response.first.c_str(), response.first.length(), 1, hFile);
 
         parameters[offset_parameter_idx] = std::make_pair(
-            std::to_string(response.second), constants::param_types::INT);
+            std::to_string(remains_bytes), constants::param_types::INT);
         response = connection_->call(rpc_name, parameters).as<response_type>();
-      } while (constants::error_codes::SUCCESS != response.second);
+        remains_bytes = response.second;
+        if (0 > response.second) {
+          fclose(hFile);
+          remove(tmp_path.c_str());
+          return std::make_pair(std::string(), error_codes::FAILED);
+        }
+      } while (remains_bytes > 0);
     }
 
     fwrite(response.first.c_str(), response.first.length(), 1, hFile);
@@ -85,11 +95,11 @@ response_type RemoteClient::file_call(const std::string &rpc_name,
 
     LOG_INFO("{0}:\nExit with SUCCESS\nReceived data from path: {1}", __func__,
              tmp_path);
-    return std::make_pair(tmp_path, constants::error_codes::SUCCESS);
+    return std::make_pair(tmp_path, error_codes::SUCCESS);
   }
 
   LOG_ERROR("No connection");
-  return std::make_pair(std::string(), constants::error_codes::NO_CONNECTION);
+  return std::make_pair(std::string(), error_codes::NO_CONNECTION);
 }
 
 response_type

@@ -22,7 +22,7 @@ static std::string close_handle = "close";
 static std::string send = "send";
 static std::string receive = "receive";
 
-static const size_t kMaxSizeData = 1048576; //1MB
+static const size_t kMaxSizeData = 1048576; // 1MB
 static const std::string kTmpPath = "/tmp/";
 
 namespace stat_app_codes {

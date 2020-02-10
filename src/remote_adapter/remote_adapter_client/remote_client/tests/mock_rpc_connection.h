@@ -11,7 +11,7 @@ using rpc_connection::RpcConnection;
 class MockRpcConnection : public RpcConnection<rpc_parameter> {
 public:
   MOCK_METHOD2(call, RPCLIB_MSGPACK::object_handle(std::string const &func_name,
-                                                   rpc_parameter parametr));
+                                                   rpc_parameter parameter));
   MOCK_METHOD1(call,
                RPCLIB_MSGPACK::object_handle(std::string const &func_name));
   MOCK_METHOD1(set_timeout, void(int64_t value));

@@ -210,6 +210,7 @@ TEST_F(MessageBroker_Test, CloseConnection_Expect_NO_CONNECTION) {
 
   try {
     auto response = close_handle.get().as<response_type>();
+    ADD_FAILURE() << "Expect rpc::rpc_error with error code NO_CONNECTION";
   } catch (rpc::rpc_error &e) {
     auto err = e.get_error().as<response_type>();
     EXPECT_EQ(constants::error_codes::NO_CONNECTION, err.second);

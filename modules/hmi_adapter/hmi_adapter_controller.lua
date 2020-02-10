@@ -2,7 +2,7 @@
 --
 -- *Dependencies:* none
 --
--- *Globals:* none
+-- *Globals:* config
 -- @module HmiAdapterController
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>

@@ -19,7 +19,7 @@ LIBRARY_API remote_adapter::adapter_plugin_ptr create_plugin();
 static constexpr uint16_t kRpcTestPort = rpc::constants::DEFAULT_PORT;
 static constexpr const char *kTestAddress = "127.0.0.1";
 static constexpr const char *kAppHelper = "helper";
-static constexpr const char *kPostFixBackup = "_origin";
+static constexpr const char *kBackupSuffix = "_origin";
 
 class UtilsManager_Test : public testing::Test {
 public:
@@ -37,7 +37,7 @@ public:
   response_type StartApp(const std::string &app_path,
                          const std::string &app_name);
   response_type StopApp(const std::string &app_name);
-  response_type CheckStatusApp(const std::string &app_name);
+  response_type CheckAppStatus(const std::string &app_name);
   response_type FileBackup(const std::string &file_path,
                            const std::string &file_name);
   response_type FileRestore(const std::string &file_path,
@@ -67,10 +67,13 @@ bool UtilsManager_Test::GetPathProperties(std::string *app_path,
 
   char *name = 0;
   char path[PATH_MAX] = {0};
+  // This file "/proc/self/exe" contain full path to the executable
+  // of the current process
   ssize_t len = readlink("/proc/self/exe", path, PATH_MAX);
   if (-1 == len) {
     return false;
   }
+  // Find last backslash and skip or simple get name
   (name = strrchr(path, '/')) ? ++name : (name = path);
   path[name - path - 1] = '\0';
   if (name == path) {
@@ -118,7 +121,7 @@ response_type UtilsManager_Test::StopApp(const std::string &app_name) {
   return app_stop.get().as<response_type>();
 }
 
-response_type UtilsManager_Test::CheckStatusApp(const std::string &app_name) {
+response_type UtilsManager_Test::CheckAppStatus(const std::string &app_name) {
   rpc::client client(kTestAddress, kRpcTestPort);
 
   std::vector<parameter_type> parameters = {
@@ -318,7 +321,7 @@ TEST_F(UtilsManager_Test, StartApp_Expect_FAILED) {
   EXPECT_EQ(constants::error_codes::FAILED, response.second);
 }
 
-TEST_F(UtilsManager_Test, StoptApp_Expect_SUCCES) {
+TEST_F(UtilsManager_Test, StopApp_Expect_SUCCES) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
@@ -330,25 +333,25 @@ TEST_F(UtilsManager_Test, StoptApp_Expect_SUCCES) {
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_NOT_RUNNING) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_NOT_RUNNING) {
   std::string app_name;
   const bool res = GetPathProperties(nullptr, &app_name);
   EXPECT_TRUE(res);
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
   EXPECT_EQ(std::to_string(stat_app_codes::NOT_RUNNING), response.first);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_RUNNING) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_RUNNING) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
 
   StartApp(app_path, app_name);
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   StopApp(app_name);
 
@@ -356,7 +359,7 @@ TEST_F(UtilsManager_Test, CheckStatusApp_Expect_RUNNING) {
   EXPECT_EQ(std::to_string(stat_app_codes::RUNNING), response.first);
 }
 
-TEST_F(UtilsManager_Test, CheckStatusApp_Expect_CRASHED) {
+TEST_F(UtilsManager_Test, CheckAppStatus_Expect_CRASHED) {
   std::string app_path, app_name;
   const bool res = GetPathProperties(&app_path, &app_name);
   EXPECT_TRUE(res);
@@ -365,7 +368,7 @@ TEST_F(UtilsManager_Test, CheckStatusApp_Expect_CRASHED) {
 
   std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
-  auto response = CheckStatusApp(app_name);
+  auto response = CheckAppStatus(app_name);
 
   StopApp(app_name);
 
@@ -385,11 +388,13 @@ TEST_F(UtilsManager_Test, FileBackup_Expect_SUCCESS) {
   FileDelete(file_path, kAppHelper);
 
   struct stat stat_buff;
-  EXPECT_EQ(0, stat((file_path + "/" + kAppHelper + kPostFixBackup).c_str(),
+  EXPECT_EQ(0, stat((file_path + "/" + kAppHelper + kBackupSuffix).c_str(),
                     &stat_buff));
 
   auto file_content =
-      GetFileContent(file_path, std::string(kAppHelper) + kPostFixBackup, 0);
+      GetFileContent(file_path, std::string(kAppHelper) + kBackupSuffix, 0);
+
+  FileDelete(file_path, std::string(kAppHelper) + kBackupSuffix);
 
   EXPECT_EQ(constants::error_codes::SUCCESS, response.second);
   EXPECT_EQ(file_content.first, kAppHelper);
@@ -399,6 +404,10 @@ TEST_F(UtilsManager_Test, FileRestore_Expect_SUCCESS) {
   std::string file_path;
   const bool res = GetPathProperties(&file_path, nullptr);
   EXPECT_TRUE(res);
+
+  FileUpdate(file_path, kAppHelper, kAppHelper);
+  FileBackup(file_path, kAppHelper);
+  FileDelete(file_path, kAppHelper);
 
   auto response = FileRestore(file_path, kAppHelper);
 

@@ -98,7 +98,7 @@ local function updateSDLLogProperties()
 end
 
 --- Update paths to SDL and its config
-local function updaterSdlPaths()
+local function updateSdlPaths()
   config.pathToSDL = SDL.addSlashToPath(config.pathToSDL)
   config.pathToSDLConfig = SDL.addSlashToPath(config.pathToSDLConfig)
 end
@@ -130,6 +130,9 @@ local function getFileContent(pPathToFile)
   if file then
     content = file:read("*all")
     file:close()
+    if config.remoteConnection.enabled then
+      os.execute("rm -f " .. pPathToFile)
+    end
   end
   return content
 end
@@ -161,7 +164,7 @@ local function deleteFolder(pPathToFolder)
     local p, n = getPathAndName(pPathToFolder)
     ATF.remoteUtils.file:DeleteFolder(p, n)
   else
-    os.execute( "rm -rf " .. pPathToFolder)
+    os.execute("rm -rf " .. pPathToFolder)
   end
 end
 
@@ -221,8 +224,8 @@ local function restore(pFilePath)
       local p, n = getPathAndName(pFilePath)
       ATF.remoteUtils.file:RestoreFile(p, n)
     else
-      os.execute(" cp " .. pFilePath .. "_origin " .. pFilePath )
-      os.execute( " rm -f " .. pFilePath .. "_origin" )
+      os.execute("cp " .. pFilePath .. "_origin " .. pFilePath)
+      os.execute("rm -f " .. pFilePath .. "_origin")
     end
   end
 end
@@ -233,7 +236,7 @@ local function backup(pFilePath)
     local p, n = getPathAndName(pFilePath)
     ATF.remoteUtils.file:BackupFile(p, n)
   else
-    os.execute(" cp " .. pFilePath .. " " .. pFilePath .. "_origin" )
+    os.execute("cp " .. pFilePath .. " " .. pFilePath .. "_origin")
   end
 end
 
@@ -627,7 +630,7 @@ function SDL.WaitForSDLStart(test)
       if not res then
         error("RemoteUtils.app unable to get status of application: " .. config.SDL)
       end
-      output = state == remote_constants.APPLICATION_STATUS.RUNNING and true or false
+      output = (state == remote_constants.APPLICATION_STATUS.RUNNING)
     else
       local hmiPort = config.hmiAdapterConfig.WebSocket.port
       output = os.execute("netstat -vatn  | grep " .. hmiPort .. " | grep LISTEN")
@@ -667,9 +670,9 @@ function SDL:CheckStatusSDL()
       elseif data == remote_constants.APPLICATION_STATUS.RUNNING then
         return self.RUNNING
       end
-    else
-      error("Remote utils: unable to get Appstatus of SDL")
+      error("Remote utils: unknown Appstatus of SDL was received")
     end
+    error("Remote utils: unable to get Appstatus of SDL")
   else
     local testFile = os.execute('test -e sdl.pid')
     if testFile then
@@ -697,7 +700,7 @@ function SDL.GetHostURL()
   return config.mobileHost
 end
 
-updaterSdlPaths()
+updateSdlPaths()
 setAllSdlBuildOptions()
 updateSDLLogProperties()
 
