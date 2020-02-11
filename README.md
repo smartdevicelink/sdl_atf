@@ -9,10 +9,10 @@ json4lua               | MIT
 lua-stdlib             | MIT
 lua-lpeg               |
 **Qt libs**            |
-Qt5.9 WebSockets       | LGPL 2.1
-Qt5.9 Network          | LGPL 2.1
-Qt5.9 Core             | LGPL 2.1
-Qt5.9 Test             | LGPL 2.1
+Qt5.3 WebSockets       | LGPL 2.1
+Qt5.3 Network          | LGPL 2.1
+Qt5.3 Core             | LGPL 2.1
+Qt5.3 Test             | LGPL 2.1
 **Other libs**         |
 lpthread               | LGPL
 OpenSSL (ssl, crypto)  | OpenSSL License
@@ -20,34 +20,30 @@ libxml2                | MIT
 ldoc                   | MIT/X11
 
 ## Get source code:
-- Clone repository
 ```
-$ git clone https://github.com/smartdevicelink/sdl_atf
-$ cd sdl_atf
-$ git submodule init
-$ git submodule update
+git clone https://github.com/smartdevicelink/sdl_atf
+cd sdl_atf
+git submodule init
+git submodule update
 ```
 ## Compilation:
 **1** Install 3d-parties developers libraries
-- Run the following commands :
 ```
-$ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
-$ sudo apt-get install openssl
+sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
+sudo apt-get install openssl
 ```
 
-**2** Install Qt5.9+
-- Run the following commands :
-```
-$ sudo add-apt-repository -y ppa:beineri/opt-qt591-xenial
-$ sudo apt-get update
-$ sudo apt-get install qt59base qt59websockets
-```
-**3** Install cmake 3.11+
-[CMake](https://cmake.org/download/) : Download and install any release version > 3.11
+**2** Install Qt5.3+
 
-**4** Build ATF
-- Create build directory and get into created directory
-- Run the following command : `cmake <path to sources>`
+[Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+```
+sudo chmod +x some-qt-build.run
+./some-qt-build.run
+```
+
+**3** Build ATF
+- Create build directory and get into it
+- Run `cmake <path_to_sources>`
 - Run `make`
 
 ## Configuration of ATF
@@ -60,7 +56,10 @@ Each folder in this folder represents values of `--config` option for ATF run: `
 They can override one or more described configuration files.
 
 ## Run:
-``` ./start.sh [--config=<config_name>] [options] [script file name] ```
+```
+./start.sh [--config=<config_name>] [options] [script file name]
+```
+
 where <config_name> is one of the following values: `local`, `remote_linux`, `remote_qnx`
 
 ## Documentation generation
