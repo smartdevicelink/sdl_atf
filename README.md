@@ -52,10 +52,10 @@ $ sudo apt-get install qt59base qt59websockets
 
 ## Configuration of ATF
 ATF configuration is setting up in `modules/configuration` folder.
-`base_config.lua` - base configuration parameters (reporting, paths to SDL e.t.c)
-`connection_config.lua` - configuration parameters related to all connections (mobile, hmi, remote)
-`security_config.lua` - configuration parameters related to security layer of connection
-`app_config.lua` - predefined applications parameters
+- `base_config.lua` : base configuration parameters (reporting, paths to SDL e.t.c)
+- `connection_config.lua` : configuration parameters related to all connections (mobile, hmi, remote)
+- `security_config.lua` : configuration parameters related to security layer of connection
+- `app_config.lua` : predefined applications parameters
 Each folder in this folder represents values of `--config` option for ATF run: `local`, `remote_linux`, `remote_qnx`
 They can override one or more described configuration files.
 
