@@ -45,6 +45,7 @@ sudo chmod +x some-qt-build.run
 - Create build directory and get into it
 - Run `cmake <path_to_sources>`
 - Run `make`
+- Run `make install`
 
 ## Configuration of ATF
 ATF configuration is setting up in `modules/configuration` folder.
@@ -56,11 +57,15 @@ Each folder in this folder represents values of `--config` option for ATF run: `
 They can override one or more described configuration files.
 
 ## Run:
+
+1. Copy `RemoteTestingAdapterServer` folder to SDL host and run `RemoteTestingAdapterServer` on that host
+
+2. Start ATF script:
 ```
 ./start.sh [--config=<config_name>] [options] [script file name]
 ```
 
-where <config_name> is one of the following values: `local`, `remote_linux`, `remote_qnx`
+where `<config_name>` is one of the following values: `local`, `remote_linux`, `remote_qnx`
 
 ## Documentation generation
 ### Download and install [ldoc](stevedonovan.github.io/ldoc/manual/doc.md.html)
