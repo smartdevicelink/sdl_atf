@@ -64,8 +64,6 @@ public:
 
 bool UtilsManager_Test::GetPathProperties(std::string *app_path,
                                           std::string *app_name) {
-
-  char *name = 0;
   char path[PATH_MAX] = {0};
   // This file "/proc/self/exe" contain full path to the executable
   // of the current process
@@ -73,10 +71,12 @@ bool UtilsManager_Test::GetPathProperties(std::string *app_path,
   if (-1 == len) {
     return false;
   }
-  // Find last backslash and skip or simple get name
-  (name = strrchr(path, '/')) ? ++name : (name = path);
-  path[name - path - 1] = '\0';
-  if (name == path) {
+  // Find last backslash and skip
+  char *name = strrchr(path, '/');
+  if (name) {
+    ++name;
+    path[name - path - 1] = '\0';
+  } else {
     return false;
   }
 
