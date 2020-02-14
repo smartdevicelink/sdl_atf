@@ -12,8 +12,8 @@ if(QNXNTO)
 endif()
 
 FetchContent_Declare(rpclib
-    GIT_REPOSITORY https://github.com/rpclib/rpclib.git
-    GIT_TAG v2.2.1)
+    GIT_REPOSITORY https://github.com/dboltovskyi/rpclib.git
+    GIT_TAG v2.2.2)
 
 find_package(Threads REQUIRED)
 FetchContent_GetProperties(rpclib)
@@ -25,8 +25,7 @@ endif()
 
 set(RPCLIB_DEPENDENCIES "${rpclib_SOURCE_DIR}/dependencies")
 file(GLOB_RECURSE DEP_HEADERS
-    ${RPCLIB_DEPENDENCIES}/include/*.h
-    ${RPCLIB_DEP_LIBRARIDEPENDENCIES}/include/*.hpp)
+    ${RPCLIB_DEPENDENCIES}/include/*.h)
 set(DEP_SOURCES
     ${RPCLIB_DEPENDENCIES}/src/format.cc
     ${RPCLIB_DEPENDENCIES}/src/posix.cc)
