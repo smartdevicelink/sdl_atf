@@ -33,13 +33,17 @@ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
 sudo apt-get install openssl
 ```
 
-**2** Install Qt5.3+
+**2** Install Qt
 
-[Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+- For Ubuntu `18.04`:
 ```
-sudo chmod +x some-qt-build.run
-./some-qt-build.run
+sudo apt-get install libqt5websockets5 libqt5websockets5-dev
 ```
+
+- For Ubuntu `16.04`:
+    - [Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+    - `sudo chmod +x some-qt-build.run`
+    - `./some-qt-build.run`
 
 **3** Build ATF
 - Create build directory and get into it
