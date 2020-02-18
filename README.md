@@ -38,7 +38,14 @@ $ sudo apt-get install openssl
 ```
 
 **2** Install Qt5.9+
-- Run the following commands :
+- For Ubuntu `18.04`:
+    - Run the following command :
+```
+$ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
+```
+
+- For Ubuntu `16.04`:
+    - Run the following commands :
 ```
 $ sudo add-apt-repository -y ppa:beineri/opt-qt591-xenial
 $ sudo apt-get update
@@ -63,7 +70,7 @@ $ sudo find / -name qmake
    Solution:
    You have to change location of qmake in Makefile in atf root directory
    Find location of qmake executable on your local PC:
-   (It should look like: .../Qt/5.3/gcc_64/bin/qmake)
+   (It should look like: .../Qt/5.9/gcc_64/bin/qmake)
 
    and put it into Makefile to the line:
    QMAKE=<your path to qmake>
