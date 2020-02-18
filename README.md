@@ -19,15 +19,12 @@ OpenSSL (ssl, crypto)  | OpenSSL License
 libxml2                | MIT
 ldoc                   | MIT/X11
 
-For ATF usage:
-```sudo apt-get install liblua5.2 libxml2 lua-lpeg```
-
 ## Get source code:
 ```
-$ git clone https://github.com/smartdevicelink/sdl_atf
-$ cd sdl_atf
-$ git submodule init
-$ git submodule update
+git clone https://github.com/smartdevicelink/sdl_atf
+cd sdl_atf
+git submodule init
+git submodule update
 ```
 ## Compilation:
 **1** Install 3d-parties developers libraries
@@ -36,42 +33,43 @@ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
 sudo apt-get install openssl
 ```
 
-**2** Install Qt5.3+
+**2** Install Qt
 
-[Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+- For Ubuntu `18.04`:
 ```
-sudo chmod +x some-qt-build.run
-./some-qt-build.run
+sudo apt-get install libqt5websockets5 libqt5websockets5-dev
 ```
 
-**2** Setup QMAKE environment variable to path to qmake
-```export QMAKE=${PATH_TO_QMAKE} ```
-*You can get path to qmake this way:*
-```
-$ sudo find / -name qmake
-/usr/bin/qmake
-/opt/Qt5.3.1/5.3/gcc/bin/qmake
-```
-/usr/bin/qmake in most cases does not work as it is just soft link to qtchooser
+- For Ubuntu `16.04`:
+    - [Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+    - `sudo chmod +x some-qt-build.run`
+    - `./some-qt-build.run`
 
-**2**  ```$ make```
+**3** Build ATF
+- Create build directory and get into it
+- Run `cmake <path_to_sources>`
+- Run `make`
+- Run `make install`
 
- 1) If during executing "make" command you have the following problem:
-   Project ERROR: Unknown module(s) in QT: websockets
-
-   Solution:
-   You have to change location of qmake in Makefile in atf root directory
-   Find location of qmake executable on your local PC:
-   (It should look like: .../Qt/5.3/gcc_64/bin/qmake)
-
-   and put it into Makefile to the line:
-   QMAKE=<your path to qmake>
-   Sometimes you will need reinstall QT Creator to get correct qmake executable
-   Also you can open QT Creator. Then go to: Tool->Options->Build & Run. Find Qt Versions Tab.
-   Here you can find qmake location.
+## Configuration of ATF
+ATF configuration is setting up in `modules/configuration` folder.
+- `base_config.lua` : base configuration parameters (reporting, paths to SDL e.t.c)
+- `connection_config.lua` : configuration parameters related to all connections (mobile, hmi, remote)
+- `security_config.lua` : configuration parameters related to security layer of connection
+- `app_config.lua` : predefined applications parameters
+Each folder in this folder represents values of `--config` option for ATF run: `local`, `remote_linux`, `remote_qnx`
+They can override one or more described configuration files.
 
 ## Run:
-``` ./start.sh [options] [script file name] ```
+
+1. Copy `RemoteTestingAdapterServer` folder to SDL host and run `RemoteTestingAdapterServer` on that host
+
+2. Start ATF script:
+```
+./start.sh [--config=<config_name>] [options] [script file name]
+```
+
+where `<config_name>` is one of the following values: `local`, `remote_linux`, `remote_qnx`
 
 ## Documentation generation
 ### Download and install [ldoc](stevedonovan.github.io/ldoc/manual/doc.md.html)
@@ -99,20 +97,16 @@ You can setup path to SDL via command line with ```--sdl-core``` option.
 ./start.sh --sdl-core=/home/user/development/sdl/build/bin ./test_scripts/ActivationDuringActiveState.lua
 ```
 
-Or via config file(```modules/config.lua```) with config parameter
+Or via config file(```modules/base_config.lua```) with config parameter
 
 **Example :**
 *ATF config : modules/config.lua :*
 ```
 config.pathToSDL = "home/user/development/sdl/build/bin"
 ```
-
-also you can copy ```modules/config.lua``` to root and rename to ```local_config.lua```.
-```local_config.lua``` is added to ```.gitignore```
-
 Usage example:
 ```
-./start.sh -clocal_config.lua ATF_script.lua 
+./start.sh -clocal_config.lua ATF_script.lua
 ```
 
 #### Connect ATF to already started SDL
@@ -124,7 +118,7 @@ Note that you should be sure that:
 
 **Example :**
 
-*ATF config : modules/config.lua :*
+*ATF config : modules/base_config.lua :*
 ```
 config.autorunSDL = false
 config.hmiUrl = "ws://localhost"

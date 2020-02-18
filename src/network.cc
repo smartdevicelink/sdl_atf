@@ -27,10 +27,13 @@ int tcp_socket_connect(lua_State *L) {/*{{{*/
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
 #line 33 "network.nw"
-  const char* ip   = luaL_checkstring(L, 2);
-  int         port = luaL_checkinteger(L, 3);
-
-
+  const char* ip = luaL_checkstring(L, 2);
+  int port = luaL_checkinteger(L, 3);
+  // Bind source address if it's defined
+  const char* source = luaL_optstring(L, 4, NULL);
+  if (source != NULL) {
+    tcpSocket->bind(QHostAddress(source));
+  }
   tcpSocket->connectToHost(ip, port);
 
   QTime timer;
@@ -38,7 +41,7 @@ QTcpSocket *tcpSocket =
   while (!tcpSocket->waitForConnected()) {
     tcpSocket->connectToHost(ip, port);
     // Check elapsed time
-    const int time_waiting_ms = 1000;
+    const int time_waiting_ms = 3000;
     if (timer.elapsed() > time_waiting_ms){
       fprintf(stderr, "%s\n%s\n", "Error: Connection not established", strerror(errno));
       return 1;

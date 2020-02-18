@@ -2,13 +2,12 @@
 --
 -- *Dependencies:* `atf.util`, `mobile_session_impl`
 --
--- *Globals:* none
+-- *Globals:* `config`
 -- @module mobile_session
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 require('atf.util')
-local config = require('config')
 local mobile_session_impl = require('mobile_session_impl')
 
 local MS = {}

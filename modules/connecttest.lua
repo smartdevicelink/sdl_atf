@@ -17,15 +17,15 @@ local mobile = require("mobile_connection")
 local tcp = require("tcp_connection")
 local file_connection = require("file_connection")
 local mobile_session = require("mobile_session")
-local websocket = require('websocket_connection')
+local hmi_adapter_controller = require("hmi_adapter/hmi_adapter_controller")
 local hmi_connection = require('hmi_connection')
 local events = require("events")
 local expectations = require('expectations')
 local functionId = require('function_id')
+local ATF = require("ATF")
 local SDL = require('SDL')
 local exit_codes = require('exit_codes')
 local load_schema = require('load_schema')
-
 local mob_schema = load_schema.mob_schema
 local hmi_schema = load_schema.hmi_schema
 
@@ -38,13 +38,18 @@ local FAILED = expectations.FAILED
 --- Type Test extends Test from testbase module
 -- @type Test
 
+--- Remote connection and utils
+  Test.remoteConnection = ATF.remoteConnection
+  Test.remoteUtils = ATF.remoteUtils
+
 --- HMI connection
-Test.hmiConnection = hmi_connection.Connection(websocket.WebSocketConnection(config.hmiUrl, config.hmiPort))
-local tcpConnection = tcp.Connection(config.mobileHost, config.mobilePort)
-local fileConnection = file_connection.FileConnection("mobile.out", tcpConnection)
+Test.hmiConnection = hmi_connection.Connection(hmi_adapter_controller.getHmiAdapter({connection = Test.remoteConnection}))
 
 --- Default mobile connection
+local tcpConnection = tcp.Connection(config.mobileHost, config.mobilePort)
+local fileConnection = file_connection.FileConnection("mobile.out", tcpConnection)
 Test.mobileConnection = mobile.MobileConnection(fileConnection)
+
 event_dispatcher:AddConnection(Test.hmiConnection)
 event_dispatcher:AddConnection(Test.mobileConnection)
 --- Notification counter
@@ -209,7 +214,7 @@ function Test:initHMI()
           "Navigation.OnAudioDataStreaming",
           "Navigation.OnVideoDataStreaming"
         })
-      registerComponent("AppService", 
+      registerComponent("AppService",
         {
           "AppService.OnAppServiceData"
         })

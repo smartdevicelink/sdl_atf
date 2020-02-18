@@ -4,12 +4,11 @@
 --
 -- *Dependencies:* `cardinalities`
 --
--- *Globals:* `list`, `timestamp()`
+-- *Globals:* `list`, `timestamp()`, `config`
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 local cardinalities = require('cardinalities')
-local config = require('config')
 
 local Expectations = { }
 --- Predefined table that represents failed expectation

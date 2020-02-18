@@ -2,13 +2,12 @@
 --
 -- *Dependencies:* `expectations`, `events`
 --
--- *Globals:* none
+-- *Globals:* `config`
 -- @copyright [Ford Motor Company](https://smartdevicelink.com/partners/ford/) and [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
 local expectations = require('expectations')
 local events = require('events')
-local config = require('config')
 
 --- Type which is responsible for dispatching events with expectations
 -- @type EventDispatcher
