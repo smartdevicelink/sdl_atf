@@ -30,7 +30,7 @@ config.pathToSDL = ""
 --- Define path to SDL .INI file
 config.pathToSDLConfig = ""
 --- Define path to SDL Policy database
-config.pathToSDLPolicyDB = ""
+config.pathToSDLPolicyDB = "policy.sqlite"
 --- Define path to SDL interfaces
 -- Example: "/home/user/sdl_panasonic/src/components/interfaces"
 config.pathToSDLInterfaces = ""
