@@ -10,7 +10,7 @@ local config = { }
 
 --- Remote cofiguration
 config.remoteConnection = {}
-config.remoteConnection.enabled = true
+config.remoteConnection.enabled = false
 --- Define host for default remote connection
 config.remoteConnection.url = "127.0.0.1"
 config.remoteConnection.port = 5555
