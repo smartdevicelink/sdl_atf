@@ -45,6 +45,29 @@ local function isCapital(c)
   return 'A' <= c and c <= 'Z'
 end
 
+--- Clear system resources after test run was finished
+local function finishTestCaseRun()
+  if SDL.autoStarted then
+    SDL:StopSDL()
+  end
+
+  local connections = {"hmiConnection", "remoteConnection"}
+  for _, connection in pairs(connections) do
+    if Test[connection] then
+      Test[connection]:Close()
+    end
+  end
+
+  Test.current_case_name = nil
+  util.runner.print_stopscript()
+  xmlReporter:finalize()
+  if total_testset_result == false then
+    quit(exit_codes.failed)
+  else
+    quit()
+  end
+end
+
 os.setlocale("C")
 
 --- Module Test members
@@ -139,17 +162,7 @@ function control.runNextCase()
 
 
   else
-    if SDL.autoStarted then
-      SDL:StopSDL()
-    end
-    Test.current_case_name = nil
-    util.runner.print_stopscript()
-    xmlReporter:finalize()
-    if total_testset_result == false then
-      quit(exit_codes.failed)
-    else
-      quit()
-    end
+    finishTestCaseRun()
   end
 end
 
@@ -159,7 +172,7 @@ function control:start()
   -- if 'color' is not set, it is true as default value
   if config.color == nil then config.color = true end
   if is_redirected then config.color = false end
-  SDL:DeleteFile()
+  SDL.DeleteFile()
   self:next()
 end
 
@@ -177,7 +190,7 @@ local function CheckStatus()
     end
     print(console.setattr("SDL has unexpectedly crashed or stop responding!", "cyan", 1))
     critical(SDL.exitOnCrash)
-    SDL:DeleteFile()
+    SDL.DeleteFile()
   end
   --- Perform delay for the time defined in 'zeroOccurrenceTimeout' configuration parameter
   --  Create expectation on a custom event and then raise this event after timeout

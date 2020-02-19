@@ -20,11 +20,11 @@ local WS = {
 -- @tparam string url URL for websocket
 -- @tparam number port Port for Websocket
 -- @treturn WebSocketConnection Constructed instance
-function WS.WebSocketConnection(url, port)
+function WS.Connection(params)
   local res =
   {
-    url = url,
-    port = port
+    url = params.url,
+    port = params.port
   }
   res.socket = network.WebSocket()
   setmetatable(res, WS.mt)
@@ -47,7 +47,14 @@ end
 
 --- Send message from HMI to SDL
 -- @tparam string text Message
-function WS.mt.__index:Send(text)
+function WS.mt.__index:Send(data)
+  local text
+  if type(data) == "table" then
+    text = json.encode(data)
+  else
+    text = data
+  end
+
   atf_logger.LOG("HMItoSDL", text)
   self.socket:write(text)
 end

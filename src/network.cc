@@ -34,10 +34,14 @@ int tcp_socket_connect(lua_State *L) {/*{{{*/
 QTcpSocket *tcpSocket =
   *static_cast<QTcpSocket**>(luaL_checkudata(L, 1, "network.TcpSocket"));
 #line 33 "network.nw"
-  const char* ip   = luaL_checkstring(L, 2);
-  int         port = luaL_checkinteger(L, 3);
+  const char* ip = luaL_checkstring(L, 2);
+  int port = luaL_checkinteger(L, 3);
   const int time_waiting_ms = lua_tointegerx(L, 4, NULL);
-
+  // Bind source address if it's defined
+  const char* source = luaL_optstring(L, 5, NULL);
+  if (source != NULL) {
+    tcpSocket->bind(QHostAddress(source));
+  }
   tcpSocket->connectToHost(ip, port);
 
   QTime timer;
