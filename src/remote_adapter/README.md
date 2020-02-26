@@ -8,7 +8,7 @@
 ## Dependencies:
  - [CMake](https://cmake.org/download/) : Download and install any release version > 3.11
  - **GNU Make & C++ compiler** : Install with command `sudo apt-get install build-essential`
- - [rpclib](https://github.com/rpclib/rpclib) : Library for TCP communication.
+ - [rpclib](https://github.com/smartdevicelink/rpclib) : Library for TCP communication.
    *Note* : Installed automatically while running CMake.
 
  - **Lua library** : Install with command `sudo apt-get install liblua5.2-dev`
