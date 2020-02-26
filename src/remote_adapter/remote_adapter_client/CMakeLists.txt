@@ -16,7 +16,7 @@ set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 
 FetchContent_Declare(rpclib
-    GIT_REPOSITORY https://github.com/livio/rpclib.git
+    GIT_REPOSITORY https://github.com/smartdevicelink/rpclib.git
     GIT_TAG v2.2.2)
 
 FetchContent_GetProperties(rpclib)
