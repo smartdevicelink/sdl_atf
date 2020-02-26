@@ -12,7 +12,7 @@ if(QNXNTO)
 endif()
 
 FetchContent_Declare(rpclib
-    GIT_REPOSITORY https://github.com/livio/rpclib.git
+    GIT_REPOSITORY https://github.com/smartdevicelink/rpclib.git
     GIT_TAG v2.2.2)
 
 find_package(Threads REQUIRED)
