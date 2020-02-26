@@ -13,6 +13,7 @@ local constants = require('protocol_handler/ford_protocol_constants')
 local securityManager = require('security/security_manager')
 local securityConstants = require('security/security_constants')
 local mt = { __index = { } }
+local LAST_FRAME = 0x00
 
 --- Type which represents protocol level message handling
 -- @type ProtocolHandler
@@ -291,7 +292,7 @@ function mt.__index:Parse(binary, validateJson, frameHandler)
       elseif msg.frameType == constants.FRAME_TYPE.CONSECUTIVE_FRAME then
         self.frames[key] = self.frames[key] .. msg.binaryData
         self.totalSize[key] = self.totalSize[key] + msg.size
-        if msg.frameInfo == constants.FRAME_INFO.LAST_FRAME then
+        if msg.frameInfo == LAST_FRAME then
           msg.binaryData = self.frames[key]
           msg.size = self.totalSize[key]
           self.frames[key] = nil
