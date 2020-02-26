@@ -30,7 +30,7 @@ git submodule update
 **1** Install 3d-parties developers libraries
 - Run the following commands :
 ```
-$ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
+$ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev libssl1.0-dev
 $ sudo apt-get install openssl
 ```
 
