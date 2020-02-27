@@ -26,7 +26,7 @@ if(BUILD_TESTS)
     enable_testing()
 endif()
 
-find_package(Qt5 COMPONENTS Core Network WebSockets REQUIRED)
+find_package(Qt5 5.9 COMPONENTS Core Network WebSockets REQUIRED)
 find_package(Lua 5.2 EXACT REQUIRED)
 
 list(GET LUA_LIBRARIES 0 LUA_LIB)

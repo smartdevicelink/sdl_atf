@@ -8,6 +8,9 @@
 
 local config = { }
 
+--- Define timeout to wait for connection to be established
+config.connectionTimeout = 5000
+
 --- Remote cofiguration
 config.remoteConnection = {}
 config.remoteConnection.enabled = false
@@ -28,10 +31,43 @@ config.hmiAdapterConfig.Remote.WebSocketConfig = {}
 config.hmiAdapterConfig.Remote.WebSocketConfig.host = "127.0.0.1"
 config.hmiAdapterConfig.Remote.WebSocketConfig.port = 8087
 
---- Define host for default mobile device connection
+--- Default mobile connection
+--
+--- Define transport type for default mobile device connection
+-- TCP - TCP connection (connection parameters: mobileHost, mobilePort)
+-- WS - WebSocket connection (connection parameters: wsMobileURL, wsMobilePort)
+-- WSS - WebSocketSecure connection (connection parameters: wssMobileURL, wssMobilePort,
+--      wssCertificateCA, wssCertificateClient, wssPrivateKey)
+config.defaultMobileAdapterType = "TCP"
+--- Define host for TCP default mobile device connection
 config.mobileHost = "127.0.0.1"
---- Define port for default mobile device connection
+--- Define port for TCP default mobile device connection
 config.mobilePort = 12345
+--- Define URL for WS default mobile device connection
+config.wsMobileURL = "ws://localhost"
+--- Define port for WS default mobile device connection
+config.wsMobilePort = 2020
+--- Define URL for WSS default mobile device connection
+config.wssMobileURL = "wss://localhost"
+--- Define port for WSS default mobile device connection
+config.wssMobilePort = 2020
+--- Define security protocol for WSS default mobile device connection
+--  TlsV1_0 - TLS 1.0
+--  TlsV1_1 - TLS 1.1
+--  TlsV1_2 - TLS 1.2
+--  DtlsV1_0 - DTLS 1.0
+--  DtlsV1_2 - DTLS 1.2
+--  TlsV1SslV3 - TLS 1.0 or SSL 3.0
+config.wssSecurityProtocol = "TlsV1SslV3"
+--- Define cypher list for WSS default mobile device connection
+config.wssCypherListString = "ALL"
+--- Define CA certificate for WSS default mobile device connection
+config.wssCertificateCAPath = "./data/cert/wss/ca-cert.pem"
+--- Define client certificate for WSS default mobile device connection
+config.wssCertificateClientPath = "./data/cert/wss/client-cert.pem"
+--- Define client private key for WSS default mobile device connection
+config.wssPrivateKeyPath = "./data/cert/wss/client-key.pem"
+--
 
 --- Define host for SDL logs
 config.sdl_logs_host = "localhost"
