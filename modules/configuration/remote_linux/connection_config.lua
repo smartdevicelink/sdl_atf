@@ -8,6 +8,9 @@
 
 local config = { }
 
+--- Define timeout to wait for connection to be established
+config.connectionTimeout = 7000
+
 --- Remote cofiguration
 config.remoteConnection = {}
 config.remoteConnection.enabled = true
@@ -17,10 +20,19 @@ config.remoteConnection.port = 5555
 config.hmiAdapterConfig = {}
 config.hmiAdapterConfig.hmiAdapterType = "Remote"
 
---- Define host for default mobile device connection
+--- Default mobile connection
+--
+--- Define transport type for default mobile device connection
+-- TCP - TCP connection (connection parameters: mobileHost, mobilePort)
+-- WS - WebSocket connection (connection parameters: wsMobileURL, wsMobilePort)
+-- WSS - WebSocketSecure connection (connection parameters: wssMobileURL, wssMobilePort,
+--      wssCertificateCA, wssCertificateClient, wssPrivateKey)
+config.defaultMobileAdapterType = "TCP"
+--- Define host for TCP default mobile device connection
 config.mobileHost = "172.17.0.1"
---- Define port for default mobile device connection
+--- Define port for TCP default mobile device connection
 config.mobilePort = 12345
+--
 
 --- Define host for SDL logs
 config.sdl_logs_host = "172.17.0.2"

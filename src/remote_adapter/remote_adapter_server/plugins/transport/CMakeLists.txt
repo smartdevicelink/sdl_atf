@@ -10,8 +10,7 @@ set (CMAKE_AUTOMOC ON)
 
 set(RPCLIB_DEPENDENCIES "${rpclib_SOURCE_DIR}/dependencies")
 file(GLOB_RECURSE DEP_HEADERS
-    ${RPCLIB_DEPENDENCIES}/include/*.h
-    ${RPCLIB_DEP_LIBRARIDEPENDENCIES}/include/*.hpp)
+    ${RPCLIB_DEPENDENCIES}/include/*.h)
 set(DEP_SOURCES
     ${RPCLIB_DEPENDENCIES}/src/format.cc
     ${RPCLIB_DEPENDENCIES}/src/posix.cc)

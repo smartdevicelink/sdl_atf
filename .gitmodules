@@ -1,4 +1,4 @@
 [submodule "modules/json4lua"]
     path = modules/json4lua
-    url = https://github.com/CustomSDL/json4lua
+    url = https://github.com/smartdevicelink/json4lua
     branch = master

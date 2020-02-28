@@ -34,7 +34,7 @@ end
 
 --- Connect with SDL
 function WS.mt.__index:Connect()
-  self.socket:open(self.url, self.port)
+  self.socket:open(self.url, self.port, config.connectionTimeout)
 end
 
 --- Check 'self' argument

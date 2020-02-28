@@ -187,10 +187,14 @@ local function setParamValue(pContent, pParam, pValue)
   local out = ""
   local find = false
   for line in pContent:gmatch("([^\r\n]*)[\r\n]") do
-    local ptrn = "^%s*".. pParam .. "%s*=.*"
+    local ptrn = "^%s*;*%s*".. pParam .. "%s*=.*"
     if string.find(line, ptrn) then
       if not find then
-        line = string.gsub(line, ptrn, pParam .. " = " .. tostring(pValue))
+        if pValue == ";" then
+          line = string.gsub(line, ptrn, pValue .. pParam .. " = ")
+        else
+          line = string.gsub(line, ptrn, pParam .. " = " .. tostring(pValue))
+        end
         find = true
       else
         line  = ";" .. line
@@ -245,6 +249,7 @@ local function getDefaultBuildOptions()
   local options = { }
   options.remoteControl = { sdlBuildParameter = "REMOTE_CONTROL", defaultValue = "ON" }
   options.extendedPolicy = { sdlBuildParameter = "EXTENDED_POLICY", defaultValue = "PROPRIETARY" }
+  options.webSocketServerSupport =  { sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT", defaultValue = "ON" }
   return options
 end
 
@@ -497,7 +502,6 @@ SDL.PolicyDB = {}
 
 function SDL.PolicyDB.clean()
   deleteFile(getFilePath(config.pathToSDLPolicyDB, SDL.INI.get("AppStorageFolder")))
-  deleteFile(getFilePath(SDL.INI.get("AppInfoStorage")))
 end
 
 SDL.Log = {}
@@ -540,6 +544,35 @@ function SDL.AppStorage.clean(pPath)
   getExecFunc()("rm -rf " .. SDL.AppStorage.path() .. pPath)
 end
 
+SDL.AppInfo = {}
+
+function SDL.AppInfo.file()
+  return getFilePath(SDL.INI.get("AppInfoStorage"))
+end
+
+function SDL.AppInfo.get()
+  local content = getFileContent(SDL.AppInfo.file())
+  if content ~= nil then return json.decode(content) end
+  return {}
+end
+
+function SDL.AppInfo.set(pAppInfo)
+  local content = json.encode(pAppInfo)
+  saveFileContent(SDL.AppInfo.file(), content)
+end
+
+function SDL.AppInfo.backup()
+  backup(SDL.AppInfo.file())
+end
+
+function SDL.AppInfo.restore()
+  restore(SDL.AppInfo.file())
+end
+
+function SDL.AppInfo.clean()
+  deleteFile(SDL.AppInfo.file())
+end
+
 --- A global function for organizing execution delays (using the OS)
 -- @tparam number n The delay in ms
 function sleep(n)
@@ -552,7 +585,8 @@ end
 -- @tparam boolean ExitOnCrash Flag whether Stop ATF in case SDL shutdown
 -- @treturn boolean The main result. Indicates whether the launch of SDL was successful
 -- @treturn string Additional information on the main SDL startup result
-function SDL:StartSDL(pathToSDL, smartDeviceLinkCore, ExitOnCrash)
+function SDL:StartSDL(pathToSDL, smartDeviceLinkCore, ExitOnCrash, isAppInfoUpdate)
+  if isAppInfoUpdate == nil then isAppInfoUpdate = true end
   local result
   if ExitOnCrash ~= nil then
     self.exitOnCrash = ExitOnCrash
@@ -565,6 +599,26 @@ function SDL:StartSDL(pathToSDL, smartDeviceLinkCore, ExitOnCrash)
     print(console.setattr(msg, "cyan", 1))
     return false, msg
   end
+
+  if isAppInfoUpdate then
+    local appInfoTable = {
+      Languages = { TTS = 0, UI = 0, VR = 0 },
+      TransportManager = {
+        BluetoothAdapter = json.null,
+        TcpAdapter = json.null,
+        WebsocketServerAdapter = {
+          device = { unique_id = config.webengineUniqueId }
+        }
+      },
+      remoteControl = json.EMPTY_OBJECT,
+      resumption = {
+        global_ign_on_counter = 0,
+        resume_app_list = json.EMPTY_ARRAY
+      }
+    }
+    if not SDL.AppInfo.get().resumption then SDL.AppInfo.set(appInfoTable) end
+  end
+
   if config.remoteConnection.enabled then
      result = ATF.remoteUtils.app:StartApp(pathToSDL, smartDeviceLinkCore)
   else

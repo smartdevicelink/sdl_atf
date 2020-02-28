@@ -30,7 +30,7 @@ config.pathToSDL = ""
 --- Define path to SDL .INI file
 config.pathToSDLConfig = ""
 --- Define path to SDL Policy database
-config.pathToSDLPolicyDB = ""
+config.pathToSDLPolicyDB = "policy.sqlite"
 --- Define path to SDL interfaces
 -- Example: "/home/user/sdl_panasonic/src/components/interfaces"
 config.pathToSDLInterfaces = ""
@@ -40,6 +40,11 @@ config.SDL = "smartDeviceLinkCore"
 config.ExitOnCrash = true
 --- Flag which defines whether ATF starts SDL on startup
 config.autorunSDL = true
+
+--- Web engine
+--
+--- Define Web engine unique identifier
+config.webengineUniqueId = "5lNGKj5n63Hf8QjZPzS7X5yjZWYD0nu6IhKtyQOFRuUZkbY8KOdFRKYOGWrHjVL0"
 
 --- Logs and Reports
 --

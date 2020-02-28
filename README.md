@@ -9,10 +9,10 @@ json4lua               | MIT
 lua-stdlib             | MIT
 lua-lpeg               |
 **Qt libs**            |
-Qt5.3 WebSockets       | LGPL 2.1
-Qt5.3 Network          | LGPL 2.1
-Qt5.3 Core             | LGPL 2.1
-Qt5.3 Test             | LGPL 2.1
+Qt5.9 WebSockets       | LGPL 2.1
+Qt5.9 Network          | LGPL 2.1
+Qt5.9 Core             | LGPL 2.1
+Qt5.9 Test             | LGPL 2.1
 **Other libs**         |
 lpthread               | LGPL
 OpenSSL (ssl, crypto)  | OpenSSL License
@@ -28,17 +28,25 @@ git submodule update
 ```
 ## Compilation:
 **1** Install 3d-parties developers libraries
+- Run the following commands :
 ```
-sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
-sudo apt-get install openssl
+$ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
+$ sudo apt-get install openssl
 ```
 
-**2** Install Qt5.3+
-
-[Download Qt5.3+](https://download.qt.io/archive/qt/5.3/5.3.1/)
+**2** Install Qt5.9+
+- For Ubuntu `18.04`:
+    - Run the following command :
 ```
-sudo chmod +x some-qt-build.run
-./some-qt-build.run
+$ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
+```
+
+- For Ubuntu `16.04`:
+    - Run the following commands :
+```
+$ sudo add-apt-repository -y ppa:beineri/opt-qt591-xenial
+$ sudo apt-get update
+$ sudo apt-get install qt59base qt59websockets
 ```
 
 **3** Build ATF
@@ -121,6 +129,10 @@ config.hmiUrl = "ws://localhost"
 config.hmiPort = 8087
 config.mobileHost = "localhost"
 config.mobilePort = 12345
+config.wsMobileURL = "ws://localhost"
+config.wsMobilePort = 2020
+config.wssMobileURL = "wss://localhost"
+config.wssMobilePort = 2020
 ```
 
 *SDL config : smartDeviceLink.ini :*

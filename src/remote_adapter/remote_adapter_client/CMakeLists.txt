@@ -16,7 +16,7 @@ set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 
 FetchContent_Declare(rpclib
-    GIT_REPOSITORY https://github.com/dboltovskyi/rpclib.git
+    GIT_REPOSITORY https://github.com/smartdevicelink/rpclib.git
     GIT_TAG v2.2.2)
 
 FetchContent_GetProperties(rpclib)
@@ -47,8 +47,7 @@ endif()
 
 set(RPCLIB_DEPENDENCIES "${rpclib_SOURCE_DIR}/dependencies")
 file(GLOB_RECURSE DEP_HEADERS
-    ${RPCLIB_DEPENDENCIES}/include/*.h
-    ${RPCLIB_DEP_LIBRARIDEPENDENCIES}/include/*.hpp)
+    ${RPCLIB_DEPENDENCIES}/include/*.h)
 set(DEP_SOURCES
     ${RPCLIB_DEPENDENCIES}/src/format.cc
     ${RPCLIB_DEPENDENCIES}/src/posix.cc)
