@@ -67,6 +67,11 @@ install(TARGETS ${PROJECT_NAME}
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
     COMPONENT sdl_atf)
 
+install(FILES ${LUA_BSON_LIBS_DIRECTORY}/bson4lua.so
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    COMPONENT sdl_atf)
+
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/modules"
     "${CMAKE_SOURCE_DIR}/data"
     DESTINATION "${CMAKE_INSTALL_PREFIX}"
@@ -82,12 +87,6 @@ install(FILES "${CMAKE_SOURCE_DIR}/start.sh"
     DESTINATION "${CMAKE_INSTALL_PREFIX}"
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
     COMPONENT sdl_atf)
-
-install(CODE "execute_process( \
-    COMMAND ${CMAKE_COMMAND} -E create_symlink \
-    ./libluabson.so \
-    ${CMAKE_INSTALL_PREFIX}/lib/libbson4lua.so \
-    )")
 
 add_subdirectory(src/luaxml)
 add_subdirectory(src/luaopenssl)
