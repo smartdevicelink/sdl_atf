@@ -747,13 +747,6 @@ function SDL.DeleteFile()
   end
 end
 
-function SDL.GetHostURL()
-  if config.remoteConnection.enabled then
-    return config.remoteConnection.url
-  end
-  return config.mobileHost
-end
-
 updateSdlPaths()
 setAllSdlBuildOptions()
 updateSDLLogProperties()

@@ -46,9 +46,7 @@ local FAILED = expectations.FAILED
 Test.hmiConnection = hmi_connection.Connection(hmi_adapter_controller.getHmiAdapter({connection = Test.remoteConnection}))
 
 --- Default mobile connection
-function Test.getDefaultMobileAdapter(tcpHost, tcpPort)
-  return mobile_adapter_controller.getDefaultAdapter(tcpHost, tcpPort)
-end
+Test.getDefaultMobileAdapter = mobile_adapter_controller.getDefaultAdapter
 
 local mobileAdapter = Test.getDefaultMobileAdapter()
 local fileConnection = file_connection.FileConnection("mobile.out", mobileAdapter)
