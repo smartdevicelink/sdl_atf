@@ -249,7 +249,7 @@ local function getDefaultBuildOptions()
   local options = { }
   options.remoteControl = { sdlBuildParameter = "REMOTE_CONTROL", defaultValue = "ON" }
   options.extendedPolicy = { sdlBuildParameter = "EXTENDED_POLICY", defaultValue = "PROPRIETARY" }
-  options.webSocketServerSupport =  { sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT", defaultValue = "ON" }
+  options.webSocketServerSupport =  { sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT", defaultValue = "OFF" }
   return options
 end
 
