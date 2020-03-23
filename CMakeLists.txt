@@ -9,6 +9,10 @@ set (CMAKE_AUTOMOC ON)
 # Append directories in the linker search path and outside the project
 set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin" CACHE PATH "default install path" FORCE )
+endif()
+
 #
 # Options
 #

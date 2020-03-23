@@ -36,28 +36,29 @@ local Logger =
   }
 }
 
-local controlMessagesSRV = {}
-controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE] = "StartService"
-controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE_ACK] = "StartServiceACK"
-controlMessagesSRV[ford_constants.FRAME_INFO.START_SERVICE_NACK] = "StartServiceNACK"
-controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE] = "EndService"
-controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE_ACK] = "EndServiceACK"
-controlMessagesSRV[ford_constants.FRAME_INFO.END_SERVICE_NACK] = "EndServiceNACK"
-
-local controlMessagesHB = {}
-controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT] = "Heartbeat"
-controlMessagesHB[ford_constants.FRAME_INFO.HEARTBEAT_ACK] = "HeartbeatACK"
-
 Logger.mobile_log_format = "%s [%s] [%s, sessionId: %s, version: %s, frameType: %s, "
       .. "encryption: %s, serviceType: %s, frameInfo: %s, messageId: %s, binaryDataSize: %s] : %s \n\n"
 Logger.hmi_log_format = "%s [%s] %s \n"
 
 local rpc_function_id
+local ctrl_msg_map = (function()
+    local out = {}
+    for key, value in pairs(ford_constants.FRAME_INFO) do
+      out[value] = key
+    end
+    return out
+  end)()
 
 --- Get function name from Mobile API
 -- @tparam table message Message table
 -- @treturn string Function name
 local function get_function_name(message)
+  local function getControlFrameMessageName(frameInfo)
+    local name = ctrl_msg_map[frameInfo]
+    if name ~= nil then return name end
+    return string.format("UNKNOWN(0x%02x)", frameInfo)
+  end
+
   if message.frameType ~= ford_constants.FRAME_TYPE.CONTROL_FRAME then
     if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL
         and message.rpcType == ford_constants.BINARY_RPC_TYPE.NOTIFICATION
@@ -65,11 +66,7 @@ local function get_function_name(message)
       return "SSL: Handshake"
     end
   else
-    if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL then
-      return "controlMsg: " .. controlMessagesHB[message.frameInfo]
-    else
-      return "controlMsg: " .. controlMessagesSRV[message.frameInfo]
-    end
+    return "controlMsg: " .. getControlFrameMessageName(message.frameInfo)
   end
 
   for name, id in pairs(rpc_function_id) do

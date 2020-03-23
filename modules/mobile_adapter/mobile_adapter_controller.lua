@@ -27,15 +27,13 @@ function MobileAdapterController.getAdapter(adapterType, adapterParams)
     .. "' was passed to MobileAdapterController.getAdapter method")
 end
 
-function MobileAdapterController.getDefaultAdapter(tcpHost, tcpPort)
-  if not tcpHost then tcpHost = config.mobileHost end
-  if not tcpPort then tcpPort = config.mobilePort end
+function MobileAdapterController.getDefaultAdapter()
   local mobileAdapterType = config.defaultMobileAdapterType
   print("Default mobile device transport: " .. tostring(mobileAdapterType))
   if mobileAdapterType == "TCP" then
     local mobileAdapterParameters = {
-      host = tcpHost,
-      port = tcpPort
+      host = config.remoteConnection.enabled and config.remoteConnection.url or config.mobileHost,
+      port = config.mobilePort
     }
     return MobileAdapterController.getAdapter(mobileAdapterType, mobileAdapterParameters)
   elseif mobileAdapterType == "WS" then

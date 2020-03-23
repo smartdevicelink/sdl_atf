@@ -249,7 +249,7 @@ local function getDefaultBuildOptions()
   local options = { }
   options.remoteControl = { sdlBuildParameter = "REMOTE_CONTROL", defaultValue = "ON" }
   options.extendedPolicy = { sdlBuildParameter = "EXTENDED_POLICY", defaultValue = "PROPRIETARY" }
-  options.webSocketServerSupport =  { sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT", defaultValue = "ON" }
+  options.webSocketServerSupport =  { sdlBuildParameter = "BUILD_WEBSOCKET_SERVER_SUPPORT", defaultValue = "OFF" }
   return options
 end
 
@@ -745,13 +745,6 @@ function SDL.DeleteFile()
   if os.execute('test -e sdl.pid') then
     os.execute('rm -f sdl.pid')
   end
-end
-
-function SDL.GetHostURL()
-  if config.remoteConnection.enabled then
-    return config.remoteConnection.url
-  end
-  return config.mobileHost
 end
 
 updateSdlPaths()

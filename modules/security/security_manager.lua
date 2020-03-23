@@ -48,18 +48,20 @@ end
 
 --- Prepare openssl to perform SSL handshake on base of securitySettings
 function security_mt.__index:prepareToHandshake()
-  local SERVER = 1
-  self.ctx = SecurityManager.createSslContext(self)
-  self.bioIn = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
-  self.bioOut = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
-  self.ssl = self.ctx:newSsl()
+  if not self.ssl or self:isHandshakeFinished() then
+    local SERVER = 1
+    self.ctx = SecurityManager.createSslContext(self)
+    self.bioIn = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
+    self.bioOut = SecurityManager.createBio(securityConstants.BIO_TYPES.SOURCE, self)
+    self.ssl = self.ctx:newSsl()
 
-  if self.settings.isHandshakeDisplayed then
-    self.ssl:setInfoCallback(SERVER)
+    if self.settings.isHandshakeDisplayed then
+      self.ssl:setInfoCallback(SERVER)
+    end
+
+    self.ssl:setBios(self.bioIn, self.bioOut)
+    self.ssl:prepareToHandshake(SERVER)
   end
-
-  self.ssl:setBios(self.bioIn, self.bioOut)
-  self.ssl:prepareToHandshake(SERVER)
 end
 
 --- Start/continue SSL handshake
