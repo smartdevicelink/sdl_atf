@@ -59,7 +59,7 @@ if (NOT ${Boost_FOUND})
     endif()
     set(BOOST_INSTALL_COMMAND ${BOOST_BUILD_COMMAND} install)
     ExternalProject_Add(Boost
-        URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+        URL https://newcontinuum.dl.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
         DOWNLOAD_DIR ${BOOST_LIB_SOURCE_DIRECTORY}
         SOURCE_DIR ${BOOST_LIB_SOURCE_DIRECTORY}
         CONFIGURE_COMMAND  ${BOOST_GCC_JAM} COMMAND ${BOOST_FILESYSTEM_OPERATION} COMMAND ${BOOTSTRAP}
