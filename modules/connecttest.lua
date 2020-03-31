@@ -211,6 +211,10 @@ function Test:initHMI()
           "UI.OnRecordStart"
         })
       registerComponent("VehicleInfo")
+      registerComponent("RC",
+        {
+          "RC.OnRCStatus"
+        })
       registerComponent("Navigation",
         {
           "Navigation.OnAudioDataStreaming",
@@ -486,6 +490,7 @@ function Test:initHMI_onReady()
   ExpectRequest("UI.IsReady", true, { available = true })
   ExpectRequest("Navigation.IsReady", true, { available = true })
   ExpectRequest("VehicleInfo.IsReady", true, { available = true })
+  ExpectRequest("RC.IsReady", true, { available = false })
 
   self.applications = { }
   ExpectRequest("BasicCommunication.UpdateAppList", false, { })
