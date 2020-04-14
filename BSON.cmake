@@ -22,7 +22,7 @@ if (${BSON_LIB} MATCHES "BSON_LIB-NOTFOUND" OR ${LUA_BSON_LIB} MATCHES "LUA_BSON
     include(ExternalProject)
     ExternalProject_Add(libbson
         GIT_REPOSITORY "http://github.com/smartdevicelink/bson_c_lib.git"
-        GIT_TAG "release/1.2.1"
+        GIT_TAG "master"
         BINARY_DIR ${BSON_LIB_SOURCE_DIRECTORY}
         INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
         DOWNLOAD_DIR ${BSON_LIB_SOURCE_DIRECTORY}
