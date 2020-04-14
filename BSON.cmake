@@ -3,7 +3,7 @@ set(CMAKE_SOURCE_PREFIX ${CMAKE_SOURCE_PREFIX} "${CMAKE_INSTALL_PREFIX}")
 
 find_package (BSON)
 
-if (${BSON_LIB} MATCHES "BSON_LIB-NOTFOUND")
+if (${BSON_LIB} MATCHES "BSON_LIB-NOTFOUND" OR ${LUA_BSON_LIB} MATCHES "LUA_BSON_LIB-NOTFOUND")
     message (STATUS "Building bson required")
     set(BSON_LIB_SOURCE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bson_c_lib CACHE INTERNAL "Sources of bson library" FORCE)
     set(BSON_LIBS_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib CACHE INTERNAL "Installation path of bson libraries" FORCE)
@@ -22,7 +22,7 @@ if (${BSON_LIB} MATCHES "BSON_LIB-NOTFOUND")
     include(ExternalProject)
     ExternalProject_Add(libbson
         GIT_REPOSITORY "http://github.com/smartdevicelink/bson_c_lib.git"
-        GIT_TAG "master"
+        GIT_TAG "release/1.2.1"
         BINARY_DIR ${BSON_LIB_SOURCE_DIRECTORY}
         INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
         DOWNLOAD_DIR ${BSON_LIB_SOURCE_DIRECTORY}
