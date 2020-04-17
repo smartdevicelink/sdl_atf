@@ -21,17 +21,14 @@ ldoc                   | MIT/X11
 
 ## Get source code:
 ```
-git clone https://github.com/smartdevicelink/sdl_atf
-cd sdl_atf
-git submodule init
-git submodule update
+git clone --recurse-submodules https://github.com/smartdevicelink/sdl_atf
 ```
 ## Compilation:
 **1** Install 3d-parties developers libraries
 - Run the following commands :
 ```
-$ sudo apt-get install liblua5.2-dev libxml2-dev lua-lpeg-dev
-$ sudo apt-get install openssl
+$ sudo apt-get install lua5.2 liblua5.2-dev libxml2-dev lua-lpeg-dev
+$ sudo apt-get install openssl libssl1.0-dev
 ```
 
 **2** Install Qt5.9+
@@ -50,8 +47,10 @@ $ sudo apt-get install qt59base qt59websockets
 ```
 
 **3** Build ATF
-- Create build directory and get into it
-- Run `cmake <path_to_sources>`
+CMake 3.15 or newer is required to generate the build files and can be downloaded from [here](https://cmake.org/download/).
+- Create a build folder outside of the sdl_atf folder
+- cd into your build folder
+- Run `cmake ../sdl_atf`
 - Run `make`
 - Run `make install`
 
