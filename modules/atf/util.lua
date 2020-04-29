@@ -12,7 +12,6 @@
   @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 ]]
 local utils = require("atf.stdlib.argument_parser")
-config = require('config')
 xmlReporter = require("reporter")
 atf_logger = require("atf_logger")
 
@@ -66,14 +65,16 @@ end
 -- Checks: SDL Core binary, HMI and MObile API files
 -- Stop ATF execution in case any error
 local function check_required_fields()
-  if (not is_file_exists(config.pathToSDL.."smartDeviceLinkCore"))
-     and (not is_file_exists(config.pathToSDL.."/smartDeviceLinkCore")) then
-    print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
-    os.exit(1)
+  if not config.remoteConnection.enabled then
+    if (not is_file_exists(config.pathToSDL..config.SDL)) and
+       (not is_file_exists(config.pathToSDL.."/" .. config.SDL)) then
+      print("ERROR: SDL is not accessible at the specified path: "..config.pathToSDL)
+      os.exit(1)
+    end
   end
   if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
-    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml"))
-       and (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
+    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and
+       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
       print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
       os.exit(1)
     end
@@ -189,19 +190,10 @@ end
 -- ------------------------------------------------
 -- parsing command line part
 
---- Set config file for ATF
--- @tparam string config_file Path to config file
-function Util.commandLine.config_file(config_file)
-  if (is_file_exists(config_file)) then
-    config_file = config_file:gsub('%.', " ")
-    config_file = config_file:gsub("/", ".")
-    config_file = config_file:gsub("[%s]lua$", "")
-    config = require(tostring(config_file))
-  else
-    print("Incorrect config file type")
-    print("Uses default config")
-    print("==========================")
-  end
+--- Load environment specific configuration of ATF
+-- @tparam string str Path to config folder
+function Util.commandLine.config(str)
+  specific_environment = str
 end
 
 --- Overwrite property mobileHost in configuration of ATF
@@ -276,7 +268,7 @@ function Util.commandLine.sdl_interfaces(str)
   config.pathToSDLInterfaces = str
 end
 
---- Overwrite property pathToSDL in configuration of ATF
+--- Overwrite property SecurityProtocol in configuration of ATF
 -- @tparam string str Value
 function Util.commandLine.security_protocol(str)
   config.SecurityProtocol = str
@@ -287,14 +279,19 @@ end
 function Util.commandLine.parse_cmdl()
   local scriptFiles = {}
   local arguments = utils.getopt(argv, opts)
+
+  if arguments and arguments['config'] then
+    Util.commandLine.config(arguments['config'])
+    arguments['config'] = nil
+  end
+
+  config = require('config_loader')
+
   if (arguments) then
-    if (arguments['config-file']) then Util.commandLine.config_file(arguments['config-file']) end
     for argument, value in pairs(arguments) do
       if (type(argument) ~= 'number') then
-        if ( argument ~= 'config-file') then
-          argument = (argument):gsub ("%W", "_")
-          Util.commandLine[argument](value)
-        end
+        argument = (argument):gsub ("%W", "_")
+        Util.commandLine[argument](value)
       else
         if argument >= 2 and value ~= "modules/launch.lua" then
           table.insert(scriptFiles, value)
@@ -302,6 +299,7 @@ function Util.commandLine.parse_cmdl()
       end
     end
   end
+
   return scriptFiles
 end
 

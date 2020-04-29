@@ -1,6 +1,5 @@
 local CommonFunctions = {}
 local mobile_session = require('mobile_session')
-local config = require('config')
 local json = require('json4lua/json/json')
 
 function CommonFunctions:newTestCasesGroup(ParameterOrMessage)
@@ -58,7 +57,7 @@ function CommonFunctions:newTestCasesGroup(ParameterOrMessage)
 
 end
 
-function CommonFunctions:ActivationApp(self, AppNumber, TestCaseName)	
+function CommonFunctions:ActivationApp(self, AppNumber, TestCaseName)
 
 	local TCName
 	if TestCaseName ==nil then
@@ -66,16 +65,16 @@ function CommonFunctions:ActivationApp(self, AppNumber, TestCaseName)
 	else
 		TCName = TestCaseName
 	end
-	
+
 	Test[TCName] = function(self)
-		
+
 		local Input_AppId
 		if AppNumber == nil then
 			Input_AppId = self.applications[config.application1.registerAppInterfaceParams.appName]
 		else
 			Input_AppId = Apps[AppNumber].appID
 		end
-		
+
 		local deviceMAC = "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0"
 
 		--hmi side: sending SDL.ActivateApp request
@@ -85,12 +84,12 @@ function CommonFunctions:ActivationApp(self, AppNumber, TestCaseName)
 			if
 				data.result.isSDLAllowed ~= true then
 				local RequestId = self.hmiConnection:SendRequest("SDL.GetUserFriendlyMessage", {language = "EN-US", messageCodes = {"DataConsent"}})
-				
+
 				--hmi side: expect SDL.GetUserFriendlyMessage message response
 				--TODO: update after resolving APPLINK-16094.
 				--EXPECT_HMIRESPONSE(RequestId,{result = {code = 0, method = "SDL.GetUserFriendlyMessage"}})
 				EXPECT_HMIRESPONSE(RequestId)
-				:Do(function(_,data)						
+				:Do(function(_,data)
 					--hmi side: send request SDL.OnAllowSDLFunctionality
 					--self.hmiConnection:SendNotification("SDL.OnAllowSDLFunctionality", {allowed = true, source = "GUI", device = {id = config.deviceMAC, name = "127.0.0.1"}})
 					self.hmiConnection:SendNotification("SDL.OnAllowSDLFunctionality", {allowed = true, source = "GUI", device = {id = deviceMAC, name = "127.0.0.1"}})
@@ -106,9 +105,9 @@ function CommonFunctions:ActivationApp(self, AppNumber, TestCaseName)
 
 			end
 		end)
-		
+
 		--mobile side: expect notification
-		EXPECT_NOTIFICATION("OnHMIStatus", {hmiLevel = "FULL", systemContext = "MAIN"}) 
+		EXPECT_NOTIFICATION("OnHMIStatus", {hmiLevel = "FULL", systemContext = "MAIN"})
 	end
 end
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-shutdown_time=30
+shutdown_time=5
 read pid < sdl.pid
 
 function shutdown_sdl {

@@ -9,7 +9,7 @@
 
 local util = require ("atf.util")
 
-util.commandLine.declare_opt("-c", "--config-file", util.commandLine.consts.RequiredArgument, "Config file")
+util.commandLine.declare_opt("-c", "--config", util.commandLine.consts.RequiredArgument, "Config folder")
 util.commandLine.declare_long_opt("--mobile-connection", util.commandLine.consts.RequiredArgument, "Mobile connection IP")
 util.commandLine.declare_long_opt("--mobile-connection-port", util.commandLine.consts.RequiredArgument, "Mobile connection port")
 util.commandLine.declare_long_opt("--hmi-connection", util.commandLine.consts.RequiredArgument, "HMI connection IP")

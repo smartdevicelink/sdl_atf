@@ -16,3 +16,5 @@ user_modules/
 sdl.pid
 ErrorLog.txt
 *.so
+build/
+ATF

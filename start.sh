@@ -1,2 +1,2 @@
-#!/bin/sh
-./bin/interp modules/launch.lua $@
+#!/usr/bin/env bash
+./ATF modules/launch.lua $@
