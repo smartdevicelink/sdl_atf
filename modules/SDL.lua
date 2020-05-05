@@ -573,6 +573,34 @@ function SDL.AppInfo.clean()
   deleteFile(SDL.AppInfo.file())
 end
 
+SDL.HMICapCache = {}
+
+function SDL.HMICapCache.file()
+  return getFilePath(SDL.INI.get("HMICapabilitiesCacheFile"), SDL.INI.get("AppStorageFolder"))
+end
+
+function SDL.HMICapCache.get()
+  local content = getFileContent(SDL.HMICapCache.file())
+  return content and json.decode(content) or nil
+end
+
+function SDL.HMICapCache.set(pHmiCapCache)
+  local content = json.encode(pHmiCapCache)
+  saveFileContent(SDL.HMICapCache.file(), content)
+end
+
+function SDL.HMICapCache.backup()
+  backup(SDL.HMICapCache.file())
+end
+
+function SDL.HMICapCache.restore()
+  restore(SDL.AppInfo.file())
+end
+
+function SDL.HMICapCache.clean()
+  deleteFile(SDL.HMICapCache.file())
+end
+
 --- A global function for organizing execution delays (using the OS)
 -- @tparam number n The delay in ms
 function sleep(n)
