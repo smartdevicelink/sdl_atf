@@ -452,7 +452,8 @@ end
 function SDL.CRT.clean()
   local ext = ".crt"
   local crtPath = getPath(SDL.INI.get("CACertificatePath"))
-  getExecFunc()("cd " .. crtPath .. " && find . -type l -not -name 'lib*' -exec rm -f {} \\;")
+  getExecFunc()("cd " .. crtPath .. " && find . -type l -regextype egrep -regex '.\\/[a-z,0-9]{8}.[0-9]'"
+    .. " -exec rm -f {} \\;")
   getExecFunc()("cd " .. crtPath .. " && rm -rf *" .. ext)
 end
 
