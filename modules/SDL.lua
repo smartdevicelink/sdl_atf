@@ -50,7 +50,7 @@ end
 local function getFilePath(pFilePath, pParentPath)
   if pParentPath == nil then pParentPath = config.pathToSDL end
   pParentPath = getPath(pParentPath)
-  if string.len(pFilePath) > 0 then
+  if pFilePath ~= nil and string.len(pFilePath) > 0 then
     if string.sub(pFilePath, 1, 1) == "/" then
       return pFilePath
     end
@@ -111,6 +111,7 @@ local function getPathAndName(pPathToFile)
 end
 
 local function getFileContent(pPathToFile)
+  if pPathToFile == nil then return nil end
   if config.remoteConnection.enabled then
     local p, n = getPathAndName(pPathToFile)
     local _, isExist = ATF.remoteUtils.file:IsFileExists(p, n)
