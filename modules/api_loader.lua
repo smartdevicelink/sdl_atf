@@ -62,6 +62,9 @@ local function LoadParamsInFunction(param, interface)
   data["maxvalue"] = tonumber(param:attr("maxvalue"))
   data["defvalue"] = tonumber(param:attr("defvalue"))
   data["resultCodes"] = result_codes
+  data["since"] = param:attr("since")
+  data["deprecated"] = param:attr("deprecated")
+
   return name, data
 end
 
