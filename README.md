@@ -18,133 +18,230 @@ lpthread               | LGPL
 OpenSSL (ssl, crypto)  | OpenSSL License
 libxml2                | MIT
 ldoc                   | MIT/X11
+docker-ce              | Apache
+screen                 | GNU
+rsync                  | GNU
 
-## Get source code:
+## Get source code
 ```
-git clone --recurse-submodules https://github.com/smartdevicelink/sdl_atf
+$ git clone --recurse-submodules https://github.com/smartdevicelink/sdl_atf.git
+$ git clone https://github.com/smartdevicelink/sdl_atf_test_scripts.git
 ```
-## Compilation:
-**1** Install 3d-parties developers libraries
-- Run the following commands :
+
+## Compilation
+**1.** Install 3d-parties developers libraries
+- Run the following commands:
 ```
 $ sudo apt-get install lua5.2 liblua5.2-dev libxml2-dev lua-lpeg-dev
 $ sudo apt-get install openssl libssl1.0-dev
 ```
 
-**2** Install Qt5.9+
+**2.** Install Qt5.9+
 - For Ubuntu `18.04`:
-    - Run the following command :
+    - Run the following command:
 ```
 $ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
 ```
 
 - For Ubuntu `16.04`:
-    - Run the following commands :
+    - Run the following commands:
 ```
 $ sudo add-apt-repository -y ppa:beineri/opt-qt591-xenial
 $ sudo apt-get update
 $ sudo apt-get install qt59base qt59websockets
 ```
 
-**3** Build ATF
+**3.** Build ATF
+
 CMake 3.15 or newer is required to generate the build files and can be downloaded from [here](https://cmake.org/download/).
-- Create a build folder outside of the sdl_atf folder
-- cd into your build folder
-- Run `cmake ../sdl_atf`
-- Run `make`
-- Run `make install`
-
-## Configuration of ATF
-ATF configuration is setting up in `modules/configuration` folder.
-- `base_config.lua` : base configuration parameters (reporting, paths to SDL e.t.c)
-- `connection_config.lua` : configuration parameters related to all connections (mobile, hmi, remote)
-- `security_config.lua` : configuration parameters related to security layer of connection
-- `app_config.lua` : predefined applications parameters
-Each folder in this folder represents values of `--config` option for ATF run: `local`, `remote_linux`, `remote_qnx`
-They can override one or more described configuration files.
-
-## Run:
-
-1. Copy `RemoteTestingAdapterServer` folder to SDL host and run `RemoteTestingAdapterServer` on that host
-
-2. Start ATF script:
+- Create a build folder outside of the `sdl_atf` folder
+- cd into your build folder and run commands:
 ```
-./start.sh [--config=<config_name>] [options] [script file name]
+$ cmake ../sdl_atf
+$ make
+$ make install
 ```
 
-where `<config_name>` is one of the following values: `local`, `remote_linux`, `remote_qnx`
+**4.** Create symlinks to folders in scripts repository
+```
+$ ln -s ../sdl_atf_test_scripts/files
+$ ln -s ../sdl_atf_test_scripts/test_sets
+$ ln -s ../sdl_atf_test_scripts/test_scripts
+$ ln -s ../sdl_atf_test_scripts/user_modules
+```
+
+**5.** Install dependencies for local parallel mode
+
+Steps below are required only in case if local parallel mode is going to be used.
+- Install Docker, e.g. [how-to](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04)
+- Install additional tools:
+```
+$ sudo apt-get install screen rsync
+```
+- Create docker image
+```
+$ cd atf_parallels/docker
+$ ./build.sh <ubuntu_version>
+```
+<b>Note:</b> accepted values are `16` and `18` (will be processed as `16.04` and `18.04` correspondingly).
+If version is not specified `18` will be used by default.
+
+## Settings
+
+### Defaults
+
+By default ATF reads the following parameters from `Default` configuration (`./modules/configuration/`).
+
+Config File           | Config Parameter                | Cmd Argument | Description
+----------------------|---------------------------------|--------------|-----------------------------------------
+base_config.lua       | config.SDL                      |              | SDL binary name
+base_config.lua       | config.reportPath               | --report     | Path to reports and logs
+base_config.lua       | config.pathToSDL                | --sdl-core   | Path to SDL binaries
+base_config.lua       | config.pathToSDLInterfaces      | --sdl-api    | Path to SDL APIs
+connection_config.lua | config.remoteConnection.enabled |              | Defines if remote connection is enabled
+
+### Priorities
+
+1. Command line argument
+2. Specific config
+3. Base config
+
+Where 1 is max and 3 is min priority.
+
+This means if some particular option is defined in all 3 places ATF will use the one from highest priority place.
+
+E.g. if path to SDL binaries is defined through `--sdl-core` command line argument (1), in specific config (2) and also in base config (3), ATF will use the value from command line argument.
+
+## Run
+
+```
+./start.sh TEST [OPTIONS]...
+```
+
+- TEST - test target, is one of the following:
+  - test script
+  - test set
+  - folder with test scripts
+- [OPTION] - is one or more of available options:
+  - --sdl-core &lt;path&gt; - path to SDL binaries
+  - --config &lt;folder&gt; - name of the folder with configuration
+  - --sdl-api &lt;path&gt;  - path to SDL APIs
+  - --report &lt;path&gt;   - path to report and logs
+  - --no-sdl-log            - force not to store SDL log
+  - --no-sdl-core-dump      - force not to store SDL core dump
+  - --parallels             - force to use local parallel mode
+    - -j|--jobs &lt;n&gt;        - number of simultaneous jobs to start
+    - --third-party &lt;path&gt; - path to SDL third party
+    - --tmp &lt;path&gt;         - path to temporary folder
+    - --copy-atf-ts              - force copying of ATF test scripts instead of creating symlinks
+
+In case if folder is specified:
+   - only scripts which name starts with number will be taken into account (e.g. 001, 002 etc.)
+   - if there are sub-folders scripts will be run recursively
+
+Besides execution of .lua scripts ATF also does auxiliary actions:
+  - clean up SDL and ATF folders before running of each script
+  - backup and restore SDL important files
+  - create report with all required logs for each script including SDL core dumps (in local parallel mode)
+
+### Modes
+
+#### Local consecutive
+
+Test scripts will be run locally one by one.
+
+*Example 1* - Single script:
+```
+./start.sh ./test_scripts/Smoke/Policies/001_PTU_all_flows.lua
+```
+
+*Example 2* - Multiple scripts from some folder:
+```
+./start.sh ./test_scripts/Smoke/Policies
+```
+
+*Example 3* - Test set:
+```
+./start.sh ./test_sets/smoke_tests.txt
+```
+
+#### Local parallel
+
+Test scripts will be run locally in isolated environments and, if required, in several threads.
+
+Test targets described in examples 1 - 3 can be executed in parallel mode by adding --parallels option.
+
+In addition number of parallel jobs can be defined by setting `-j` (or `--jobs`) option.
+
+*Example 4* - Single script in parallel mode:
+```
+./start.sh ./test_scripts/Smoke/Policies/001_PTU_all_flows.lua --parallels
+```
+
+*Example 5* - Multiple scripts from some folder in parallel mode split into 4 threads:
+```
+./start.sh ./test_scripts/Smoke/Policies -j 4
+```
+
+*Example 6* - Test set in parallel mode split into 2 threads:
+```
+./start.sh ./test_sets/smoke_tests.txt -j 2
+```
+
+In case if number of jobs is more than one `--parallels` option can be omitted.
+
+#### Remote consecutive
+
+Test scripts will be run using remote connection.
+In this mode `RemoteTestingAdapterServer` should be run on the same host as SDL
+
+Test targets described in examples 1 - 3 can be executed in remote mode.
+
+Appropriate parameters needs to be defined in configuration files:
+
+Config Parameter                | Description
+------------------------------- | -----------------------------------
+config.pathToSDL                | Path to SDL on a remote host
+config.remoteConnection.enabled | Set to `true` for remote connection
+config.remoteConnection.url     | SDL host URL
+config.mobileHost               | Mobile host URL
+config.sdl_logs_host            | SDL host URL to receive log
+
+The best approach is to use predefined configuration (e.g. `remote_linux`) as base and update some parameters in it.
+
+*Example 7* - Test set in remote connection mode:
+```
+./start.sh ./test_sets/smoke_tests.txt --config remote_linux
+```
+
+### Advanced options
+
+1. For a big tests sets (>1000 scripts) Report and Logs can be very huge (>10Gb). Most of the space is occupied by SDL logs. In order to turn them off `--no-sdl-log` or `--no-sdl-core-dump` options can be specified.
+2. Some scripts (old policy ones) create the same temporary files inside `files`, `test_scripts` or `user_modules` folders. In case of parallel mode the same temporary file can be used by different scripts at the same time. This leads to incorrect results or even aborts. In order to mitigate this issue `--copy-atf-ts` option can be specified. It tells ATF to copy mentioned folders for each job instead of creating symlinks.
 
 ## Documentation generation
+
 ### Download and install [ldoc](stevedonovan.github.io/ldoc/manual/doc.md.html)
 ```
-sudo apt install luarocks
-sudo luarocks install luasec
-sudo luarocks install penlight
-sudo luarocks install ldoc
-sudo luarocks install discount
+$ sudo apt install luarocks
+$ sudo luarocks install luasec
+$ sudo luarocks install penlight
+$ sudo luarocks install ldoc
+$ sudo luarocks install discount
 ```
+
 ### Generate ATF documentation
 ```
-cd sdl_atf
-ldoc -c docs/config.ld .
+$ cd sdl_atf
+$ ldoc -c docs/config.ld .
 ```
+
 ### Open documentation
-```chromium-browser docs/html/index.html```
-
-### Useful options:
-#### Path to SDL
-You can setup path to SDL via command line with ```--sdl-core``` option.
-
-**Example :**
 ```
-./start.sh --sdl-core=/home/user/development/sdl/build/bin ./test_scripts/ActivationDuringActiveState.lua
+$ chromium-browser docs/html/index.html
 ```
 
-Or via config file(```modules/base_config.lua```) with config parameter
-
-**Example :**
-*ATF config : modules/config.lua :*
+## Run Unit Tests
 ```
-config.pathToSDL = "home/user/development/sdl/build/bin"
+$ make test
 ```
-Usage example:
-```
-./start.sh -clocal_config.lua ATF_script.lua
-```
-
-#### Connect ATF to already started SDL
-ATF is able to connect to already started SDL.
-Note that you should be sure that:
- - ATF is configured not to start SDL
- - SDL is configured not to start HMI
- - mobile and HMI sockets options match each other in SDL and ATF configs.
-
-**Example :**
-
-*ATF config : modules/base_config.lua :*
-```
-config.autorunSDL = false
-config.hmiUrl = "ws://localhost"
-config.hmiPort = 8087
-config.mobileHost = "localhost"
-config.mobilePort = 12345
-config.wsMobileURL = "ws://localhost"
-config.wsMobilePort = 2020
-config.wssMobileURL = "wss://localhost"
-config.wssMobilePort = 2020
-```
-
-*SDL config : smartDeviceLink.ini :*
-```
-[HMI]
-; Open the $LinkToWebHMI in chromium browser
-LaunchHMI = false
-; WebSocket connection address and port
-ServerAddress = 127.0.0.1
-ServerPort = 8087
-[TransportManager]
-; Listening port form incoming TCP mobile connection
-TCPAdapterPort = 12345
-```
-## Run tests
-``` make test```
