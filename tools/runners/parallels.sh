@@ -54,13 +54,17 @@ function prepare_sdl {
 
   cp -r $_path_sdl $_sdl_prepared
 
+  local llp=/usr/local/lib:$LD_LIBRARY_PATH
+  local fltr="/usr/local/lib"
   if [ ! -z "$_path_3rd_party" ]; then
-    LD_LIBRARY_PATH=$_path_3rd_party/lib:$_path_3rd_party/x86_64/lib:$LD_LIBRARY_PATH \
+    llp=$_path_3rd_party/lib:$_path_3rd_party/x86_64/lib:$LD_LIBRARY_PATH
+    fltr="$_path_3rd_party/lib\|$_path_3rd_party/x86_64/lib"
+  fi
+  LD_LIBRARY_PATH="$llp" \
     ldd $_sdl_prepared/bin/smartDeviceLinkCore \
-    | grep "$_path_3rd_party/lib\|$_path_3rd_party/x86_64/lib" \
+    | grep "$fltr" \
     | awk '{print $3}' \
     | xargs -L1 -I LIB cp LIB $_sdl_prepared/bin
-  fi
 }
 
 function rm_dir_if_exists {
