@@ -108,9 +108,8 @@ function prepare_atf {
     rm_dir_if_exists $atf_tmp_dir/$dir
   done
 
-  if [ -d "$atf_tmp_ts_dir" ]; then
-    rm -r $atf_tmp_ts_dir
-  fi
+  rm_dir_if_exists $atf_tmp_ts_dir
+
   mkdir $atf_tmp_ts_dir
 
   for dir in ${dirs[@]}; do
@@ -180,7 +179,7 @@ function common {
   prepare_atf
 }
 
-function mktemptdir {
+function mktempdir {
   #
   #   Create temporary folder with SDL, ATF and Test Scripts
   #
@@ -383,7 +382,7 @@ _tmp_workers=""
 function Run() {
   log "Running workers..."
   for (( a = 0; a < $_number_of_workers; a++ )); do
-    tmpdirname=$(mktemptdir)
+    tmpdirname=$(mktempdir)
     screen_basename=$(basename $tmpdirname)
     screen -d -m -S $screen_basename \
       $_path_to_atf_parallels/loop.sh \
