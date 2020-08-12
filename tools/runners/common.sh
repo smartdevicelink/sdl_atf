@@ -117,7 +117,7 @@ run() {
 
   let ID=ID+1
 
-  log "Processing script: ${ID}(${NUM_OF_SCRIPTS}) ["\
+  log "Processing script: ${ID}/${NUM_OF_SCRIPTS} ["\
     "${P}PASSED: ${#LIST_PASSED[@]}, "\
     "${F}FAILED: ${#LIST_FAILED[@]}, "\
     "${A}ABORTED: ${#LIST_ABORTED[@]}, "\

@@ -2,6 +2,7 @@
 
 source tools/runners/common.sh
 
+# Overwrite functions which are unavailable for remote configuration
 dummy() { :; }
 
 kill_sdl() {
