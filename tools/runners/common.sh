@@ -101,7 +101,7 @@ run_atf() {
     ;;
   esac
 
-  local total="$ID_SFX:\t$SCRIPT\t$RESULT_STATUS"
+  local total="$ID_SFX:\t$RESULT_STATUS\t$SCRIPT"
   if [ -n $ISSUE ]; then total="${total}\t$ISSUE"; fi
   LIST_TOTAL[ID]="${total}"
 

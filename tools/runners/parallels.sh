@@ -281,15 +281,15 @@ function process_report {
   ((_total_skipped+=skipped_tests))
 
   if [[ $passed_tests == 1 ]]; then
-    echo -e "$dir_number:\t$test_target\tPASSED" >> $overall_report_file
+    echo -e "$dir_number:\tPASSED\t$test_target" >> $overall_report_file
   elif [[ $failed_tests == 1 ]]; then
-    echo -e "$dir_number:\t$test_target\tFAILED" >> $overall_report_file
+    echo -e "$dir_number:\tFAILED\t$test_target" >> $overall_report_file
   elif [[ $aborted_tests == 1 ]]; then
-    echo -e "$dir_number:\t$test_target\tABORTED" >> $overall_report_file
+    echo -e "$dir_number:\tABORTED\t$test_target" >> $overall_report_file
   elif [[ $skipped_tests == 1 ]]; then
-    echo -e "$dir_number:\t$test_target\tSKIPPED" >> $overall_report_file
+    echo -e "$dir_number:\tSKIPPED\t$test_target" >> $overall_report_file
   else
-    echo -e "$dir_number:\t$test_target\tPARSING ERROR" >> $overall_report_file
+    echo -e "$dir_number:\tPARSING ERROR\t$test_target" >> $overall_report_file
     return 1
   fi
 
