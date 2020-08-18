@@ -48,7 +48,7 @@ function prepare_sdl {
   #
 
   if [ -d "$_sdl_prepared" ]; then
-    rm -r "$_sdl_prepared"
+    rm -rf "$_sdl_prepared"
   fi
   mkdir $_sdl_prepared
 
@@ -76,7 +76,7 @@ function rm_dir_if_exists {
   if [ -L "$1" ]; then
     rm "$1"
   elif [ -d "$1" ]; then
-    rm -r "$1"
+    rm -rf "$1"
   fi
 }
 
@@ -93,7 +93,7 @@ function prepare_atf {
   atf_tmp_ts_dir=$_tmp_dir/atf_ts
 
   if [ -d "$atf_tmp_dir" ]; then
-    rm -r $atf_tmp_dir
+    rm -rf $atf_tmp_dir
   fi
   mkdir $atf_tmp_dir
 
@@ -166,7 +166,7 @@ function prepare_queue {
 function common {
   # remove tmp dir if exists
   if [ -d "$_tmp_dir" ]; then
-    rm -r "$_tmp_dir"
+    rm -rf "$_tmp_dir"
   fi
   rm -f "$_test_id_file"
 
@@ -250,7 +250,7 @@ function show_progress {
 }
 
 function clean_up {
-  rm -r $_tmp_dir
+  rm -rf $_tmp_dir
   rm $_queue
   rm $_queue_reference
   rm $_test_id_file
@@ -326,9 +326,9 @@ function generate_total_report {
       if [ $process_report_status != 0 ]; then
         mv $abs_path/Report.txt $current_test_dirname/
       fi
-      rm -r $abs_path
+      rm -rf $abs_path
     done
-    rm -r $env_dir/$worker/TestingReports
+    rm -rf $env_dir/$worker/TestingReports
   done
 
   sort -o $overall_report_file $overall_report_file
