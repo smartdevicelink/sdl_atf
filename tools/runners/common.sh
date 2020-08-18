@@ -33,12 +33,13 @@ process() {
   ID=0
   local EXT=${TEST_TARGET: -3}
   if [ $EXT = "txt" ]; then
-    local total_num_of_scripts=$(wc -l $TEST_TARGET | awk '{print $1}')
+    local ROWS=$(sed -E '/^;($|[^.])/d' $TEST_TARGET)
+    local total_num_of_scripts=$(echo "$ROWS" | wc -l | awk '{print $1}')
     while read -r ROW; do
       local script=$(echo $ROW | awk '{print $1}')
       local issue=$(echo $ROW | awk '{print $2}')
       run $script $total_num_of_scripts $issue
-    done < "$TEST_TARGET"
+    done <<< "$ROWS"
   elif [ $EXT = "lua" ]; then
     run $TEST_TARGET 1
   else
@@ -181,7 +182,9 @@ copy_logs() {
       done
     done
   done
-  remove_color ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE}
+  if [ -f ${REPORT_FILE_CONSOLE} ]; then
+    remove_color ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE}
+  fi
   copy_sdl_logs
 }
 
