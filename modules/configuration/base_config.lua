@@ -57,7 +57,7 @@ config.excludeReport = true
 --- Flag which defines whether ATF creates full ATF logs (with json files and service messages)
 config.storeFullATFLogs = true
 --- Flag which defines whether ATF stores full SDLCore logs
-config.storeFullSDLLogs = true
+config.storeFullSDLLogs = false
 --- Define path to collected ATF and SDL logs
 config.reportPath = "./TestingReports"
 --- Define delays for storing sdl log -"x" before start script
