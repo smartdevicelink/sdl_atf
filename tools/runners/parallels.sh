@@ -261,8 +261,8 @@ function clean_up {
 #############################################################
 
 function process_report {
-  #   overall_report_file - defined in generate_total_report()
 
+  local tmp_report_file=$1; shift
   local curr_report_file=$1; shift
   local dir_number=$1; shift
 
@@ -281,15 +281,15 @@ function process_report {
   ((_total_skipped+=skipped_tests))
 
   if [[ $passed_tests == 1 ]]; then
-    echo -e "$dir_number:\tPASSED\t$test_target" >> $overall_report_file
+    echo -e "$dir_number:\tPASSED\t$test_target" >> $tmp_report_file
   elif [[ $failed_tests == 1 ]]; then
-    echo -e "$dir_number:\tFAILED\t$test_target" >> $overall_report_file
+    echo -e "$dir_number:\tFAILED\t$test_target" >> $tmp_report_file
   elif [[ $aborted_tests == 1 ]]; then
-    echo -e "$dir_number:\tABORTED\t$test_target" >> $overall_report_file
+    echo -e "$dir_number:\tABORTED\t$test_target" >> $tmp_report_file
   elif [[ $skipped_tests == 1 ]]; then
-    echo -e "$dir_number:\tSKIPPED\t$test_target" >> $overall_report_file
+    echo -e "$dir_number:\tSKIPPED\t$test_target" >> $tmp_report_file
   else
-    echo -e "$dir_number:\tPARSING ERROR\t$test_target" >> $overall_report_file
+    echo -e "$dir_number:\tPARSING ERROR\t$test_target" >> $tmp_report_file
     return 1
   fi
 
@@ -304,9 +304,8 @@ function generate_total_report {
 
   total_number_of_tests=$(find $env_dir/*/TestingReports/* -maxdepth 0 -type d | wc -l)
 
-  overall_report_file=$testing_report_dir/Report.txt
-
-  touch $overall_report_file
+  local overall_report_file=$testing_report_dir/Report.txt
+  local tmp_report_file=$testing_report_dir/Report.txt.tmp
 
   for worker in $(ls $env_dir | grep _worker)
   do
@@ -318,7 +317,7 @@ function generate_total_report {
       local abs_path=$env_dir/$worker/TestingReports/$item
       local dir_number=$(basename $(find $abs_path -maxdepth 1 -type d | sort -r | head -n 1))
       local dir_number_lead_zeroes=$(printf "%0${#total_number_of_tests}d" $dir_number)
-      process_report $abs_path/Report.txt $dir_number_lead_zeroes
+      process_report $tmp_report_file $abs_path/Report.txt $dir_number_lead_zeroes
       process_report_status=$?
 
       local current_test_dirname=$testing_report_dir/$dir_number_lead_zeroes
@@ -331,22 +330,26 @@ function generate_total_report {
     rm -rf $env_dir/$worker/TestingReports
   done
 
-  sort -o $overall_report_file $overall_report_file
+  sort -o $tmp_report_file $tmp_report_file
 
-  echo "$(echo ${LINE2} | cat - $overall_report_file)" > $overall_report_file
-  echo "$(echo 'Test target:' $_testfile | cat - $overall_report_file)" > $overall_report_file
-  echo "$(echo ${LINE1} | cat - $overall_report_file)" > $overall_report_file
+  logf() { log "$@" | tee -a ${overall_report_file}; }
 
-  echo ${LINE2} >> $overall_report_file
-  echo "TOTAL: $_overall_test_number" >> $overall_report_file
-  echo "PASSED: $_total_passed" >> $overall_report_file
-  echo "FAILED: $_total_failed" >> $overall_report_file
-  echo "ABORTED: $_total_aborted" >> $overall_report_file
-  echo "SKIPPED: $_total_skipped" >> $overall_report_file
-  echo ${LINE2} >> $overall_report_file
-  echo "Execution time:" $(seconds2time $(($ts_finish - $ts_start))) >> $overall_report_file
-  echo ${LINE1} >> $overall_report_file
+  logf ${LINE1}
+  logf "Test target:" $_testfile
+  logf ${LINE2}
+  while read -r line; do logf "$line"; done < $tmp_report_file
+  logf ${LINE2}
+  logf "TOTAL: $_overall_test_number" "${N}"
+  logf "${P}PASSED: $_total_passed" "${N}"
+  logf "${F}FAILED: $_total_failed" "${N}"
+  logf "${A}ABORTED: $_total_aborted" "${N}"
+  logf "${S}SKIPPED: $_total_skipped" "${N}"
+  logf ${LINE2}
+  logf "Execution time:" $(seconds2time $(($ts_finish - $ts_start)))
+  logf ${LINE1}
 
+  remove_color $overall_report_file
+  rm $tmp_report_file
   mv $testing_report_dir/* $_test_result_path/
 }
 
@@ -405,6 +408,6 @@ function TearDown() {
   log "Collecting results..."
   generate_total_report $_tmp_dir
 
-  log "Clearing up..."
+  log "Cleaning up..."
   clean_up
 }

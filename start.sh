@@ -28,7 +28,7 @@ dbg() {
 }
 
 log() {
-  echo -e $@;
+  echo -e "$@";
 }
 
 timestamp() {
@@ -47,6 +47,10 @@ seconds2time() {
   else
      printf '%02d:%02d:%02d' $H $M $S
   fi
+}
+
+remove_color() {
+  sed -i "s/\x1b[^m]*m//g" $1
 }
 
 show_help() {

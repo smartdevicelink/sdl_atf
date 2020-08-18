@@ -9,19 +9,17 @@ SDL_CLEAN_UP=("*.log" "app_info.dat" "storage" "ivsu_cache" "../sdl_bin_bk")
 
 logf() { log "$@" | tee -a ${REPORT_PATH_TS}/${REPORT_FILE}; }
 
-remove_color() { sed -i "s/\x1b[^m]*m//g" $1; }
-
 status() {
   logf ${LINE1}
   logf "Test target:" $TEST_TARGET
   logf ${LINE2}
   for i in ${LIST_TOTAL[@]}; do logf "${i}"; done
   logf ${LINE2}
-  logf "TOTAL: " $ID
-  logf "${P}PASSED: " ${#LIST_PASSED[@]} "${N}"
-  logf "${F}FAILED: " ${#LIST_FAILED[@]} "${N}"
-  logf "${A}ABORTED: " ${#LIST_ABORTED[@]} "${N}"
-  logf "${S}SKIPPED: " ${#LIST_SKIPPED[@]} "${N}"
+  logf "TOTAL:" $ID
+  logf "${P}PASSED:" ${#LIST_PASSED[@]} "${N}"
+  logf "${F}FAILED:" ${#LIST_FAILED[@]} "${N}"
+  logf "${A}ABORTED:" ${#LIST_ABORTED[@]} "${N}"
+  logf "${S}SKIPPED:" ${#LIST_SKIPPED[@]} "${N}"
   logf ${LINE2}
   logf "Execution time:" $(seconds2time $(($ts_finish - $ts_start)))
   logf ${LINE1}
