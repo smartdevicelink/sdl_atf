@@ -104,7 +104,7 @@ run_atf() {
   if [ -n $ISSUE ]; then total="${total}\t$ISSUE"; fi
   LIST_TOTAL[ID]="${total}"
 
-  log "SCRIPT STATUS: " ${RESULT_STATUS}
+  log "SCRIPT STATUS:" ${RESULT_STATUS}
 }
 
 run() {
@@ -180,7 +180,7 @@ copy_logs() {
       done
     done
   done
-  if [ -f ${REPORT_FILE_CONSOLE} ]; then
+  if [ -f ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE} ]; then
     remove_color ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE}
   fi
   copy_sdl_logs
