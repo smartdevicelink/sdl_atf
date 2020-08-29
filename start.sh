@@ -323,7 +323,7 @@ build_atf_options() {
 
 create_report_folder() {
   dbg "Func" "create_report_folder" "Enter"
-  REPORT_PATH_TS=${REPORT_PATH}/$(date +"%Y-%m-%d_%H-%M-%S")
+  REPORT_PATH_TS=${REPORT_PATH}/$(date +"%Y-%m-%d_%H-%M-%S.%3N")
   mkdir -p ${REPORT_PATH_TS}
   dbg "Func" "create_report_folder" "Exit"
 }

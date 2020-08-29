@@ -48,7 +48,7 @@ function pop {
         if [ -n "$LINE" ]; then
             sed -i '1d' $FILE
             RES=0
-            if [ -z $_test_id_file ]; then echo 0 > $_test_id_file; fi
+            if [ ! -f $_test_id_file ]; then echo 0 > $_test_id_file; fi
             local CURRENT_ID=$(cat $_test_id_file)
             let CURRENT_ID=CURRENT_ID+1
             echo $CURRENT_ID > $_test_id_file
