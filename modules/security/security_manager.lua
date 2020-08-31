@@ -12,19 +12,6 @@ local securityConstants = require('security/security_constants')
 
 local SecurityManager = {}
 
---- Update mobile session property 'isSecuredSession' according to secured services
-local function updateSecurityOfSession(security)
-  if next(security.encryptedServices) == nil then
-    security.session.isSecuredSession = false
-    security.ctx = nil
-    security.ssl = nil
-    security.bioIn = nil
-    security.bioOut = nil
-  else
-    security.session.isSecuredSession = true
-  end
-end
-
 --- Get security protocol type
 -- @treturn number Return number representation of security protocol type
 local function getSecurityProtocolConst(strProtocol)
@@ -143,20 +130,18 @@ end
 -- @tparam number service Service number
 function security_mt.__index:registerSecureService(service)
   self.encryptedServices[service] = true
-  updateSecurityOfSession(self)
+  self.session.isSecuredSession = true
 end
 
 --- Unregister service into mobile session security. Service assumed as not secure
 -- @tparam number service Service number
 function security_mt.__index:unregisterSecureService(service)
   self.encryptedServices[service] = nil
-  updateSecurityOfSession(self)
 end
 
 --- Unregister all registered services into mobile session security. All services assumed as not secure
 function security_mt.__index:unregisterAllSecureServices()
   self.encryptedServices = {}
-  updateSecurityOfSession(self)
 end
 
 --- Unregister service into mobile session security. Service assumed as not secure
