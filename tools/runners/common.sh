@@ -166,8 +166,10 @@ copy_sdl_logs() {
   if [ $SAVE_SDL_LOG = true ] && [ -f $SDL_LOG ]; then
     cp $SDL_LOG ${REPORT_PATH_TS_SCRIPT}/
   fi
-  if [ $SAVE_SDL_CORE_DUMP = true ] && [ "$(ls -A /tmp/corefiles 2> /dev/null)" ]; then
-    mv /tmp/corefiles/* ${REPORT_PATH_TS_SCRIPT}/
+  local SDL_CORE_PATH="/tmp/corefiles"
+  if [ $SAVE_SDL_CORE_DUMP = true ] && [ -d $SDL_CORE_PATH ] && [ "$(ls -A $SDL_CORE_PATH)" ];
+  then
+    mv $SDL_CORE_PATH/* ${REPORT_PATH_TS_SCRIPT}/
   fi
 }
 
