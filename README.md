@@ -123,13 +123,15 @@ E.g. if path to SDL binaries is defined through `--sdl-core` command line argume
   - test set
   - folder with test scripts
 - [OPTION] - is one or more of available options:
-  - --sdl-core &lt;path&gt; - path to SDL binaries
-  - --config &lt;folder&gt; - name of the folder with configuration
-  - --sdl-api &lt;path&gt;  - path to SDL APIs
-  - --report &lt;path&gt;   - path to report and logs
-  - --no-sdl-log            - force not to store SDL log
-  - --no-sdl-core-dump      - force not to store SDL core dump
-  - --parallels             - force to use local parallel mode
+  - --sdl-core &lt;path&gt;  - path to SDL binaries
+  - --config &lt;folder&gt;  - name of the folder with configuration
+  - --sdl-api &lt;path&gt;   - path to SDL APIs
+  - --report &lt;path&gt;    - path to report and logs
+  - --sdl-log [ACTION]       - how to collect SDL logs:
+    'yes' - (default) always save, 'no' - do not save, 'fail' - save if script failed or aborted
+  - --sdl-core-dump [ACTION] - how to collect SDL core dumps:
+    'yes' - (default) always save, 'no' - do not save, 'fail' - save if script failed or aborted
+  - --parallels              - force to use local parallel mode
     - -j|--jobs &lt;n&gt;        - number of simultaneous jobs to start
     - --third-party &lt;path&gt; - path to SDL third party
     - --tmp &lt;path&gt;         - path to temporary folder
@@ -216,7 +218,7 @@ The best approach is to use predefined configuration (e.g. `remote_linux`) as ba
 
 ### Advanced options
 
-1. For a big tests sets (>1000 scripts) Report and Logs can be very huge (>10Gb). Most of the space is occupied by SDL logs. In order to turn them off `--no-sdl-log` or `--no-sdl-core-dump` options can be specified.
+1. For a big tests sets (>1000 scripts) Report and Logs can be very huge (>10Gb). Most of the space is occupied by SDL logs. In order to turn them off `--sdl-log` or `--sdl-core-dump` options with `no` or `fail` value can be specified.
 2. Some scripts (old policy ones) create the same temporary files inside `files`, `test_scripts` or `user_modules` folders. In case of parallel mode the same temporary file can be used by different scripts at the same time. This leads to incorrect results or even aborts. In order to mitigate this issue `--copy-atf-ts` option can be specified. It tells ATF to copy mentioned folders for each job instead of creating symlinks.
 
 ## Documentation generation
