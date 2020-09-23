@@ -92,8 +92,8 @@ function main {
         local script_name=$(echo $row | awk '{print $2}')
 
         docker_run $script_name \
-          $([ "$_save_sdl_log" = false ] && echo "--no-sdl-log") \
-          $([ "$_save_sdl_core_dump" = false ] && echo "--no-sdl-core-dump") \
+          --sdl-log=$_save_sdl_log \
+          --sdl-core-dump=$_save_sdl_core_dump \
           --test-id $script_num
 
         sleep 0.1

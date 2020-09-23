@@ -9,8 +9,8 @@ LINE2=$(printf -- '-%.0s' {1..100})
 
 JOBS=1
 FORCE_PARALLELS=false
-SAVE_SDL_LOG=true
-SAVE_SDL_CORE_DUMP=true
+SAVE_SDL_LOG=yes
+SAVE_SDL_CORE_DUMP=yes
 COPY_TS=false
 
 THIRD_PARTY="$THIRD_PARTY_INSTALL_PREFIX"
@@ -64,17 +64,19 @@ show_help() {
   echo "   - folder with test scripts"
   echo
   echo "[OPTION] - one or more options:"
-  echo "   --sdl-core         - path to SDL binaries"
-  echo "   --config           - name of configuration"
-  echo "   --sdl-api          - path to SDL APIs"
-  echo "   --report           - path to report and logs"
-  echo "   --no-sdl-log       - force not to store SDL log"
-  echo "   --no-sdl-core-dump - force not to store SDL core dump"
-  echo "   --parallels        - force to use parallels mode"
-  echo "     -j|--jobs n      - number of jobs to start ATF in parallels"
-  echo "     --third-party    - path to SDL third party"
-  echo "     --tmp            - path to temporary folder used by parallels"
-  echo "     --copy-atf-ts    - force copying of ATF test scripts instead of creating symlinks"
+  echo "   --sdl-core               - path to SDL binaries"
+  echo "   --config                 - name of configuration"
+  echo "   --sdl-api                - path to SDL APIs"
+  echo "   --report                 - path to report and logs"
+  echo "   --sdl-log [ACTION]       - how to collect SDL logs"
+  echo "     'yes' - always save (default), 'no' - do not save, 'fail' - save if script failed or aborted"
+  echo "   --sdl-core-dump [ACTION] - how to collect SDL core dumps"
+  echo "     'yes' - always save (default), 'no' - do not save, 'fail' - save if script failed or aborted"
+  echo "   --parallels              - force to use parallels mode"
+  echo "     -j|--jobs n            - number of jobs to start ATF in parallels"
+  echo "     --third-party          - path to SDL third party"
+  echo "     --tmp                  - path to temporary folder used by parallels"
+  echo "     --copy-atf-ts          - force copying of ATF test scripts instead of creating symlinks"
   echo
   echo "In case if folder is specified as a test target:"
   echo "   - only scripts which name starts with number will be taken into account (e.g. 001, 002 etc.)"
@@ -164,11 +166,11 @@ parse_arguments() {
       --tmp)
         TMP_PATH="$ARG_VAL"
       ;;
-      --no-sdl-log)
-        SAVE_SDL_LOG=false
+      --sdl-log)
+        SAVE_SDL_LOG="$ARG_VAL"
       ;;
-      --no-sdl-core-dump)
-        SAVE_SDL_CORE_DUMP=false
+      --sdl-core-dump)
+        SAVE_SDL_CORE_DUMP="$ARG_VAL"
       ;;
       --copy-atf-ts)
         COPY_TS=true
@@ -205,6 +207,7 @@ print_parameters() {
   dbg "SDL_API: "$SDL_API
   dbg "IS_REMOTE_ENABLED: "$IS_REMOTE_ENABLED
   dbg "SAVE_SDL_LOG: "$SAVE_SDL_LOG
+  dbg "SAVE_SDL_CORE_DUMP: "$SAVE_SDL_CORE_DUMP
 }
 
 check_environment() {
@@ -240,6 +243,14 @@ check_arguments() {
     echo "Required docker image 'atf_worker' is not available"
     exit 1
   fi
+  if [ -z $SAVE_SDL_LOG ]; then
+    echo "ACTION was not specified within --sdl-log option"
+    exit 1
+  fi
+  if [ -z $SAVE_SDL_CORE_DUMP ]; then
+    echo "ACTION was not specified within --sdl-core-dump option"
+    exit 1
+  fi
   dbg "Func" "check_arguments" "Exit"
 }
 
@@ -266,8 +277,6 @@ build_parameters() {
     set_param IS_REMOTE_ENABLED "config.remoteConnection.enabled" ${CONFIG_PATH}/connection_config.lua
     print_parameters "specific config"
   fi
-
-
 
   # load parameters from base config
   local CONFIG_PATH=${ATF_PATH}/modules/configuration
@@ -315,7 +324,7 @@ build_atf_options() {
   if [ -n "$SDL_CORE" ]; then OPTIONS="$OPTIONS --sdl-core=${SDL_CORE}"; fi
   if [ -n "$REPORT_PATH" ]; then OPTIONS="$OPTIONS --report-path=${REPORT_PATH}"; fi
   if [ -n "$SDL_API" ]; then OPTIONS="$OPTIONS --sdl-interfaces=${SDL_API}"; fi
-  if [ $IS_REMOTE_ENABLED = true ] && [ $SAVE_SDL_LOG = true ]; then OPTIONS="$OPTIONS --storeFullSDLLogs"; fi
+  if [ $IS_REMOTE_ENABLED = true ] && [ $SAVE_SDL_LOG = yes ]; then OPTIONS="$OPTIONS --storeFullSDLLogs"; fi
 
   dbg "= OPTIONS:"$OPTIONS
   dbg "Func" "build_atf_options" "Exit"

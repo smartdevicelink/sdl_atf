@@ -162,14 +162,18 @@ clean_sdl_folder() {
 }
 
 copy_sdl_logs() {
-  local SDL_LOG=$SDL_CORE/SmartDeviceLinkCore.log
-  if [ $SAVE_SDL_LOG = true ] && [ -f $SDL_LOG ]; then
-    cp $SDL_LOG ${REPORT_PATH_TS_SCRIPT}/
+  local is_script_failed=$(([ ${LIST_FAILED[ID]} ] || [ ${LIST_ABORTED[ID]} ]) && echo true || echo false)
+  if [ $SAVE_SDL_LOG = yes ] || ( [ $SAVE_SDL_LOG = fail ] && [ $is_script_failed == true ] ); then
+    local SDL_LOG=$SDL_CORE/SmartDeviceLinkCore.log
+    if [ -f $SDL_LOG ]; then
+      mv $SDL_LOG ${REPORT_PATH_TS_SCRIPT}/
+    fi
   fi
-  local SDL_CORE_PATH="/tmp/corefiles"
-  if [ $SAVE_SDL_CORE_DUMP = true ] && [ -d $SDL_CORE_PATH ] && [ "$(ls -A $SDL_CORE_PATH)" ];
-  then
-    mv $SDL_CORE_PATH/* ${REPORT_PATH_TS_SCRIPT}/
+  if [ $SAVE_SDL_CORE_DUMP = yes ] || ( [ $SAVE_SDL_CORE_DUMP = fail ] && [ $is_script_failed == true ] ); then
+    local SDL_CORE_PATH="/tmp/corefiles"
+    if [ -d $SDL_CORE_PATH ] && [ "$(ls -A $SDL_CORE_PATH)" ]; then
+      mv $SDL_CORE_PATH/* ${REPORT_PATH_TS_SCRIPT}/
+    fi
   fi
 }
 
