@@ -204,6 +204,7 @@ print_parameters() {
   dbg "REPORT_PATH: "$REPORT_PATH
   dbg "SDL_PROCESS_NAME: "$SDL_PROCESS_NAME
   dbg "SDL_CORE: "$SDL_CORE
+  dbg "SDL_CONFIG: "$SDL_CONFIG
   dbg "SDL_API: "$SDL_API
   dbg "IS_REMOTE_ENABLED: "$IS_REMOTE_ENABLED
   dbg "SAVE_SDL_LOG: "$SAVE_SDL_LOG
@@ -273,6 +274,7 @@ build_parameters() {
     set_param SDL_PROCESS_NAME "config.SDL" ${CONFIG_PATH}/base_config.lua
     set_param REPORT_PATH "config.reportPath" ${CONFIG_PATH}/base_config.lua
     set_param SDL_CORE "config.pathToSDL" ${CONFIG_PATH}/base_config.lua
+    set_param SDL_CONFIG "config.pathToSDLConfig" ${CONFIG_PATH}/base_config.lua
     set_param SDL_API "config.pathToSDLInterfaces" ${CONFIG_PATH}/base_config.lua
     set_param IS_REMOTE_ENABLED "config.remoteConnection.enabled" ${CONFIG_PATH}/connection_config.lua
     print_parameters "specific config"
@@ -283,6 +285,7 @@ build_parameters() {
   set_param SDL_PROCESS_NAME "config.SDL" ${CONFIG_PATH}/base_config.lua
   set_param REPORT_PATH "config.reportPath" ${CONFIG_PATH}/base_config.lua
   set_param SDL_CORE "config.pathToSDL" ${CONFIG_PATH}/base_config.lua
+  set_param SDL_CONFIG "config.pathToSDLConfig" ${CONFIG_PATH}/base_config.lua
   set_param SDL_API "config.pathToSDLInterfaces" ${CONFIG_PATH}/base_config.lua
   set_param IS_REMOTE_ENABLED "config.remoteConnection.enabled" ${CONFIG_PATH}/connection_config.lua
   print_parameters "base config"
@@ -308,6 +311,10 @@ check_parameters() {
   fi
   if [ ! -d $SDL_API ]; then
     echo "Invalid path to APIs was specified"
+    exit 1
+  fi
+  if [ ! -d $SDL_CONFIG ] && [ $IS_REMOTE_ENABLED = false ]; then
+    echo "Invalid path to SDL config was specified"
     exit 1
   fi
   if [ ! -d $SDL_CORE ] && [ $IS_REMOTE_ENABLED = false ]; then
