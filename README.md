@@ -54,20 +54,30 @@ $ sudo apt-get install qt59base qt59websockets
 **3.** Build ATF
 
 CMake 3.15 or newer is required to generate the build files and can be downloaded from [here](https://cmake.org/download/).
-- Create a build folder outside of the `sdl_atf` folder
-- cd into your build folder and run commands:
+
+- Create a build folder outside of the `sdl_atf` folder, e.g. `atf_build`
+- Assume there is the following directory structure:
+```
+..
+ ├sdl_atf/
+ ├sdl_atf_test_scripts/
+ └atf_build
+```
+- Go into `atf_build` folder and run commands:
 ```
 $ cmake ../sdl_atf
 $ make
 $ make install
 ```
+- When build process is finished navigate to `atf_build/bin` folder
 
 **4.** Create symlinks to folders in scripts repository
+
 ```
-$ ln -s ../sdl_atf_test_scripts/files
-$ ln -s ../sdl_atf_test_scripts/test_sets
-$ ln -s ../sdl_atf_test_scripts/test_scripts
-$ ln -s ../sdl_atf_test_scripts/user_modules
+$ ln -s ../../sdl_atf_test_scripts/files
+$ ln -s ../../sdl_atf_test_scripts/test_sets
+$ ln -s ../../sdl_atf_test_scripts/test_scripts
+$ ln -s ../../sdl_atf_test_scripts/user_modules
 ```
 
 **5.** Install dependencies for local parallel mode
@@ -114,6 +124,7 @@ E.g. if path to SDL binaries is defined through `--sdl-core` command line argume
 
 ## Run
 
+Being in `atf_build/bin` folder run the command:
 ```
 ./start.sh TEST [OPTIONS]...
 ```
