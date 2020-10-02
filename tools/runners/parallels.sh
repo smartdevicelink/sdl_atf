@@ -10,7 +10,6 @@ _path_atf="$ATF_PATH"
 _test_result_path="$REPORT_PATH_TS"
 _testfile="$TEST_TARGET"
 _path_sdl_api="$SDL_API"
-_path_sdl_config="$SDL_CONFIG"
 _path_3rd_party="$THIRD_PARTY"
 _save_sdl_log="$SAVE_SDL_LOG"
 _save_sdl_core_dump="$SAVE_SDL_CORE_DUMP"
@@ -54,10 +53,6 @@ function prepare_sdl {
   mkdir $_sdl_prepared
 
   cp -r $_path_sdl $_sdl_prepared
-
-  if [ -d "$_path_sdl_config" ]; then
-    cp $_path_sdl_config/smartDeviceLink.ini $_sdl_prepared/bin
-  fi
 
   local llp=/usr/local/lib:$LD_LIBRARY_PATH
   local fltr="/usr/local/lib"
@@ -125,7 +120,6 @@ function prepare_atf {
 
   local config_file=$atf_tmp_dir/modules/configuration/base_config.lua
   sed -i '/^config.pathToSDL\ =/c\config.pathToSDL="/home/developer/sdl/bin"' $config_file
-  sed -i '/^config.pathToSDLConfig\ =/c\config.pathToSDLConfig="/home/developer/sdl/bin"' $config_file
   sed -i '/^config.pathToSDLInterfaces\ =/c\config.pathToSDLInterfaces="/home/developer/sdl/atf/data"' $config_file
   sed -i '/^config.reportPath\ =/c\config.reportPath="/home/developer/sdl/TestingReports"' $config_file
 }

@@ -100,7 +100,6 @@ end
 --- Update paths to SDL and its config
 local function updateSdlPaths()
   config.pathToSDL = SDL.addSlashToPath(config.pathToSDL)
-  config.pathToSDLConfig = SDL.addSlashToPath(config.pathToSDLConfig)
 end
 
 local function getPathAndName(pPathToFile)
@@ -319,11 +318,7 @@ end
 SDL.INI = {}
 
 function SDL.INI.file()
-  local path = config.pathToSDLConfig
-  if path == nil or path == "" then
-    path = config.pathToSDL
-  end
-  return path .. "smartDeviceLink.ini"
+  return config.pathToSDL .. "smartDeviceLink.ini"
 end
 
 function SDL.INI.get(pParam)
