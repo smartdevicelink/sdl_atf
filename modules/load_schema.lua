@@ -23,7 +23,8 @@ LoadSchema.request = 'request'
 LoadSchema.notification = 'notification'
 if (not LoadSchema.mob_schema) then
   LoadSchema.mob_api = api_loader.init("data/MOBILE_API.xml")
-  LoadSchema.mob_api_version = LoadSchema.mob_api.interface["SmartDeviceLink RAPI"].version
+  local interfaceName = next(LoadSchema.mob_api.interface)
+  LoadSchema.mob_api_version = LoadSchema.mob_api.interface[interfaceName].version
   LoadSchema.mob_schema = validator.CreateSchemaValidator(LoadSchema.mob_api)
 end
 if (not LoadSchema.hmi_schema) then
