@@ -86,7 +86,8 @@ local function baseStartService(controlService, service, isSecure)
   startServiceEvent.matches = function(_, data)
     return data.frameType == constants.FRAME_TYPE.CONTROL_FRAME
     and data.serviceType == service
-    and (service == constants.SERVICE_TYPE.RPC or data.sessionId == controlService.session.sessionId.get())
+    and ((service == constants.SERVICE_TYPE.RPC and controlService.session.sessionId.get() == 0)
+      or data.sessionId == controlService.session.sessionId.get())
     and (data.frameInfo == constants.FRAME_INFO.START_SERVICE_ACK
       or data.frameInfo == constants.FRAME_INFO.START_SERVICE_NACK)
     and data.encryption == isSecure
