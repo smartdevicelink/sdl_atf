@@ -50,7 +50,7 @@ end
 local function getFilePath(pFilePath, pParentPath)
   if pParentPath == nil then pParentPath = config.pathToSDL end
   pParentPath = getPath(pParentPath)
-  if string.len(pFilePath) > 0 then
+  if pFilePath ~= nil and string.len(pFilePath) > 0 then
     if string.sub(pFilePath, 1, 1) == "/" then
       return pFilePath
     end
@@ -100,7 +100,6 @@ end
 --- Update paths to SDL and its config
 local function updateSdlPaths()
   config.pathToSDL = SDL.addSlashToPath(config.pathToSDL)
-  config.pathToSDLConfig = SDL.addSlashToPath(config.pathToSDLConfig)
 end
 
 local function getPathAndName(pPathToFile)
@@ -111,6 +110,7 @@ local function getPathAndName(pPathToFile)
 end
 
 local function getFileContent(pPathToFile)
+  if pPathToFile == nil then return nil end
   if config.remoteConnection.enabled then
     local p, n = getPathAndName(pPathToFile)
     local _, isExist = ATF.remoteUtils.file:IsFileExists(p, n)
@@ -318,11 +318,7 @@ end
 SDL.INI = {}
 
 function SDL.INI.file()
-  local path = config.pathToSDLConfig
-  if path == nil or path == "" then
-    path = config.pathToSDL
-  end
-  return path .. "smartDeviceLink.ini"
+  return config.pathToSDL .. "smartDeviceLink.ini"
 end
 
 function SDL.INI.get(pParam)
@@ -452,7 +448,8 @@ end
 function SDL.CRT.clean()
   local ext = ".crt"
   local crtPath = getPath(SDL.INI.get("CACertificatePath"))
-  getExecFunc()("cd " .. crtPath .. " && find . -type l -not -name 'lib*' -exec rm -f {} \\;")
+  getExecFunc()("cd " .. crtPath .. " && find . -type l -regextype egrep -regex '.\\/[a-z,0-9]{8}.[0-9]'"
+    .. " -exec rm -f {} \\;")
   getExecFunc()("cd " .. crtPath .. " && rm -rf *" .. ext)
 end
 
@@ -573,6 +570,34 @@ function SDL.AppInfo.clean()
   deleteFile(SDL.AppInfo.file())
 end
 
+SDL.HMICapCache = {}
+
+function SDL.HMICapCache.file()
+  return getFilePath(SDL.INI.get("HMICapabilitiesCacheFile"), SDL.INI.get("AppStorageFolder"))
+end
+
+function SDL.HMICapCache.get()
+  local content = getFileContent(SDL.HMICapCache.file())
+  return content and json.decode(content) or nil
+end
+
+function SDL.HMICapCache.set(pHmiCapCache)
+  local content = json.encode(pHmiCapCache)
+  saveFileContent(SDL.HMICapCache.file(), content)
+end
+
+function SDL.HMICapCache.backup()
+  backup(SDL.HMICapCache.file())
+end
+
+function SDL.HMICapCache.restore()
+  restore(SDL.AppInfo.file())
+end
+
+function SDL.HMICapCache.clean()
+  deleteFile(SDL.HMICapCache.file())
+end
+
 --- A global function for organizing execution delays (using the OS)
 -- @tparam number n The delay in ms
 function sleep(n)
@@ -660,6 +685,7 @@ function SDL:StopSDL()
     sdl_logger.close()
   end
   sleep(1)
+  SDL:DeleteFile()
 end
 
 function SDL.ForceStopSDL()

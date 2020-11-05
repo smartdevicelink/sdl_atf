@@ -204,7 +204,7 @@ local function get_log_file_name(timestamp, log_file_type)
   if (reportMark == nil) then reportMark = ''
   else reportMark = "_" .. reportMark end
   local curr_log_dir = config.reportPath .. '/' .. log_file_type
-  local curr_log_path = io.catdir(curr_log_dir ..'_'.. timestamp, io.catdir(io.dirname(dir_name)))
+  local curr_log_path = curr_log_dir ..'_'.. timestamp
   local full_log_name = io.catfile(curr_log_path, script_name ..'_'..timestamp .. reportMark)
   os.execute('mkdir -p "'.. curr_log_path .. '"')
   return full_log_name

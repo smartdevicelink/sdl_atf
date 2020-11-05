@@ -133,11 +133,11 @@ function Reporter.init(script_file_name)
   local dir_name = './' .. script_file_name
   local curr_report_dir = ''
   if (config.reportPath ~= nil and config.reportPath ~= '') then
-    curr_report_dir = config.reportPath .. '/TestingReports'
+    curr_report_dir = config.reportPath .. '/XMLReports'
   else
-    curr_report_dir = 'TestingReports'
+    curr_report_dir = 'XMLReports'
   end
-  local curr_report_path = io.catdir(curr_report_dir ..'_'..Reporter.timestamp, io.catdir(io.dirname(dir_name)))
+  local curr_report_path = curr_report_dir ..'_'..Reporter.timestamp
   local report_header_name = ''
   if (config.reportMark ~= nil and config.reportMark ~= '' ) then
     Reporter.curr_report_name = io.catfile(curr_report_path,get_script_name(dir_name) ..'_'..Reporter.timestamp ..'_'..config.reportMark .. '.xml')

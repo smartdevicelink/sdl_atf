@@ -27,8 +27,6 @@ config.defaultProtocolVersion = 3
 --- Define path to SDL binary
 -- Example: "/home/user/sdl_build/bin"
 config.pathToSDL = ""
---- Define path to SDL .INI file
-config.pathToSDLConfig = ""
 --- Define path to SDL Policy database
 config.pathToSDLPolicyDB = "policy.sqlite"
 --- Define path to SDL interfaces
@@ -57,7 +55,7 @@ config.excludeReport = true
 --- Flag which defines whether ATF creates full ATF logs (with json files and service messages)
 config.storeFullATFLogs = true
 --- Flag which defines whether ATF stores full SDLCore logs
-config.storeFullSDLLogs = true
+config.storeFullSDLLogs = false
 --- Define path to collected ATF and SDL logs
 config.reportPath = "./TestingReports"
 --- Define delays for storing sdl log -"x" before start script

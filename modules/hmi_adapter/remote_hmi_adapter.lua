@@ -52,9 +52,10 @@ function RemoteHMIAdapter.mt.__index:Send(data)
   else
     text = data
   end
-
-  atf_logger.LOG("HMItoSDL", text)
-  self.connection:write(text)
+  if self.connection then
+    atf_logger.LOG("HMItoSDL", text)
+    self.connection:write(text)
+  end
 end
 
 --- Set handler for OnInputData
