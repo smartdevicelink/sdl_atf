@@ -46,6 +46,9 @@ config.webengineUniqueId = "5lNGKj5n63Hf8QjZPzS7X5yjZWYD0nu6IhKtyQOFRuUZkbY8KOdF
 
 --- Logs and Reports
 --
+
+-- Flag which defines the logger name (BOOST, LOG4CXX)
+config.loggerName = "BOOST"
 --- Flag which defines whether ATF displays time of test step run
 config.ShowTimeInConsole = true
 --- Flag which defines whether ATF performs validation of Mobile and HMI messages by API

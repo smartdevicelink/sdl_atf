@@ -69,30 +69,32 @@ end
 --- Update SDL logger config in order SDL will be able to write logs through Telnet
 local function updateSDLLogProperties()
   if config.storeFullSDLLogs == true then
-    local name = "log4j.rootLogger"
-    local curValue = SDL.LOGGER.get(name)
-    local newValue = "TelnetLogging"
-    if not string.find(curValue, newValue) then
-      SDL.LOGGER.set(name, curValue .. ", " .. newValue)
-    end
-    name = "log4j.appender.TelnetLogging.layout.ConversionPattern"
-    curValue = SDL.LOGGER.get(name)
-    if string.sub(curValue, -1) == "n" then
-      SDL.LOGGER.set(name, string.sub(curValue, 1, -3))
-    end
+    if config.loggerName == "LOG4CXX" then
+      local name = "log4j.rootLogger"
+      local curValue = SDL.LOGGER.get(name)
+      local newValue = "TelnetLogging"
+      if not string.find(curValue, newValue) then
+        SDL.LOGGER.set(name, curValue .. ", " .. newValue)
+      end
+      name = "log4j.appender.TelnetLogging.layout.ConversionPattern"
+      curValue = SDL.LOGGER.get(name)
+      if string.sub(curValue, -1) == "n" then
+        SDL.LOGGER.set(name, string.sub(curValue, 1, -3))
+      end
 
-    local paramsToUpdate = {
-      {
-        name = "log4j.appender.TransportManagerLogFile",
-        value = "SafeFileAppender\nlog4j.appender.TransportManagerLogFile.Threshold=OFF"
-      },
-      {
-        name = "log4j.appender.ProtocolFordHandlingLogFile",
-        value = "SafeFileAppender\nlog4j.appender.ProtocolFordHandlingLogFile.Threshold=OFF"
+      local paramsToUpdate = {
+        {
+          name = "log4j.appender.TransportManagerLogFile",
+          value = "SafeFileAppender\nlog4j.appender.TransportManagerLogFile.Threshold=OFF"
+        },
+        {
+          name = "log4j.appender.ProtocolFordHandlingLogFile",
+          value = "SafeFileAppender\nlog4j.appender.ProtocolFordHandlingLogFile.Threshold=OFF"
+        }
       }
-    }
-    for _, item in pairs(paramsToUpdate) do
-      SDL.LOGGER.set(item.name, item.value)
+      for _, item in pairs(paramsToUpdate) do
+        SDL.LOGGER.set(item.name, item.value)
+      end
     end
   end
 end
@@ -343,7 +345,11 @@ end
 SDL.LOGGER = {}
 
 function SDL.LOGGER.file()
-  return config.pathToSDL .. "log4cxx.properties"
+  local configFileName = "boostlogconfig.ini"
+  if config.loggerName == "LOG4CXX" then
+    configFileName = "log4cxx.properties"
+  end
+  return config.pathToSDL .. configFileName
 end
 
 function SDL.LOGGER.get(pParam)

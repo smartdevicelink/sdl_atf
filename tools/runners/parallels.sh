@@ -190,6 +190,7 @@ function mktempdir {
 
   cp $_sdl_prepared/bin/hmi_capabilities.json $tmpdirname/bin/
   cp $_sdl_prepared/bin/log4cxx.properties $tmpdirname/bin/
+  cp $_sdl_prepared/bin/boostlogconfig.ini $tmpdirname/bin/
   cp $_sdl_prepared/bin/*.pem $tmpdirname/bin/
   cp $_sdl_prepared/bin/sdl_preloaded_pt.json $tmpdirname/bin/
   cp $_sdl_prepared/bin/smartDeviceLink.ini $tmpdirname/bin/
