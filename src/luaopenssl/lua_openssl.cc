@@ -13,6 +13,8 @@ extern "C" {
 #include <openssl/engine.h>
 }
 
+#define OPENSSL1_1_VERSION 0x10100000L
+
 /**
 * @brief Definition of function pointer type info_callback
 * @param OpenSSL SSL
@@ -54,13 +56,8 @@ namespace {
 	* @brief OpenSSL library cleanup
 	**/
 	void cleanupOpensslLib() {
-		ERR_remove_state(0);
-		ENGINE_cleanup();
-		CONF_modules_unload(1);
-		ERR_free_strings();
 		EVP_cleanup();
-		sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
-		CRYPTO_cleanup_all_ex_data();
+		ERR_free_strings();
 	}
 
 	/**
@@ -75,13 +72,19 @@ namespace {
 				method = SSLv23_method();
 				break;
 			case SP_TLS:
+#if OPENSSL_VERSION_NUMBER < OPENSSL1_1_VERSION
 				method = TLSv1_2_method();
+#else
+				method = TLS_method();
+#endif
 				break;
+#ifndef OPENSSL_NO_SSL3
 			case SP_SSL:
 				method = SSLv3_method();
 				break;
+#endif
 			case SP_DTLS:
-				method = DTLSv1_method();
+				method = DTLS_method();
 				break;
 			default:
 				printf("Error: Can not create SSL context with security protocol %d\n", type);
@@ -275,20 +278,19 @@ namespace {
 	* @return OpenSSL BIO structure
 	**/
 	BIO* newBIO(const int type) {
-		BIO_METHOD* methodType;
+		BIO* bio = NULL;
 		switch ((BIOTypes)type) {
 			case BIO_SOURCE:
-				methodType = BIO_s_mem();
+				bio = BIO_new(BIO_s_mem());
 				break;
 			case BIO_FILTER:
-				methodType = BIO_f_ssl();
+				bio = BIO_new(BIO_f_ssl());
 				break;
 			default:
 				printf("Error: Can not create BIO with type %d\n", type);
 				return NULL;
 		}
 
-		BIO* bio = BIO_new(methodType);
 		if (bio && type == BIO_SOURCE) {
 			BIO_set_mem_eof_return(bio, -1);
 		}
