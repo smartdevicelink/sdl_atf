@@ -24,6 +24,7 @@ function docker_run {
         --cap-add NET_ADMIN \
         --privileged \
         -e LOCAL_USER_ID=`id -u $USER` \
+        -e VD_PARAMS=$VD_PARAMS \
         -v $_atf_ts_dir:/home/developer/atf_ts \
         -v $_tmpdirname:/home/developer/sdl \
         -v $_sdl_prepared:/home/developer/sdl_ext \

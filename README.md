@@ -231,6 +231,7 @@ The best approach is to use predefined configuration (e.g. `remote_linux`) as ba
 
 1. For a big tests sets (>1000 scripts) Report and Logs can be very huge (>10Gb). Most of the space is occupied by SDL logs. In order to turn them off `--sdl-log` or `--sdl-core-dump` options with `no` or `fail` value can be specified.
 2. Some scripts (old policy ones) create the same temporary files inside `files`, `test_scripts` or `user_modules` folders. In case of parallel mode the same temporary file can be used by different scripts at the same time. This leads to incorrect results or even aborts. In order to mitigate this issue `--copy-atf-ts` option can be specified. It tells ATF to copy mentioned folders for each job instead of creating symlinks.
+3. By default scripts for vehicle data executed for all available parameters. However there is possibility to restrict parameters to be tested by defining `VD_PARAMS` environment variable. E.g. `export VD_PARAMS=gps,speed` will allow to run the tests only for `gps` and `speed` vehicle data parameters.
 
 ## Documentation generation
 
