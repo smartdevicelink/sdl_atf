@@ -5,7 +5,7 @@ FROM ubuntu:${ubuntu_ver}
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get -q -y install \
-  locales sudo libssl1.0.0 libusb-1.0-0 libbluetooth3 openssl liblua5.2-0 psmisc \
+  locales sudo libssl1.0.0 libssl-dev libusb-1.0-0 libbluetooth3 openssl liblua5.2-0 psmisc \
   libexpat1 sqlite3 libqt5websockets5 net-tools iproute2 \
   libssl-doc- libusb-1.0-doc- autotools-dev- binutils- build-essential- bzip2- cpp- cpp-5- \
   dpkg-dev- fakeroot- manpages- manpages-dev- qttranslations5-l10n- xdg-user-dirs- xml-core- dbus-
