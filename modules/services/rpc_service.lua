@@ -28,7 +28,7 @@ local mt = { __index = { } }
 
 --- Basic function to create expectation for request from SDL and register it in expectation list
 -- @tparam RPCService RPCService Instance of RPCService
--- @tparam string funcName Function name
+-- @tparam ?string|number funcName Function name or function id
 -- @tparam table ... Expectations parameters
 -- @treturn Expectation Created expectation
 local function baseExpectRequest(RPCService, funcName, ...)
@@ -36,11 +36,11 @@ local function baseExpectRequest(RPCService, funcName, ...)
   local args = table.pack(...)
   local requestEvent = Event()
   if type(funcName) ~= 'string' and type(funcName) ~= 'number' then
-    error("ExpectResponse: argument 1 (funcName) must be string")
+    error("ExpectResponse: argument 1 (funcName) must be string or number")
     return nil
   end
   requestEvent.matches = function(_, data)
-    return ((type(funcName) == 'string' and data.rpcFunctionId == functionId[funcName]) 
+    return ((type(funcName) == 'string' and data.rpcFunctionId == functionId[funcName])
          or (type(funcName) == 'number' and data.rpcFunctionId == funcName))
       and data.sessionId == RPCService.session.sessionId.get()
       and data.rpcType == constants.BINARY_RPC_TYPE.REQUEST
@@ -103,7 +103,7 @@ local function baseExpectResponse(RPCService, cor_id, ...)
   if(#tbl_corr_id > 0) then
     responseEvent.matches = function(_, data)
         for _, v in pairs(tbl_corr_id) do
-          if data.rpcCorrelationId == v 
+          if data.rpcCorrelationId == v
               and data.sessionId == RPCService.session.sessionId.get()
               and data.rpcType == constants.BINARY_RPC_TYPE.RESPONSE then
             return true
@@ -238,7 +238,7 @@ local function setFunctionId(func)
 end
 
 --- Send RPC message
--- @tparam string func Mobile function name
+-- @tparam ?string|number func Mobile function name or mobile function id
 -- @tparam table arguments RPC parameters
 -- @tparam string fileName RPC binary data
 -- @tparam boolean encrypt If True RPC payload will be encrypted
@@ -276,7 +276,7 @@ function mt.__index:SendRPC(func, arguments, fileName, encrypt)
 end
 
 --- Send RPC response
--- @tparam string func Mobile function name
+-- @tparam ?string|number func Mobile function name or mobile function id
 -- @tparam number cor_id Correlation identifier
 -- @tparam table arguments RPC parameters
 -- @tparam string fileName RPC binary data
@@ -338,6 +338,7 @@ function mt.__index:SendNotification(func, arguments, fileName, encrypt)
 end
 
 --- Create expectation for request from SDL and register it in expectation list
+-- @tparam ?string|number funcName Function name or function id
 -- @tparam table ... Expectations parameters
 -- @treturn Expectation Created expectation
 function mt.__index:ExpectRequest(funcName, ...)
@@ -386,7 +387,7 @@ function mt.__index:ExpectNotification(funcName, ...)
 end
 
 --- Create expectation for encrypted request from SDL and register it in expectation list
--- @tparam string funcName Request name
+-- @tparam ?string|number funcName Function name or function id
 -- @tparam table ... Expectations parameters
 -- @treturn Expectation Created expectation
 function mt.__index:ExpectEncryptedRequest(funcName, ...)
