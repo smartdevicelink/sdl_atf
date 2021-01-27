@@ -27,6 +27,7 @@ _total_passed=0
 _total_failed=0
 _total_aborted=0
 _total_skipped=0
+_total_missing=0
 
 function prepare_num_of_workers {
   local num=$(wc -l $_queue | awk '{print $1}')
@@ -273,12 +274,14 @@ function process_report {
   local failed_tests=$(cat $curr_report_file | grep "FAILED:" | awk '{print $2}')
   local aborted_tests=$(cat $curr_report_file | grep "ABORTED:" | awk '{print $2}')
   local skipped_tests=$(cat $curr_report_file | grep "SKIPPED:" | awk '{print $2}')
+  local missing_tests=$(cat $curr_report_file | grep "MISSING:" | awk '{print $2}')
 
   ((_overall_test_number+=total_tests))
   ((_total_passed+=passed_tests))
   ((_total_failed+=failed_tests))
   ((_total_aborted+=aborted_tests))
   ((_total_skipped+=skipped_tests))
+  ((_total_missing+=missing_tests))
 
   if [[ $passed_tests == 1 ]]; then
     echo -e "$dir_number:\tPASSED\t$test_target" >> $tmp_report_file
@@ -288,6 +291,8 @@ function process_report {
     echo -e "$dir_number:\tABORTED\t$test_target" >> $tmp_report_file
   elif [[ $skipped_tests == 1 ]]; then
     echo -e "$dir_number:\tSKIPPED\t$test_target" >> $tmp_report_file
+  elif [[ $missing_tests == 1 ]]; then
+    echo -e "$dir_number:\tMISSING\t$test_target" >> $tmp_report_file    
   else
     echo -e "$dir_number:\tPARSING ERROR\t$test_target" >> $tmp_report_file
     return 1
@@ -344,6 +349,7 @@ function generate_total_report {
   logf "${F}FAILED: $_total_failed" "${N}"
   logf "${A}ABORTED: $_total_aborted" "${N}"
   logf "${S}SKIPPED: $_total_skipped" "${N}"
+  logf "${B}MISSING: $_total_missing" "${N}"
   logf ${LINE2}
   logf "Execution time:" $(seconds2time $(($ts_finish - $ts_start)))
   logf ${LINE1}
