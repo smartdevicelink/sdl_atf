@@ -570,7 +570,7 @@ MessageBroker<TCPListener>::MakeEndpoint(const std::string &address,
 
   auto const ip_address = boost::asio::ip::make_address(address.c_str());
 
-  return tcp::endpoint{ip_address, port};
+  return tcp::endpoint{ip_address, static_cast<unsigned short>(port)};
 }
 
 #define LIBRARY_API extern "C"

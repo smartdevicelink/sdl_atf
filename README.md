@@ -29,7 +29,7 @@ $ git clone https://github.com/smartdevicelink/sdl_atf_test_scripts.git
 ```
 
 ## Compilation
-**1.** Install 3d-parties developers libraries
+**1.** Install 3rd-parties developers libraries
 - Run the following commands:
 ```
 $ sudo apt-get install lua5.2 liblua5.2-dev libxml2-dev lua-lpeg-dev
@@ -37,7 +37,7 @@ $ sudo apt-get install openssl libssl1.0-dev
 ```
 
 **2.** Install Qt5.9+
-- For Ubuntu `18.04`:
+- For Ubuntu `18.04+`:
     - Run the following command:
 ```
 $ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
@@ -83,7 +83,7 @@ $ ln -s ../../sdl_atf_test_scripts/user_modules
 **5.** Install dependencies for local parallel mode
 
 Steps below are required only in case if local parallel mode is going to be used.
-- Install Docker, e.g. [how-to](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04)
+- Install Docker, e.g. [how-to](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04)
 - Install additional tools:
 ```
 $ sudo apt-get install screen rsync
@@ -93,8 +93,8 @@ $ sudo apt-get install screen rsync
 $ cd atf_parallels/docker
 $ ./build.sh <ubuntu_version>
 ```
-<b>Note:</b> accepted values are `16` and `18` (will be processed as `16.04` and `18.04` correspondingly).
-If version is not specified `18` will be used by default.
+<b>Note:</b> accepted values are `16`, `18`, and `20` (will be processed as `16.04`, `18.04`, and `20.04` correspondingly).
+If version is not specified `20` will be used by default.
 
 ## Settings
 

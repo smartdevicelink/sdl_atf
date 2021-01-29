@@ -5,12 +5,14 @@ FROM ubuntu:${ubuntu_ver}
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get -q -y install \
-  locales sudo libssl1.0.0 libssl-dev libusb-1.0-0 libbluetooth3 openssl liblua5.2-0 psmisc \
+  locales sudo libssl1.1 libssl-dev libusb-1.0-0 libbluetooth3 openssl liblua5.2-0 psmisc \
   libexpat1 sqlite3 libqt5websockets5 net-tools iproute2 \
-  libssl-doc- libusb-1.0-doc- autotools-dev- binutils- build-essential- bzip2- cpp- cpp-5- \
+  libssl-doc- libusb-1.0-doc- autotools-dev- binutils- build-essential- bzip2- cpp- \
   dpkg-dev- fakeroot- manpages- manpages-dev- qttranslations5-l10n- xdg-user-dirs- xml-core- dbus-
 
-RUN ln -s /lib/x86_64-linux-gnu/libexpat.so.1.6.7 /usr/lib/x86_64-linux-gnu/libexpat.so
+ARG expat_lib_ver
+
+RUN ln -s /lib/x86_64-linux-gnu/libexpat.so.${expat_lib_ver} /usr/lib/x86_64-linux-gnu/libexpat.so
 
 RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
 
