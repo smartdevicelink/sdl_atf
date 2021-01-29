@@ -33,7 +33,7 @@ $ git clone https://github.com/smartdevicelink/sdl_atf_test_scripts.git
 - Run the following commands:
 ```
 $ sudo apt-get install lua5.2 liblua5.2-dev libxml2-dev lua-lpeg-dev
-$ sudo apt-get install openssl libssl1.0-dev
+$ sudo apt-get install openssl libssl-dev net-tools
 ```
 
 **2.** Install Qt5.9+
