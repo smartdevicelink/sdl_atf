@@ -19,8 +19,6 @@ fi
 
 case $_ubuntu_ver in
   16|18|20)
-    _ubuntu_ver=$_ubuntu_ver.04
-
     case $_ubuntu_ver in
       16)
         _openssl_lib_ver=1.0.0
@@ -30,6 +28,8 @@ case $_ubuntu_ver in
       *)
         ;;
     esac
+
+    _ubuntu_ver=$_ubuntu_ver.04
 
     if [ ! -z $_hosted_ubuntu_ver ]; then
       if [ ! $_hosted_ubuntu_ver = $_ubuntu_ver ]; then
