@@ -3,6 +3,7 @@
 _ubuntu_ver=$1
 _ubuntu_ver_default=20
 _hosted_ubuntu_ver=$(lsb_release -sr 2>/dev/null)
+_openssl_lib_ver=1.1
 _expat_lib_ver=1.6.11
 
 function warning {
@@ -22,7 +23,8 @@ case $_ubuntu_ver in
 
     case $_ubuntu_ver in
       16)
-        _expat_lib_ver=1.6.7;;
+        _openssl_lib_ver=1.0.0
+        _expat_lib_ver=1.6.0;;
       18)
         _expat_lib_ver=1.6.7;;
       *)
@@ -43,4 +45,4 @@ case $_ubuntu_ver in
     exit 1;;
 esac
 
-docker build --build-arg ubuntu_ver=$_ubuntu_ver --build-arg expat_lib_ver=$_expat_lib_ver -f Dockerfile -t atf_worker .
+docker build --build-arg ubuntu_ver=$_ubuntu_ver --build-arg openssl_lib_ver=$_openssl_lib_ver --build-arg expat_lib_ver=$_expat_lib_ver -f Dockerfile -t atf_worker .
