@@ -20,6 +20,7 @@ status() {
   logf "${F}FAILED:" ${#LIST_FAILED[@]} "${N}"
   logf "${A}ABORTED:" ${#LIST_ABORTED[@]} "${N}"
   logf "${S}SKIPPED:" ${#LIST_SKIPPED[@]} "${N}"
+  logf "${B}MISSING:" ${#LIST_MISSING[@]} "${N}"
   logf ${LINE2}
   logf "Execution time:" $(seconds2time $(($ts_finish - $ts_start)))
   logf ${LINE1}
@@ -64,20 +65,24 @@ run_atf() {
 
   if [ ${SCRIPT:0:1} != ";" ]; then
 
-    # Link file descriptors: #6 - stdout, #7 - stderr
-    exec 6>&1 7>&2
-    # Redirect all output to console and file
-    exec > >(tee -a -i ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE})
-    # Redirect stderr to stdout
-    exec 2>&1
-    sleep .1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib
-    ./ATF modules/launch.lua $SCRIPT $OPTIONS
+    if [ -f ${SCRIPT} ]; then
+      # Link file descriptors: #6 - stdout, #7 - stderr
+      exec 6>&1 7>&2
+      # Redirect all output to console and file
+      exec > >(tee -a -i ${REPORT_PATH_TS_SCRIPT}/${REPORT_FILE_CONSOLE})
+      # Redirect stderr to stdout
+      exec 2>&1
+      sleep .1
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib
+      ./ATF modules/launch.lua $SCRIPT $OPTIONS
 
-    RESULT_CODE=$?
+      RESULT_CODE=$?
 
-    # Restore stdout, stderr and close file descriptors #6 and #7
-    exec 1>&6 6>&- 2>&7 7>&-
+      # Restore stdout, stderr and close file descriptors #6 and #7
+      exec 1>&6 6>&- 2>&7 7>&-
+    else
+      RESULT_CODE=5
+    fi
 
   fi
 
@@ -98,6 +103,10 @@ run_atf() {
       RESULT_STATUS="SKIPPED"
       LIST_SKIPPED[ID]="$ID_SFX|$SCRIPT|$ISSUE"
     ;;
+    5)
+      RESULT_STATUS="MISSING"
+      LIST_MISSING[ID]="$ID_SFX|$SCRIPT|$ISSUE"
+    ;;    
   esac
 
   local total="$ID_SFX:\t$RESULT_STATUS\t$SCRIPT"
@@ -120,7 +129,8 @@ run() {
     "${P}PASSED: ${#LIST_PASSED[@]}, "\
     "${F}FAILED: ${#LIST_FAILED[@]}, "\
     "${A}ABORTED: ${#LIST_ABORTED[@]}, "\
-    "${S}SKIPPED: ${#LIST_SKIPPED[@]}"\
+    "${S}SKIPPED: ${#LIST_SKIPPED[@]}, "\
+    "${B}MISSING: ${#LIST_MISSING[@]}"\
     "${N}]"
 
   kill_sdl
