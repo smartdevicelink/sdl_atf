@@ -4,7 +4,6 @@
 #include "rpc/detail/log.h"
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <future>
@@ -126,7 +125,6 @@ private:
   void OnClose(boost::system::error_code ec);
 
   websocket::stream<tcp::socket> ws_;
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::beast::multi_buffer read_buffer_;
   std::queue<std::string> msg_queue_;
   std::mutex msg_queue_lock_;

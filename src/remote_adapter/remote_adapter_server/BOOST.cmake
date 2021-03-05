@@ -24,10 +24,14 @@ if(QNXNTO)
     set(CMAKE_FIND_ROOT_PATH "${CMAKE_FIND_ROOT_PATH}" "${BOOST_ROOT}")
 endif()
 
-find_package(Boost 1.68.0 COMPONENTS system filesystem)
+find_package(Boost 1.72.0 COMPONENTS system filesystem)
 
 if (NOT ${Boost_FOUND})
-    message(STATUS "Did not find boost. Downloading and installing boost 1.68")
+    message(STATUS "Did not find boost. Downloading and installing boost 1.72")
+    set(BOOST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/third_party/boost)
+    set(BOOST_INSTALL ${BOOST_ROOT})
+    set(BOOST_INCLUDE_DIRS ${BOOST_INSTALL}/include)
+    set(BOOST_LIBRARY_DIRS ${BOOST_INSTALL}/lib)
     if(NOT QNXNTO)
         set(BOOST_GCC_JAM "")
         set(BOOST_FILESYSTEM_OPERATION "")
@@ -59,7 +63,7 @@ if (NOT ${Boost_FOUND})
     endif()
     set(BOOST_INSTALL_COMMAND ${BOOST_BUILD_COMMAND} install)
     ExternalProject_Add(Boost
-        URL https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz https://newcontinuum.dl.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
+        URL https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz https://newcontinuum.dl.sourceforge.net/project/boost/boost/1.72.0/boost_1_72_0.tar.gz
         DOWNLOAD_DIR ${BOOST_LIB_SOURCE_DIRECTORY}
         SOURCE_DIR ${BOOST_LIB_SOURCE_DIRECTORY}
         CONFIGURE_COMMAND  ${BOOST_GCC_JAM} COMMAND ${BOOST_FILESYSTEM_OPERATION} COMMAND ${BOOTSTRAP}
@@ -67,6 +71,9 @@ if (NOT ${Boost_FOUND})
         INSTALL_COMMAND ${BOOST_INSTALL_COMMAND}
         INSTALL_DIR ${BOOST_INSTALL}
         BUILD_IN_SOURCE true)
+else()
+    set(BOOST_INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+    set(BOOST_LIBRARY_DIRS ${Boost_LIBRARY_DIRS})
 endif()
 
 set(BOOST_LIBRARIES

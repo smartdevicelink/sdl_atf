@@ -78,7 +78,7 @@ void Fail(boost::system::error_code ec, char const *what) {
 
 // //------------------------------------------------------------------------------
 WebsocketSession::WebsocketSession(tcp::socket socket)
-    : ws_(std::move(socket)), strand_(ws_.get_executor()) {
+    : ws_(std::move(socket)) {
   LOG_INFO("{0}", __func__);
 }
 
@@ -100,9 +100,8 @@ void WebsocketSession::AsyncRead() {
 
   ws_.async_read(
       read_buffer_,
-      boost::asio::bind_executor(
-          strand_, std::bind(&WebsocketSession::OnRead, shared_from_this(),
-                             std::placeholders::_1, std::placeholders::_2)));
+      std::bind(&WebsocketSession::OnRead, shared_from_this(),
+                std::placeholders::_1, std::placeholders::_2));
 }
 
 void WebsocketSession::OnRead(boost::system::error_code ec,
@@ -199,7 +198,7 @@ template <class Session> void WebsocketListener<Session>::Run() {
 
 template <class Session> void WebsocketListener<Session>::Stop() {
   LOG_INFO("{0}", __func__);
-  resolver_.get_io_context().stop();
+  resolver_.cancel();
   if (session_.use_count()) {
     session_->Close();
   }
@@ -229,9 +228,6 @@ void WebsocketListener<Session>::OnResolve(
   if (er) {
     Fail(er, "WebsocketListener::OnResolve connect");
     resolver_.cancel();
-    if (resolver_.get_io_context().stopped()) {
-      return;
-    }
     return DoResolve();
   }
 
