@@ -63,8 +63,8 @@ function prepare_sdl {
   fi
   LD_LIBRARY_PATH="$llp" \
     ldd $_sdl_prepared/bin/smartDeviceLinkCore \
-    | grep "$fltr" \
     | awk '{print $3}' \
+    | grep "$fltr" \
     | xargs -L1 -I LIB cp LIB $_sdl_prepared/bin
 }
 
@@ -292,7 +292,7 @@ function process_report {
   elif [[ $skipped_tests == 1 ]]; then
     echo -e "$dir_number:\tSKIPPED\t$test_target" >> $tmp_report_file
   elif [[ $missing_tests == 1 ]]; then
-    echo -e "$dir_number:\tMISSING\t$test_target" >> $tmp_report_file    
+    echo -e "$dir_number:\tMISSING\t$test_target" >> $tmp_report_file
   else
     echo -e "$dir_number:\tPARSING ERROR\t$test_target" >> $tmp_report_file
     return 1
