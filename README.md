@@ -29,15 +29,15 @@ $ git clone https://github.com/smartdevicelink/sdl_atf_test_scripts.git
 ```
 
 ## Compilation
-**1.** Install 3d-parties developers libraries
+**1.** Install 3rd-parties developers libraries
 - Run the following commands:
 ```
 $ sudo apt-get install lua5.2 liblua5.2-dev libxml2-dev lua-lpeg-dev
-$ sudo apt-get install openssl libssl1.0-dev
+$ sudo apt-get install openssl libssl-dev net-tools
 ```
 
 **2.** Install Qt5.9+
-- For Ubuntu `18.04`:
+- For Ubuntu `18.04+`:
     - Run the following command:
 ```
 $ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
@@ -83,7 +83,7 @@ $ ln -s ../../sdl_atf_test_scripts/user_modules
 **5.** Install dependencies for local parallel mode
 
 Steps below are required only in case if local parallel mode is going to be used.
-- Install Docker, e.g. [how-to](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04)
+- Install Docker, e.g. [how-to](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04)
 - Install additional tools:
 ```
 $ sudo apt-get install screen rsync
@@ -93,8 +93,8 @@ $ sudo apt-get install screen rsync
 $ cd atf_parallels/docker
 $ ./build.sh <ubuntu_version>
 ```
-<b>Note:</b> accepted values are `16` and `18` (will be processed as `16.04` and `18.04` correspondingly).
-If version is not specified `18` will be used by default.
+<b>Note:</b> accepted values are `16`, `18`, and `20` (will be processed as `16.04`, `18.04`, and `20.04` correspondingly).
+If version is not specified `20` will be used by default.
 
 ## Settings
 
@@ -231,6 +231,7 @@ The best approach is to use predefined configuration (e.g. `remote_linux`) as ba
 
 1. For a big tests sets (>1000 scripts) Report and Logs can be very huge (>10Gb). Most of the space is occupied by SDL logs. In order to turn them off `--sdl-log` or `--sdl-core-dump` options with `no` or `fail` value can be specified.
 2. Some scripts (old policy ones) create the same temporary files inside `files`, `test_scripts` or `user_modules` folders. In case of parallel mode the same temporary file can be used by different scripts at the same time. This leads to incorrect results or even aborts. In order to mitigate this issue `--copy-atf-ts` option can be specified. It tells ATF to copy mentioned folders for each job instead of creating symlinks.
+3. By default scripts for vehicle data executed for all available parameters. However there is possibility to restrict parameters to be tested by defining `VD_PARAMS` environment variable. E.g. `export VD_PARAMS=gps,speed` will allow to run the tests only for `gps` and `speed` vehicle data parameters.
 
 ## Documentation generation
 

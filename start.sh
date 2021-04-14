@@ -21,6 +21,7 @@ P="\033[0;32m" # GREEN
 F="\033[0;31m" # RED
 A="\033[0;35m" # MAGENTA
 S="\033[0;33m" # YELLOW
+B="\033[0;34m" # BLUE
 N="\033[0m"    # NONE
 
 dbg() {
