@@ -5,7 +5,7 @@ SDL_BACK_UP=("sdl_preloaded_pt.json" "smartDeviceLink.ini" "hmi_capabilities.jso
 
 # ATF and SDL files/folders to remove before each script run
 ATF_CLEAN_UP=("sdl.pid" "mobile*.out")
-SDL_CLEAN_UP=("*.log" "app_info.dat" "storage" "ivsu_cache" "../sdl_bin_bk")
+SDL_CLEAN_UP=("*.log" "storage" "ivsu_cache" "../sdl_bin_bk")
 
 logf() { log "$@" | tee -a ${REPORT_PATH_TS}/${REPORT_FILE}; }
 
