@@ -541,6 +541,16 @@ function SDL.AppStorage.clean(pPath)
   getExecFunc()("rm -rf " .. SDL.AppStorage.path() .. pPath)
 end
 
+SDL.AppIcons = {}
+
+function SDL.AppIcons.path()
+  return getPath(SDL.INI.get("AppIconsFolder"))
+end
+
+function SDL.AppIcons.clean()
+  getExecFunc()("rm -rf " .. SDL.AppIcons.path())
+end
+
 SDL.AppInfo = {}
 
 function SDL.AppInfo.file()
