@@ -554,7 +554,7 @@ end
 SDL.AppInfo = {}
 
 function SDL.AppInfo.file()
-  return getFilePath(SDL.INI.get("AppInfoStorage"))
+  return getFilePath(SDL.INI.get("AppInfoStorage"), SDL.INI.get("AppStorageFolder"))
 end
 
 function SDL.AppInfo.get()
@@ -565,6 +565,7 @@ end
 
 function SDL.AppInfo.set(pAppInfo)
   local content = json.encode(pAppInfo)
+  getExecFunc()("mkdir " .. SDL.AppStorage.path())
   saveFileContent(SDL.AppInfo.file(), content)
 end
 
@@ -593,6 +594,7 @@ end
 
 function SDL.HMICapCache.set(pHmiCapCache)
   local content = json.encode(pHmiCapCache)
+  getExecFunc()("mkdir " .. SDL.AppStorage.path())
   saveFileContent(SDL.HMICapCache.file(), content)
 end
 
