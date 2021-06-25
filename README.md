@@ -43,14 +43,6 @@ $ sudo apt-get install openssl libssl-dev net-tools
 $ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
 ```
 
-- For Ubuntu `16.04`:
-    - Run the following commands:
-```
-$ sudo add-apt-repository -y ppa:beineri/opt-qt591-xenial
-$ sudo apt-get update
-$ sudo apt-get install qt59base qt59websockets
-```
-
 **3.** Build ATF
 
 CMake 3.15 or newer is required to generate the build files and can be downloaded from [here](https://cmake.org/download/).
@@ -93,7 +85,7 @@ $ sudo apt-get install screen rsync
 $ cd atf_parallels/docker
 $ ./build.sh <ubuntu_version>
 ```
-<b>Note:</b> accepted values are `16`, `18`, and `20` (will be processed as `16.04`, `18.04`, and `20.04` correspondingly).
+<b>Note:</b> accepted values are `18` and `20` (will be processed as `18.04`, and `20.04` correspondingly).
 If version is not specified `20` will be used by default.
 
 ## Settings
