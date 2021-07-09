@@ -37,8 +37,7 @@ $ sudo apt-get install openssl libssl-dev net-tools
 ```
 
 **2.** Install Qt5.9+
-- For Ubuntu `18.04+`:
-    - Run the following command:
+- Run the following command:
 ```
 $ sudo apt-get install libqt5websockets5 libqt5websockets5-dev
 ```
