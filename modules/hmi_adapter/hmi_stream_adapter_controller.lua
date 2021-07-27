@@ -96,6 +96,7 @@ function Stream.PipeConnection(pipe, bytes, func)
     os.execute("head -c " .. tostring(bytes) .. " " .. pipe .. " > pipe_stream.out")
     local file = io.open("pipe_stream.out", "rb")
     res.receivedBytes = file:seek("end")
+    file:close()
 
     local success = res.receivedBytes >= res.callbackBytes
     res.callback(success, res.receivedBytes, "pipe_stream.out")
