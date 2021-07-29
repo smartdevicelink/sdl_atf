@@ -163,7 +163,7 @@ function Expectations.Expectation(name, connection)
     timesGE = 1, -- Times Greater or Equal
     after = { }, -- Expectations that should get complied before this one
     ts = timestamp(), -- Timestamp
-    timeout = 10500, -- Maximum allowed age
+    timeout = 11500, -- Maximum allowed age
     name = name, -- Name to display in error message if failed
     connection = connection, -- Network connection
     occurences = 0, -- Expectation complience times
