@@ -26,31 +26,36 @@ function Stream.TcpConnection(host, port, bytes, func)
     callback = func,
     callbackBytes = bytes,
     receivedBytes = 0,
-    file = io.open("tcp_stream.out","w+b")
+    data = {}
   }
 
   res.socket = network.TcpClient()
   res.qtproxy = qt.dynamic()
 
   function streamTcpCleanup()
-    res.callbackBytes = -1
-    res.file:close()
-    res.file = nil
+    local file = io.open("tcp_stream.out","w+b")
+    local streamedData = table.concat(res.data)
+    file:write(streamedData)
+    file:close()
   end
 
   function res.qtproxy.inputData(_, data)
-    if res.receivedBytes == 0 then
+    local tableIndex = #res.data
+    res.data[tableIndex+1] = data
+
+    if tableIndex == 0 then
         -- trim off TCP header
-        data = string.sub(data, data:find("\r\n\r\n") + 4)
+        local headerEnd = data:find("\r\n\r\n")
+        res.data[tableIndex+1] = string.sub(data, headerEnd + 4)
     end
 
     local data_len = #data
     res.receivedBytes = res.receivedBytes + data_len
-    if res.file then res.file:write(data) end
 
-    if res.callbackBytes > 0 and res.receivedBytes >= res.callbackBytes then
-        streamTcpCleanup()
-        res.callback(true, res.receivedBytes, "tcp_stream.out")
+    if res.callbackBytes ~= -1 and res.receivedBytes >= res.callbackBytes then
+      streamTcpCleanup()
+      res.callback(true, res.callbackBytes, "tcp_stream.out")
+      res.callbackBytes = -1
     end
   end
 
