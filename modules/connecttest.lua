@@ -188,7 +188,7 @@ function Test:initHMI()
 
   EXPECT_HMIEVENT(events.connectedEvent, "Connected websocket")
   :Do(function()
-      registerComponent("Buttons", {"Buttons.OnButtonSubscription"})
+      registerComponent("Buttons")
       registerComponent("TTS")
       registerComponent("VR")
       registerComponent("BasicCommunication",
