@@ -142,7 +142,6 @@ end
 -- @treturn boolean True if binary data is handshake data
 local function isHandshakeBinaryData(serviceType, rpcType, rpcFunctionId, rpcJsonSize)
   return serviceType == constants.SERVICE_TYPE.CONTROL
-    and rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
     and rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
     and rpcJsonSize == 0
 end
