@@ -61,7 +61,6 @@ local function get_function_name(message)
 
   if message.frameType ~= ford_constants.FRAME_TYPE.CONTROL_FRAME then
     if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL
-        and message.rpcType == ford_constants.BINARY_RPC_TYPE.NOTIFICATION
         and message.rpcFunctionId == ford_constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE then
       return "SSL: Handshake"
     end
