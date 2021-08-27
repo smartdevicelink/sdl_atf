@@ -33,7 +33,6 @@ local function performStartServiceHandshake(controlService)
         return data.frameType ~= constants.FRAME_TYPE.CONTROL_FRAME
           and data.serviceType == constants.SERVICE_TYPE.CONTROL
           and data.sessionId == controlService.session.sessionId.get()
-          and data.rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
           and data.rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
       end
 
@@ -46,7 +45,7 @@ local function performStartServiceHandshake(controlService)
             frameInfo = 0,
             serviceType = constants.SERVICE_TYPE.CONTROL,
             encryption = false,
-            rpcType = constants.BINARY_RPC_TYPE.NOTIFICATION,
+            rpcType = constants.BINARY_RPC_TYPE.RESPONSE,
             rpcFunctionId = constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE,
             rpcCorrelationId = data.rpcCorrelationId,
             binaryData = dataToSend
