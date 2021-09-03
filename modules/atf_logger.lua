@@ -64,6 +64,10 @@ local function get_function_name(message)
         and message.rpcFunctionId == ford_constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE then
       return "SSL: Handshake"
     end
+    if message.serviceType == ford_constants.SERVICE_TYPE.CONTROL
+        and message.rpcFunctionId == ford_constants.BINARY_RPC_FUNCTION_ID.INTERNAL_ERROR then
+      return "SSL: Internal Error"
+    end
   else
     return "controlMsg: " .. getControlFrameMessageName(message.frameInfo)
   end
