@@ -2,8 +2,8 @@
 --
 -- *Dependencies:* `qt`, `network`
 --
--- *Globals:* `xmlReporter`, `qt`, `network`
--- @module tcp_connection
+-- *Globals:* `qt`, `network`
+-- @module Stream
 -- @copyright [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
@@ -14,7 +14,7 @@ local Stream = { }
 
 --- Construct instance of Connection type
 -- @tparam string host SDL host address
--- @tparam string port SDL port
+-- @tparam number port SDL port
 -- @tparam number bytes Number of bytes to receive before calling callback
 -- @tparam function func Callback when stream ends or number of bytes are received
 -- @treturn Connection Constructed instance
@@ -44,7 +44,7 @@ function Stream.TcpConnection(host, port, bytes, func)
     res.data[tableIndex+1] = data
 
     if tableIndex == 0 then
-        -- trim off TCP header
+        -- trim off HTTP header
         local headerEnd = data:find("\r\n\r\n")
         res.data[tableIndex+1] = string.sub(data, headerEnd + 4)
     end
@@ -73,7 +73,7 @@ function Stream.TcpConnection(host, port, bytes, func)
       res.callback(false, res.receivedBytes, "tcp_video.out")
     end
   end
-  
+
   qt.connect(res.socket, "disconnected()", res.qtproxy, "disconnected()")
 
   res.qtproxy.connected = function() print("HMI connected to stream") end
