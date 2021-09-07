@@ -32,7 +32,7 @@ function Stream.TcpConnection(host, port, bytes, func)
   res.socket = network.TcpClient()
   res.qtproxy = qt.dynamic()
 
-  function streamTcpCleanup()
+  local function streamTcpCleanup()
     local file = io.open("tcp_stream.out","w+b")
     local streamedData = table.concat(res.data)
     file:write(streamedData)
