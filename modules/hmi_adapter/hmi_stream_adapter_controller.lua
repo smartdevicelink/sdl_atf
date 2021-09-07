@@ -32,7 +32,7 @@ function Stream.TcpConnection(host, port, bytes, func)
   res.socket = network.TcpClient()
   res.qtproxy = qt.dynamic()
 
-  local function streamTcpCleanup()
+  local function flushStreamTcpData()
     local file = io.open("tcp_stream.out","w+b")
     local streamedData = table.concat(res.data)
     file:write(streamedData)
@@ -44,16 +44,16 @@ function Stream.TcpConnection(host, port, bytes, func)
 
     if tableIndex == 0 then
         -- trim off HTTP header
-        local headerEnd = data:find("\r\n\r\n")
-        data = string.sub(data, headerEnd + 4)
+        local headerDelimeter = "\r\n\r\n"
+        local headerSize = data:find(headerDelimeter) + headerDelimeter:len()
+        data = string.sub(data, headerSize)
     end
 
     table.insert(res.data, data);
-    local data_len = #data
-    res.receivedBytes = res.receivedBytes + data_len
+    res.receivedBytes = res.receivedBytes + data:len()
 
     if res.callbackBytes ~= -1 and res.receivedBytes >= res.callbackBytes then
-      streamTcpCleanup()
+      flushStreamTcpData()
       res.callback(true, res.callbackBytes, "tcp_stream.out")
       res.callbackBytes = -1
     end
@@ -69,7 +69,7 @@ function Stream.TcpConnection(host, port, bytes, func)
 
   res.qtproxy.disconnected = function()
     if res.receivedBytes < res.callbackBytes then
-      streamTcpCleanup()
+      flushStreamTcpData()
       res.callback(false, res.receivedBytes, "tcp_stream.out")
     end
   end
