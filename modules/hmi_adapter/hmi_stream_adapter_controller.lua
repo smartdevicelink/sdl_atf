@@ -39,7 +39,7 @@ function Stream.TcpConnection(host, port, bytes, func)
     file:close()
   end
 
-  function res.qtproxy.inputData(_, data)
+  local function processInputData(data)
     local tableIndex = #res.data
 
     if tableIndex == 0 then
@@ -63,7 +63,7 @@ function Stream.TcpConnection(host, port, bytes, func)
     while true do
       local data = res.socket:read(81920)
       if data == '' or type(data) ~= "string" then break end
-      res.qtproxy:inputData(data)
+      processInputData(data)
     end
   end
 
