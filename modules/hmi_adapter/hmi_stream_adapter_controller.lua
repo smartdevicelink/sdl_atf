@@ -70,7 +70,7 @@ function Stream.TcpConnection(host, port, bytes, func)
   res.qtproxy.disconnected = function()
     if res.receivedBytes < res.callbackBytes then
       streamTcpCleanup()
-      res.callback(false, res.receivedBytes, "tcp_video.out")
+      res.callback(false, res.receivedBytes, "tcp_stream.out")
     end
   end
 
