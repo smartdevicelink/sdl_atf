@@ -41,14 +41,14 @@ function Stream.TcpConnection(host, port, bytes, func)
 
   function res.qtproxy.inputData(_, data)
     local tableIndex = #res.data
-    res.data[tableIndex+1] = data
 
     if tableIndex == 0 then
         -- trim off HTTP header
         local headerEnd = data:find("\r\n\r\n")
-        res.data[tableIndex+1] = string.sub(data, headerEnd + 4)
+        data = string.sub(data, headerEnd + 4)
     end
 
+    table.insert(res.data, data);
     local data_len = #data
     res.receivedBytes = res.receivedBytes + data_len
 
