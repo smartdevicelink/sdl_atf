@@ -143,7 +143,20 @@ end
 local function isHandshakeBinaryData(serviceType, rpcType, rpcFunctionId, rpcJsonSize)
   return serviceType == constants.SERVICE_TYPE.CONTROL
     and rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.HANDSHAKE
-    and rpcJsonSize == 0
+    and (not rpcJsonSize or rpcJsonSize == 0)
+end
+
+--- Check whether binary data is a Send Internal Error query
+-- @tparam number serviceType Value of field 'serviceType' from SDL protocol header
+-- @tparam number rpcType Value of field 'rpcType' from SDL binary header
+-- @tparam number rpcFunctionId Value of field 'rpcFunctionId' from SDL binary header
+-- @tparam number rpcJsonSize Value of field 'rpcJsonSize' from SDL binary header
+-- @treturn boolean True if binary data is handshake data
+local function isInternalErrorQuery(serviceType, rpcType, rpcFunctionId, rpcJsonSize)
+  return serviceType == constants.SERVICE_TYPE.CONTROL
+    and rpcType == constants.BINARY_RPC_TYPE.NOTIFICATION
+    and rpcFunctionId == constants.BINARY_RPC_FUNCTION_ID.INTERNAL_ERROR
+    and (not rpcJsonSize or rpcJsonSize ~= 0)
 end
 
 --- Check whether binary header should be built
@@ -160,8 +173,9 @@ local function hasToBuildBinaryHeader(message)
     end
     return false
   end
-  if isHandshakeBinaryData(message.serviceType, message.rpcType, message.rpcFunctionId, 0) then
-      return true
+  if isHandshakeBinaryData(message.serviceType, message.rpcType, message.rpcFunctionId, 0)
+      or isInternalErrorQuery(message.serviceType, message.rpcType, message.rpcFunctionId, 0) then
+    return true
   end
   return false
 end
@@ -176,7 +190,8 @@ local function parseBinaryHeader(message, validateJson)
   local rpcJsonSize = bytesToInt32(message.binaryData, 9)
 
   if message.serviceType == constants.SERVICE_TYPE.CONTROL
-    and (not isHandshakeBinaryData(message.serviceType, rpcType, rpcFunctionId, rpcJsonSize)) then
+      and not isHandshakeBinaryData(message.serviceType, rpcType, rpcFunctionId, rpcJsonSize) 
+      and not isInternalErrorQuery(message.serviceType, rpcType, rpcFunctionId, rpcJsonSize) then
     return
   end
 
