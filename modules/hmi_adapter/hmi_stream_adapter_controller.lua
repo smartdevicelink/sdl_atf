@@ -7,6 +7,8 @@
 -- @copyright [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
 
+local ATF = require("ATF")
+
 local Stream = { }
 
 --- Type which provides transport level interface for emulate connection with SDL from HMI
@@ -97,15 +99,33 @@ function Stream.PipeConnection(pipe, bytes, func)
       callbackBytes = bytes,
       receivedBytes = 0,
     }
-
-    os.execute("head -c " .. tostring(bytes) .. " " .. pipe .. " > pipe_stream.out")
-    local file = io.open("pipe_stream.out", "rb")
-    res.receivedBytes = file:seek("end")
-    file:close()
-
+    local pipeContentFileName = "pipe_stream.out"
+    local command = "head -c " .. tostring(bytes) .. " " .. pipe .. " > " .. pipeContentFileName
+    if config.remoteConnection.enabled then
+      ATF.remoteUtils.app:ExecuteCommand(command)
+      local _, isExists = ATF.remoteUtils.file:IsFileExists(".", pipeContentFileName)
+      if isExists then
+        local isSuccess, path = ATF.remoteUtils.file:GetFile(".", pipeContentFileName)
+        if isSuccess then
+          ATF.remoteUtils.file:DeleteFile(".", pipeContentFileName)
+          local file = io.open(path, "rb")
+          res.receivedBytes = file:seek("end")
+          file:close()
+          pipeContentFileName = path
+        else
+          pipeContentFileName = ""
+        end
+      else
+        pipeContentFileName = ""
+      end
+    else
+      os.execute(command)
+      local file = io.open(pipeContentFileName, "rb")
+      res.receivedBytes = file:seek("end")
+      file:close()
+    end
     local success = res.receivedBytes >= res.callbackBytes
-    res.callback(success, res.receivedBytes, "pipe_stream.out")
-
+    res.callback(success, res.receivedBytes, pipeContentFileName)
     return res
   end
 
