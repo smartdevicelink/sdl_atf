@@ -2,10 +2,12 @@
 --
 -- *Dependencies:* `qt`, `network`
 --
--- *Globals:* `xmlReporter`, `qt`, `network`
--- @module tcp_connection
+-- *Globals:* `qt`, `network`
+-- @module Stream
 -- @copyright [SmartDeviceLink Consortium](https://smartdevicelink.com/consortium/)
 -- @license <https://github.com/smartdevicelink/sdl_core/blob/master/LICENSE>
+
+local ATF = require("ATF")
 
 local Stream = { }
 
@@ -14,7 +16,7 @@ local Stream = { }
 
 --- Construct instance of Connection type
 -- @tparam string host SDL host address
--- @tparam string port SDL port
+-- @tparam number port SDL port
 -- @tparam number bytes Number of bytes to receive before calling callback
 -- @tparam function func Callback when stream ends or number of bytes are received
 -- @treturn Connection Constructed instance
@@ -32,28 +34,28 @@ function Stream.TcpConnection(host, port, bytes, func)
   res.socket = network.TcpClient()
   res.qtproxy = qt.dynamic()
 
-  function streamTcpCleanup()
+  local function flushStreamTcpData()
     local file = io.open("tcp_stream.out","w+b")
     local streamedData = table.concat(res.data)
     file:write(streamedData)
     file:close()
   end
 
-  function res.qtproxy.inputData(_, data)
+  local function processInputData(data)
     local tableIndex = #res.data
-    res.data[tableIndex+1] = data
 
     if tableIndex == 0 then
-        -- trim off TCP header
-        local headerEnd = data:find("\r\n\r\n")
-        res.data[tableIndex+1] = string.sub(data, headerEnd + 4)
+        -- trim off HTTP header
+        local headerDelimeter = "\r\n\r\n"
+        local headerSize = data:find(headerDelimeter) + headerDelimeter:len()
+        data = string.sub(data, headerSize)
     end
 
-    local data_len = #data
-    res.receivedBytes = res.receivedBytes + data_len
+    table.insert(res.data, data);
+    res.receivedBytes = res.receivedBytes + data:len()
 
     if res.callbackBytes ~= -1 and res.receivedBytes >= res.callbackBytes then
-      streamTcpCleanup()
+      flushStreamTcpData()
       res.callback(true, res.callbackBytes, "tcp_stream.out")
       res.callbackBytes = -1
     end
@@ -63,17 +65,17 @@ function Stream.TcpConnection(host, port, bytes, func)
     while true do
       local data = res.socket:read(81920)
       if data == '' or type(data) ~= "string" then break end
-      res.qtproxy:inputData(data)
+      processInputData(data)
     end
   end
 
   res.qtproxy.disconnected = function()
     if res.receivedBytes < res.callbackBytes then
-      streamTcpCleanup()
-      res.callback(false, res.receivedBytes, "tcp_video.out")
+      flushStreamTcpData()
+      res.callback(false, res.receivedBytes, "tcp_stream.out")
     end
   end
-  
+
   qt.connect(res.socket, "disconnected()", res.qtproxy, "disconnected()")
 
   res.qtproxy.connected = function() print("HMI connected to stream") end
@@ -97,15 +99,33 @@ function Stream.PipeConnection(pipe, bytes, func)
       callbackBytes = bytes,
       receivedBytes = 0,
     }
-
-    os.execute("head -c " .. tostring(bytes) .. " " .. pipe .. " > pipe_stream.out")
-    local file = io.open("pipe_stream.out", "rb")
-    res.receivedBytes = file:seek("end")
-    file:close()
-
+    local pipeContentFileName = "pipe_stream.out"
+    local command = "head -c " .. tostring(bytes) .. " " .. pipe .. " > " .. pipeContentFileName
+    if config.remoteConnection.enabled then
+      ATF.remoteUtils.app:ExecuteCommand(command)
+      local _, isExists = ATF.remoteUtils.file:IsFileExists(".", pipeContentFileName)
+      if isExists then
+        local isSuccess, path = ATF.remoteUtils.file:GetFile(".", pipeContentFileName)
+        if isSuccess then
+          ATF.remoteUtils.file:DeleteFile(".", pipeContentFileName)
+          local file = io.open(path, "rb")
+          res.receivedBytes = file:seek("end")
+          file:close()
+          pipeContentFileName = path
+        else
+          pipeContentFileName = ""
+        end
+      else
+        pipeContentFileName = ""
+      end
+    else
+      os.execute(command)
+      local file = io.open(pipeContentFileName, "rb")
+      res.receivedBytes = file:seek("end")
+      file:close()
+    end
     local success = res.receivedBytes >= res.callbackBytes
-    res.callback(success, res.receivedBytes, "pipe_stream.out")
-
+    res.callback(success, res.receivedBytes, pipeContentFileName)
     return res
   end
 
