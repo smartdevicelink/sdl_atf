@@ -18,11 +18,8 @@ if [ -z $_ubuntu_ver ]; then
 fi
 
 case $_ubuntu_ver in
-  16|18|20)
+  18|20)
     case $_ubuntu_ver in
-      16)
-        _openssl_lib_ver=1.0.0
-        _expat_lib_ver=1.6.0;;
       18)
         _expat_lib_ver=1.6.7;;
       *)
@@ -41,7 +38,7 @@ case $_ubuntu_ver in
 
     echo "Ubuntu version: "$_ubuntu_ver;;
   *)
-    warning "Specified Ubuntu version '$_ubuntu_ver' is unexpected. Allowed versions: 16, 18, or 20";
+    warning "Specified Ubuntu version '$_ubuntu_ver' is unexpected. Allowed versions: 18 or 20";
     exit 1;;
 esac
 

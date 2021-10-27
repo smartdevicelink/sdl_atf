@@ -66,5 +66,22 @@ SDLProtocolConstants.BINARY_RPC_TYPE = {
 --- RPC Function Id for Binary header
 SDLProtocolConstants.BINARY_RPC_FUNCTION_ID = {
   HANDSHAKE = 0x1,
+  INTERNAL_ERROR = 0x2
 }
+
+--- Error code for Send Internal Error query notification
+SDLProtocolConstants.QUERY_ERROR_CODE = {
+  SUCCESS = 0x00,
+  INVALID_QUERY_SIZE = 0x01,  -- wrong size of query data
+  INVALID_QUERY_ID = 0x02,    -- unknown query id
+  NOT_SUPPORTED = 0x03,       -- SDL does not support encryption
+  SERVICE_ALREADY_PROTECTED = 0x04,
+  SERVICE_NOT_PROTECTED = 0x05,  -- got handshake or encrypted data for not protected service
+  DECRYPTION_FAILED = 0x06,
+  ENCRYPTION_FAILED = 0x07,
+  SSL_INVALID_DATA = 0x08,
+  INTERNAL = 0xFF,
+  UNKNOWN_INTERNAL_ERROR = 0xFE  -- error value for testing
+}
+
 return SDLProtocolConstants

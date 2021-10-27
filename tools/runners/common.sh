@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 # SDL files to back-up
-SDL_BACK_UP=("sdl_preloaded_pt.json" "smartDeviceLink.ini" "hmi_capabilities.json" "log4cxx.properties")
+SDL_BACK_UP=("sdl_preloaded_pt.json" "smartDeviceLink.ini" "hmi_capabilities.json" "log4cxx.properties" "boostlogconfig.ini")
 
 # ATF and SDL files/folders to remove before each script run
 ATF_CLEAN_UP=("sdl.pid" "mobile*.out")
-SDL_CLEAN_UP=("*.log" "app_info.dat" "storage" "ivsu_cache" "../sdl_bin_bk")
+SDL_CLEAN_UP=("*.log" "storage" "icons" "ivsu_cache" "../sdl_bin_bk")
 
 logf() { log "$@" | tee -a ${REPORT_PATH_TS}/${REPORT_FILE}; }
 
@@ -106,7 +106,7 @@ run_atf() {
     5)
       RESULT_STATUS="MISSING"
       LIST_MISSING[ID]="$ID_SFX|$SCRIPT|$ISSUE"
-    ;;    
+    ;;
   esac
 
   local total="$ID_SFX:\t$RESULT_STATUS\t$SCRIPT"

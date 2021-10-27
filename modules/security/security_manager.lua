@@ -218,7 +218,7 @@ function SecurityManager:encrypt(data, sessionId, serviceType)
     error("Error [encrypt]: Session " .. sessionId .. " is not registered in ATF Security manager")
   end
   if not security:checkSecureService(serviceType) then
-    error("Error: Try to send encrypted message with not secure service" .. serviceType)
+    print("Warning: Trying to send encrypted message with not secure service " .. serviceType)
   end
   return security:encrypt(data)
 end
