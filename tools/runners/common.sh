@@ -179,11 +179,23 @@ copy_sdl_logs() {
       mv $SDL_LOG ${REPORT_PATH_TS_SCRIPT}/
     fi
   fi
-  if [ $SAVE_SDL_CORE_DUMP = yes ] || ( [ $SAVE_SDL_CORE_DUMP = fail ] && [ $is_script_failed == true ] ); then
-    local SDL_CORE_PATH="/tmp/corefiles"
-    if [ -d $SDL_CORE_PATH ] && [ "$(ls -A $SDL_CORE_PATH)" ]; then
-      mv $SDL_CORE_PATH/* ${REPORT_PATH_TS_SCRIPT}/
-    fi
+  local SDL_CORE_PATH="/tmp/corefiles"
+  if [ -d $SDL_CORE_PATH ] && [ "$(ls -A $SDL_CORE_PATH)" ]; then
+    for FILE in "$(find $SDL_CORE_PATH -type f)"; do
+      echo "Creating backtrace from file:" $(basename ${FILE})
+      gdb --batch \
+        -iex "cd $SDL_CORE" \
+        -iex "set pagination off" \
+        -iex "set solib-search-path ." \
+        -ex "info threads" \
+        -ex "thread apply all bt" \
+        $SDL_PROCESS_NAME ${FILE} &> ${REPORT_PATH_TS_SCRIPT}/Backtrace_$(basename ${FILE}).txt
+      if [ $SAVE_SDL_CORE_DUMP = yes ] || ( [ $SAVE_SDL_CORE_DUMP = fail ] && [ $is_script_failed == true ] ); then
+        mv ${FILE} ${REPORT_PATH_TS_SCRIPT}/
+      else
+        rm -f ${FILE}
+      fi
+    done
   fi
 }
 

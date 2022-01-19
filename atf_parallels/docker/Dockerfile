@@ -8,7 +8,7 @@ ARG openssl_lib_ver
 
 RUN apt-get update && apt-get -q -y install \
   locales sudo libssl${openssl_lib_ver} libssl-dev libusb-1.0-0 libbluetooth3 openssl liblua5.2-0 psmisc \
-  libexpat1 sqlite3 libqt5websockets5 net-tools iproute2 \
+  libexpat1 sqlite3 libqt5websockets5 net-tools iproute2 gdb \
   libssl-doc- libusb-1.0-doc- autotools-dev- binutils- build-essential- bzip2- cpp- \
   dpkg-dev- fakeroot- manpages- manpages-dev- qttranslations5-l10n- xdg-user-dirs- xml-core- dbus-
 

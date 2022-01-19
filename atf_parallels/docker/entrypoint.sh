@@ -19,7 +19,7 @@ echo "export LANG=en_US.UTF-8" >> /home/developer/.profile
 mkdir /tmp/corefiles
 chown developer /tmp/corefiles
 chgrp developer /tmp/corefiles
-echo '/tmp/corefiles/core.%e.%p.%t' > /proc/sys/kernel/core_pattern
+echo '/tmp/corefiles/core.sdl.%p.%t' > /proc/sys/kernel/core_pattern
 
 cd /home/developer/sdl/atf
 sudo -E -u developer ./start.sh "$@"
