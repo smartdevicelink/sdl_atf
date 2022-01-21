@@ -65,6 +65,13 @@ end
 -- Checks: SDL Core binary, HMI and MObile API files
 -- Stop ATF execution in case any error
 local function check_required_fields()
+  local function check_api_exists(interface_path, api_file)
+    if (not is_file_exists(interface_path..api_file)) and
+       (not is_file_exists(interface_path.."/"..api_file)) then
+      print("ERROR:"..api_file.."file is not accessible at the specified path: "..interface_path)
+      os.exit(1)
+    end
+  end
   if not config.remoteConnection.enabled then
     if (not is_file_exists(config.pathToSDL..config.SDL)) and
        (not is_file_exists(config.pathToSDL.."/" .. config.SDL)) then
@@ -72,14 +79,16 @@ local function check_required_fields()
       os.exit(1)
     end
   end
-  if config.pathToSDLInterfaces~="" and config.pathToSDLInterfaces~=nil then
-    if (not is_file_exists(config.pathToSDLInterfaces.."MOBILE_API.xml")) and
-       (not is_file_exists(config.pathToSDLInterfaces.."/MOBILE_API.xml")) then
-      print("ERROR: XML files are not accessible at the specified path: "..config.pathToSDLInterfaces)
-      os.exit(1)
-    end
+
+  if config.pathToSDLSource~="" and config.pathToSDLSource~=nil then
+    check_api_exists(config.pathToSDLSource..config.defaultPathToMobileInterface, "MOBILE_API.xml")
+    check_api_exists(config.pathToSDLSource..config.defaultPathToHMIInterface, "HMI_API.xml")
+  elseif (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
+         (config.pathToSDLHMIInterface~="" and config.pathToSDLHMIInterface~=nil) then
+    check_api_exists(config.pathToSDLMobileInterface, "MOBILE_API.xml")
+    check_api_exists(config.pathToSDLHMIInterface, "HMI_API.xml")
   else
-    print "\27[33m WARNING: Parameter pathToSDLInterfaces is not specified, default APIs are used \27[0m"
+    print "\27[33m WARNING: Parameters pathToSDLMobileInterface and pathToSDLHMIInterface (or pathToSDLSource) are not specified, default APIs are used \27[0m"
   end
 end
 
@@ -262,10 +271,22 @@ function Util.commandLine.sdl_core(str)
   config.pathToSDL = str
 end
 
---- Overwrite property pathToSDLInterfaces in configuration of ATF
+--- Overwrite property pathToSDLSource in configuration of ATF
 -- @tparam string str Value
-function Util.commandLine.sdl_interfaces(str)
-  config.pathToSDLInterfaces = str
+function Util.commandLine.sdl_src(str)
+  config.pathToSDLSource = str
+end
+
+--- Overwrite property pathToSDLMobileInterface in configuration of ATF
+-- @tparam string str Value
+function Util.commandLine.sdl_mobile_api(str)
+  config.pathToSDLMobileInterface = str
+end
+
+--- Overwrite property pathToSDLHMIInterface in configuration of ATF
+-- @tparam string str Value
+function Util.commandLine.sdl_hmi_api(str)
+  config.pathToSDLHMIInterface = str
 end
 
 --- Overwrite property SecurityProtocol in configuration of ATF
@@ -326,11 +347,19 @@ local function copy_file(file, newfile)
 end
 
 local function copy_interfaces()
-  if config.pathToSDLInterfaces ~= "" and config.pathToSDLInterfaces ~= nil then
-    local mobile_api = config.pathToSDLInterfaces .. '/MOBILE_API.xml'
-    local hmi_api = config.pathToSDLInterfaces .. '/HMI_API.xml'
+  local function copy_files(mobile_interface_path, hmi_interface_path)
+    local mobile_api = mobile_interface_path .. '/MOBILE_API.xml'
+    local hmi_api = hmi_interface_path .. '/HMI_API.xml'
     copy_file(mobile_api, 'data/MOBILE_API.xml')
     copy_file(hmi_api, 'data/HMI_API.xml')
+  end
+
+  if config.pathToSDLSource~="" and config.pathToSDLSource~=nil then
+    copy_files(config.pathToSDLSource..config.defaultPathToMobileInterface, 
+      config.pathToSDLSource..config.defaultPathToHMIInterface)
+  elseif (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
+         (config.pathToSDLHMIInterface~="" and config.pathToSDLHMIInterface~=nil) then
+    copy_files(config.pathToSDLMobileInterface, config.pathToSDLHMIInterface)
   end
 end
 

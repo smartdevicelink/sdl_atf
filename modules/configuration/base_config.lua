@@ -29,9 +29,19 @@ config.defaultProtocolVersion = 3
 config.pathToSDL = ""
 --- Define path to SDL Policy database
 config.pathToSDLPolicyDB = "policy.sqlite"
---- Define path to SDL interfaces
--- Example: "/home/user/sdl_panasonic/src/components/interfaces"
-config.pathToSDLInterfaces = ""
+--- Define path to SDL source
+-- Example: "/home/user/sdl_core"
+config.pathToSDLSource = ""
+--- Define default path to the mobile interface folder
+config.defaultPathToMobileInterface = "/tools/rpc_spec"
+---Define default path to the hmi interface
+config.defaultPathToHMIInterface = "/src/components/interfaces"
+--- Define path to SDL MOBILE interface
+-- Example: "/home/user/sdl_core/tools/rpc_spec"
+config.pathToSDLMobileInterface = ""
+--- Define path to SDL HMI interface
+-- Example: "/home/user/sdl_core/src/components/interfaces"
+config.pathToSDLHMIInterface = ""
 --- Define SDL modification
 config.SDL = "smartDeviceLinkCore"
 --- Flag which defines behavior of ATF on SDL crash
