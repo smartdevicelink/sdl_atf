@@ -68,7 +68,7 @@ local function check_required_fields()
   local function check_api_exists(interface_path, api_file)
     if (not is_file_exists(interface_path..api_file)) and
        (not is_file_exists(interface_path.."/"..api_file)) then
-      print("ERROR:"..api_file.."file is not accessible at the specified path: "..interface_path)
+      print("ERROR: "..api_file.." file is not accessible at the specified path: "..interface_path)
       os.exit(1)
     end
   end
