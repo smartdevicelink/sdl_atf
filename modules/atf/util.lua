@@ -62,7 +62,7 @@ local function convert_ms(milliseconds)
 end
 
 --- Check mandatory files existence for testing
--- Checks: SDL Core binary, HMI and MObile API files
+-- Checks: SDL Core binary, HMI and Mobile API files
 -- Stop ATF execution in case any error
 local function check_required_fields()
   local function check_api_exists(interface_path, api_file)
@@ -80,10 +80,7 @@ local function check_required_fields()
     end
   end
 
-  if config.pathToSDLSource~="" and config.pathToSDLSource~=nil then
-    check_api_exists(config.pathToSDLSource..config.defaultPathToMobileInterface, "MOBILE_API.xml")
-    check_api_exists(config.pathToSDLSource..config.defaultPathToHMIInterface, "HMI_API.xml")
-  elseif (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
+  if (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
          (config.pathToSDLHMIInterface~="" and config.pathToSDLHMIInterface~=nil) then
     check_api_exists(config.pathToSDLMobileInterface, "MOBILE_API.xml")
     check_api_exists(config.pathToSDLHMIInterface, "HMI_API.xml")
@@ -271,10 +268,20 @@ function Util.commandLine.sdl_core(str)
   config.pathToSDL = str
 end
 
---- Overwrite property pathToSDLSource in configuration of ATF
+--- Overwrite property pathToSDLSource (and pathToSDLMobileInterface and pathToSDLHMIInterface if undefined)
+--  in configuration of ATF
 -- @tparam string str Value
 function Util.commandLine.sdl_src(str)
   config.pathToSDLSource = str
+
+  if (config.pathToSDLSource~="" and config.pathToSDLSource~=nil) then
+    if (config.pathToSDLMobileInterface=="" or config.pathToSDLMobileInterface==nil) then
+      config.pathToSDLMobileInterface = config.pathToSDLSource..config.defaultPathToMobileInterface 
+    end
+    if (config.pathToSDLHMIInterface=="" or config.pathToSDLHMIInterface==nil) then
+      config.pathToSDLHMIInterface = config.pathToSDLSource..config.defaultPathToHMIInterface
+    end
+  end
 end
 
 --- Overwrite property pathToSDLMobileInterface in configuration of ATF
@@ -354,10 +361,7 @@ local function copy_interfaces()
     copy_file(hmi_api, 'data/HMI_API.xml')
   end
 
-  if config.pathToSDLSource~="" and config.pathToSDLSource~=nil then
-    copy_files(config.pathToSDLSource..config.defaultPathToMobileInterface, 
-      config.pathToSDLSource..config.defaultPathToHMIInterface)
-  elseif (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
+  if (config.pathToSDLMobileInterface~="" and config.pathToSDLMobileInterface~=nil) and
          (config.pathToSDLHMIInterface~="" and config.pathToSDLHMIInterface~=nil) then
     copy_files(config.pathToSDLMobileInterface, config.pathToSDLHMIInterface)
   end

@@ -11,6 +11,7 @@ _test_result_path="$REPORT_PATH_TS"
 _testfile="$TEST_TARGET"
 _path_sdl_mobile_api="$SDL_MOBILE_API"
 _path_sdl_hmi_api="$SDL_HMI_API"
+_path_sdl_src="$SDL_SRC"
 _path_3rd_party="$THIRD_PARTY"
 _save_sdl_log="$SAVE_SDL_LOG"
 _save_sdl_core_dump="$SAVE_SDL_CORE_DUMP"
@@ -118,11 +119,18 @@ function prepare_atf {
     cp -r $(realpath ./$dir) $atf_tmp_ts_dir/
   done
 
+  local config_file=$atf_tmp_dir/modules/configuration/base_config.lua
+  if [ -n "$_path_sdl_src" ]; then
+    default_mobile_api_dir=$(fgrep "config.defaultPathToMobileInterface" $config_file | sed 's/config.defaultPathToMobileInterface\s=\s"//;s/"$//')
+    default_hmi_api_dir=$(fgrep "config.defaultPathToHMIInterface" $config_file | sed 's/config.defaultPathToHMIInterface\s=\s"//;s/"$//')
+    
+    _path_sdl_mobile_api=$(realpath "${_path_sdl_src}/${default_mobile_api_dir}")
+    _path_sdl_hmi_api=$(realpath "${_path_sdl_src}/${default_hmi_api_dir}")
+    sed -i '/^config.pathToSDLSource\ =/c\config.pathToSDLSource=""' $config_file
+  fi
   if [ -n "$_path_sdl_mobile_api" ]; then cp $_path_sdl_mobile_api/*.xml $atf_tmp_dir/data; fi
   if [ -n "$_path_sdl_hmi_api" ]; then cp $_path_sdl_hmi_api/*.xml $atf_tmp_dir/data; fi
 
-
-  local config_file=$atf_tmp_dir/modules/configuration/base_config.lua
   sed -i '/^config.pathToSDL\ =/c\config.pathToSDL="/home/developer/sdl/bin"' $config_file
   sed -i '/^config.pathToSDLMobileInterface\ =/c\config.pathToSDLMobileInterface="/home/developer/sdl/atf/data"' $config_file
   sed -i '/^config.pathToSDLHMIInterface\ =/c\config.pathToSDLHMIInterface="/home/developer/sdl/atf/data"' $config_file

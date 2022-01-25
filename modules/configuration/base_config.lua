@@ -33,8 +33,10 @@ config.pathToSDLPolicyDB = "policy.sqlite"
 -- Example: "/home/user/sdl_core"
 config.pathToSDLSource = ""
 --- Define default path to the mobile interface folder
+-- Used in conjunction with pathToSDLSource (pathToSDLSource..defaultPathToMobileInterface)
 config.defaultPathToMobileInterface = "/tools/rpc_spec"
----Define default path to the hmi interface
+--- Define default path to the HMI interface folder
+-- Used in conjunction with pathToSDLSource (pathToSDLSource..defaultPathToHMIInterface)
 config.defaultPathToHMIInterface = "/src/components/interfaces"
 --- Define path to SDL MOBILE interface
 -- Example: "/home/user/sdl_core/tools/rpc_spec"

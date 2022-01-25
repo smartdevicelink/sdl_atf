@@ -322,15 +322,15 @@ check_parameters() {
     exit 1
   fi
   if [ ! -d $SDL_SRC ]; then
-    echo "Invalid path to SDL core was specified"
+    echo "Invalid path to SDL source was specified: ${SDL_SRC}"
     exit 1
   fi
   if [ ! -d $SDL_MOBILE_API ]; then
-    echo "Invalid path to MOBILE API was specified"
+    echo "Invalid path to MOBILE API was specified: ${SDL_MOBILE_API}"
     exit 1
   fi
   if [ ! -d $SDL_HMI_API ]; then
-    echo "Invalid path to HMI API was specified"
+    echo "Invalid path to HMI API was specified: ${SDL_HMI_API}"
     exit 1
   fi
   if [ ! -d $SDL_CORE ] && [ $IS_REMOTE_ENABLED = false ]; then

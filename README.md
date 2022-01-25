@@ -99,8 +99,8 @@ base_config.lua       | config.SDL                      |                   | SD
 base_config.lua       | config.reportPath               | --report          | Path to reports and logs
 base_config.lua       | config.pathToSDL                | --sdl-core        | Path to SDL binaries
 base_config.lua       | config.pathToSDLSource          | --sdl-src         | Path to SDL Core
-base_config.lua       | config.pathToSDLMobileInterface | --sdl-mobile-api  | Path to SDL MOBILE API. Not used if `pathToSDLSource` is defined
-base_config.lua       | config.pathToSDLHMIInterface    | --sdl-hmi-api     | Path to SDL HMI API. Not used if `pathToSDLSource` is defined
+base_config.lua       | config.pathToSDLMobileInterface | --sdl-mobile-api  | Path to SDL MOBILE API.
+base_config.lua       | config.pathToSDLHMIInterface    | --sdl-hmi-api     | Path to SDL HMI API.
 connection_config.lua | config.remoteConnection.enabled |                   | Defines if remote connection is enabled
 
 ### Priorities
@@ -130,8 +130,8 @@ Being in `atf_build/bin` folder run the command:
   - --sdl-core &lt;path&gt;  - path to SDL binaries
   - --config &lt;folder&gt;  - name of the folder with configuration
   - --sdl-src &lt;path&gt;   - path to SDL Core
-  - --sdl-mobile-api &lt;path&gt;   - path to SDL MOBILE API. Not used if pathToSDLSource is defined
-  - --sdl-hmi-api &lt;path&gt;   - path to SDL HMI API. Not used if pathToSDLSource is defined
+  - --sdl-mobile-api &lt;path&gt;   - path to SDL MOBILE API
+  - --sdl-hmi-api &lt;path&gt;   - path to SDL HMI API
   - --report &lt;path&gt;    - path to report and logs
   - --sdl-log [ACTION]       - how to collect SDL logs:
     'yes' - (default) always save, 'no' - do not save, 'fail' - save if script failed or aborted
