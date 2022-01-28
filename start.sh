@@ -67,7 +67,9 @@ show_help() {
   echo "[OPTION] - one or more options:"
   echo "   --sdl-core               - path to SDL binaries"
   echo "   --config                 - name of configuration"
-  echo "   --sdl-api                - path to SDL APIs"
+  echo "   --sdl-src                - path to SDL Core"
+  echo "   --sdl-mobile-api         - path to SDL MOBILE API"
+  echo "   --sdl-hmi-api            - path to SDL HMI API"
   echo "   --report                 - path to report and logs"
   echo "   --sdl-log [ACTION]       - how to collect SDL logs"
   echo "     'yes' - always save (default), 'no' - do not save, 'fail' - save if script failed or aborted"
@@ -152,8 +154,14 @@ parse_arguments() {
       --report)
         REPORT_PATH="$ARG_VAL"
       ;;
-      --sdl-api)
-        SDL_API="$ARG_VAL"
+      --sdl-src)
+        SDL_SRC="$ARG_VAL"
+      ;;
+      --sdl-mobile-api)
+        SDL_MOBILE_API="$ARG_VAL"
+      ;;
+      --sdl-hmi-api)
+        SDL_HMI_API="$ARG_VAL"
       ;;
       -j|--jobs)
         JOBS="$ARG_VAL"
@@ -205,7 +213,9 @@ print_parameters() {
   dbg "REPORT_PATH: "$REPORT_PATH
   dbg "SDL_PROCESS_NAME: "$SDL_PROCESS_NAME
   dbg "SDL_CORE: "$SDL_CORE
-  dbg "SDL_API: "$SDL_API
+  dbg "SDL_SRC: "$SDL_SRC
+  dbg "SDL_MOBILE_API: "$SDL_MOBILE_API
+  dbg "SDL_HMI_API: "$SDL_HMI_API
   dbg "IS_REMOTE_ENABLED: "$IS_REMOTE_ENABLED
   dbg "SAVE_SDL_LOG: "$SAVE_SDL_LOG
   dbg "SAVE_SDL_CORE_DUMP: "$SAVE_SDL_CORE_DUMP
@@ -274,7 +284,9 @@ build_parameters() {
     set_param SDL_PROCESS_NAME "config.SDL" ${CONFIG_PATH}/base_config.lua
     set_param REPORT_PATH "config.reportPath" ${CONFIG_PATH}/base_config.lua
     set_param SDL_CORE "config.pathToSDL" ${CONFIG_PATH}/base_config.lua
-    set_param SDL_API "config.pathToSDLInterfaces" ${CONFIG_PATH}/base_config.lua
+    set_param SDL_SRC "config.pathToSDLSource" ${CONFIG_PATH}/base_config.lua
+    set_param SDL_MOBILE_API "config.pathToSDLMobileInterface" ${CONFIG_PATH}/base_config.lua
+    set_param SDL_HMI_API "config.pathToSDLHMIInterface" ${CONFIG_PATH}/base_config.lua
     set_param IS_REMOTE_ENABLED "config.remoteConnection.enabled" ${CONFIG_PATH}/connection_config.lua
     print_parameters "specific config"
   fi
@@ -284,7 +296,9 @@ build_parameters() {
   set_param SDL_PROCESS_NAME "config.SDL" ${CONFIG_PATH}/base_config.lua
   set_param REPORT_PATH "config.reportPath" ${CONFIG_PATH}/base_config.lua
   set_param SDL_CORE "config.pathToSDL" ${CONFIG_PATH}/base_config.lua
-  set_param SDL_API "config.pathToSDLInterfaces" ${CONFIG_PATH}/base_config.lua
+  set_param SDL_SRC "config.pathToSDLSource" ${CONFIG_PATH}/base_config.lua
+  set_param SDL_MOBILE_API "config.pathToSDLMobileInterface" ${CONFIG_PATH}/base_config.lua
+  set_param SDL_HMI_API "config.pathToSDLHMIInterface" ${CONFIG_PATH}/base_config.lua
   set_param IS_REMOTE_ENABLED "config.remoteConnection.enabled" ${CONFIG_PATH}/connection_config.lua
   print_parameters "base config"
 
@@ -307,8 +321,16 @@ check_parameters() {
     echo "Path to SDL binaries was not specified"
     exit 1
   fi
-  if [ ! -d $SDL_API ]; then
-    echo "Invalid path to APIs was specified"
+  if [ ! -d $SDL_SRC ]; then
+    echo "Invalid path to SDL source was specified: ${SDL_SRC}"
+    exit 1
+  fi
+  if [ ! -d $SDL_MOBILE_API ]; then
+    echo "Invalid path to MOBILE API was specified: ${SDL_MOBILE_API}"
+    exit 1
+  fi
+  if [ ! -d $SDL_HMI_API ]; then
+    echo "Invalid path to HMI API was specified: ${SDL_HMI_API}"
     exit 1
   fi
   if [ ! -d $SDL_CORE ] && [ $IS_REMOTE_ENABLED = false ]; then
@@ -324,7 +346,9 @@ build_atf_options() {
   if [ -n "$CONFIG" ]; then OPTIONS="$OPTIONS --config=${CONFIG}"; fi
   if [ -n "$SDL_CORE" ]; then OPTIONS="$OPTIONS --sdl-core=${SDL_CORE}"; fi
   if [ -n "$REPORT_PATH" ]; then OPTIONS="$OPTIONS --report-path=${REPORT_PATH}"; fi
-  if [ -n "$SDL_API" ]; then OPTIONS="$OPTIONS --sdl-interfaces=${SDL_API}"; fi
+  if [ -n "$SDL_SRC" ]; then OPTIONS="$OPTIONS --sdl-src=${SDL_SRC}"; fi
+  if [ -n "$SDL_MOBILE_API" ]; then OPTIONS="$OPTIONS --sdl-mobile-api=${SDL_MOBILE_API}"; fi
+  if [ -n "$SDL_HMI_API" ]; then OPTIONS="$OPTIONS --sdl-hmi-api=${SDL_HMI_API}"; fi
   if [ $IS_REMOTE_ENABLED = true ] && [ $SAVE_SDL_LOG = yes ]; then OPTIONS="$OPTIONS --storeFullSDLLogs"; fi
 
   dbg "= OPTIONS:"$OPTIONS

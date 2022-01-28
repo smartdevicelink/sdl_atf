@@ -23,7 +23,9 @@ util.commandLine.declare_long_opt("--heartbeat", util.commandLine.consts.Require
 util.commandLine.declare_long_opt("--sdl-core", util.commandLine.consts.RequiredArgument, "Path to folder with SDL binary")
 util.commandLine.declare_long_opt("--report-mark", util.commandLine.consts.RequiredArgument, "Marker of testing report")
 util.commandLine.declare_long_opt("--security-protocol", util.commandLine.consts.RequiredArgument, "Security protocol type")
-util.commandLine.declare_long_opt("--sdl-interfaces", util.commandLine.consts.RequiredArgument, "Path to folder with APIs")
+util.commandLine.declare_long_opt("--sdl-src", util.commandLine.consts.RequiredArgument, "Path to folder with sdl core")
+util.commandLine.declare_long_opt("--sdl-mobile-api", util.commandLine.consts.RequiredArgument, "Path to folder with MOBILE API")
+util.commandLine.declare_long_opt("--sdl-hmi-api", util.commandLine.consts.RequiredArgument, "Path to folder with HMI API")
 
 local script_files = util.commandLine.parse_cmdl()
 if (#script_files > 0) then
