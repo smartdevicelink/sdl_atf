@@ -120,12 +120,16 @@ function prepare_atf {
   done
 
   local config_file=$atf_tmp_dir/modules/configuration/base_config.lua
+
   if [ -n "$_path_sdl_src" ]; then
-    default_mobile_api_dir=$(fgrep "config.defaultPathToMobileInterface" $config_file | sed 's/config.defaultPathToMobileInterface\s=\s"//;s/"$//')
-    default_hmi_api_dir=$(fgrep "config.defaultPathToHMIInterface" $config_file | sed 's/config.defaultPathToHMIInterface\s=\s"//;s/"$//')
-    
-    _path_sdl_mobile_api=$(realpath "${_path_sdl_src}/${default_mobile_api_dir}")
-    _path_sdl_hmi_api=$(realpath "${_path_sdl_src}/${default_hmi_api_dir}")
+    if [ -z "$_path_sdl_mobile_api" ]; then
+      default_mobile_api_dir=$(fgrep "config.defaultPathToMobileInterface" $config_file | sed 's/config.defaultPathToMobileInterface\s=\s"//;s/"$//')
+      _path_sdl_mobile_api=$(realpath "${_path_sdl_src}/${default_mobile_api_dir}")
+    fi
+    if [ -z "$_path_sdl_hmi_api" ]; then 
+      default_hmi_api_dir=$(fgrep "config.defaultPathToHMIInterface" $config_file | sed 's/config.defaultPathToHMIInterface\s=\s"//;s/"$//')
+      _path_sdl_hmi_api=$(realpath "${_path_sdl_src}/${default_hmi_api_dir}")
+    fi
     sed -i '/^config.pathToSDLSource\ =/c\config.pathToSDLSource=""' $config_file
   fi
   if [ -n "$_path_sdl_mobile_api" ]; then cp $_path_sdl_mobile_api/*.xml $atf_tmp_dir/data; fi
