@@ -276,7 +276,7 @@ function Util.commandLine.sdl_src(str)
 
   if (config.pathToSDLSource~="" and config.pathToSDLSource~=nil) then
     if (config.pathToSDLMobileInterface=="" or config.pathToSDLMobileInterface==nil) then
-      config.pathToSDLMobileInterface = config.pathToSDLSource..config.defaultPathToMobileInterface 
+      config.pathToSDLMobileInterface = config.pathToSDLSource..config.defaultPathToMobileInterface
     end
     if (config.pathToSDLHMIInterface=="" or config.pathToSDLHMIInterface==nil) then
       config.pathToSDLHMIInterface = config.pathToSDLSource..config.defaultPathToHMIInterface

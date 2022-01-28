@@ -126,7 +126,7 @@ function prepare_atf {
       default_mobile_api_dir=$(fgrep "config.defaultPathToMobileInterface" $config_file | sed 's/config.defaultPathToMobileInterface\s=\s"//;s/"$//')
       _path_sdl_mobile_api=$(realpath "${_path_sdl_src}/${default_mobile_api_dir}")
     fi
-    if [ -z "$_path_sdl_hmi_api" ]; then 
+    if [ -z "$_path_sdl_hmi_api" ]; then
       default_hmi_api_dir=$(fgrep "config.defaultPathToHMIInterface" $config_file | sed 's/config.defaultPathToHMIInterface\s=\s"//;s/"$//')
       _path_sdl_hmi_api=$(realpath "${_path_sdl_src}/${default_hmi_api_dir}")
     fi

@@ -99,8 +99,8 @@ base_config.lua       | config.SDL                      |                   | SD
 base_config.lua       | config.reportPath               | --report          | Path to reports and logs
 base_config.lua       | config.pathToSDL                | --sdl-core        | Path to SDL binaries
 base_config.lua       | config.pathToSDLSource          | --sdl-src         | Path to SDL Core
-base_config.lua       | config.pathToSDLMobileInterface | --sdl-mobile-api  | Path to SDL MOBILE API.
-base_config.lua       | config.pathToSDLHMIInterface    | --sdl-hmi-api     | Path to SDL HMI API.
+base_config.lua       | config.pathToSDLMobileInterface | --sdl-mobile-api  | Path to SDL MOBILE API
+base_config.lua       | config.pathToSDLHMIInterface    | --sdl-hmi-api     | Path to SDL HMI API
 connection_config.lua | config.remoteConnection.enabled |                   | Defines if remote connection is enabled
 
 ### Priorities
