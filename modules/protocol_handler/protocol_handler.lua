@@ -77,7 +77,7 @@ local function rpcPayload(msg)
     bit32.rshift(bit32.band(msg.rpcFunctionId, 0xff0000), 16),
     bit32.rshift(bit32.band(msg.rpcFunctionId, 0xff00), 8),
     bit32.band(msg.rpcFunctionId, 0xff)) ..
-  int32ToBytes(uint32ToInt32(msg.rpcCorrelationId)) ..
+  int32ToBytes(uint32ToInt32(msg.rpcCorrelationId or 0)) ..
   int32ToBytes(#msg.payload) ..
   msg.payload .. msg.binaryData
 
@@ -166,16 +166,16 @@ local function hasToBuildBinaryHeader(message)
   if message.frameType == constants.FRAME_TYPE.CONTROL_FRAME then
     return false
   end
+  if isHandshakeBinaryData(message.serviceType, message.rpcType, message.rpcFunctionId)
+      or isInternalErrorQuery(message.serviceType, message.rpcType, message.rpcFunctionId) then
+    return true
+  end
   if message.payload then
     if message.serviceType == constants.SERVICE_TYPE.RPC
         or message.serviceType == constants.SERVICE_TYPE.BULK_DATA then
       return true
     end
     return false
-  end
-  if isHandshakeBinaryData(message.serviceType, message.rpcType, message.rpcFunctionId, 0)
-      or isInternalErrorQuery(message.serviceType, message.rpcType, message.rpcFunctionId, 0) then
-    return true
   end
   return false
 end
